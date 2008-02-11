@@ -1,0 +1,24 @@
+Installation procedure
+----------------------
+
+scramv1 p CMSSW CMSSW_1_6_9
+cd CMSSW_1_6_9/src
+project CMSSW
+eval `scramv1 runtime -sh`
+[ eval `scramv1 runtime -csh` if you use a c-shell]
+
+addpkg RecoEcal/EgammaClusterAlgos
+addpkg RecoEcal/EgammaClusterProducers
+
+# getting all the S9 clustering files, to be copied in the appropriate places
+cvs co UserCode/ferriff/S9Clustering
+
+cp UserCode/ferriff/S9Clustering/S9ClusterAlgo*.h RecoEcal/EgammaClusterAlgos/interface
+cp UserCode/ferriff/S9Clustering/S9Cluster*Algo.cc RecoEcal/EgammaClusterAlgos/src
+cp UserCode/ferriff/S9Clustering/BuildFile_Algos RecoEcal/EgammaClusterAlgos/BuildFile
+
+cp UserCode/ferriff/S9Clustering/S9ClusterProducer.h RecoEcal/EgammaClusterProducers/interface/S9ClusterProducer.h
+cp UserCode/ferriff/S9Clustering/S9ClusterProducer.cc RecoEcal/EgammaClusterProducers/src/S9ClusterProducer.cc
+cp UserCode/ferriff/S9Clustering/SealModule.cc RecoEcal/EgammaClusterProducers/src/SealModule.cc
+cp UserCode/ferriff/S9Clustering/BuildFile_Producers RecoEcal/EgammaClusterProducers/BuildFile
+cp UserCode/ferriff/S9Clustering/S9SuperClusters.cfi RecoEcal/EgammaClusterProducers/data
