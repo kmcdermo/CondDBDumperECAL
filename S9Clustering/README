@@ -22,3 +22,11 @@ cp UserCode/ferriff/S9Clustering/S9ClusterProducer.cc RecoEcal/EgammaClusterProd
 cp UserCode/ferriff/S9Clustering/SealModule.cc RecoEcal/EgammaClusterProducers/src/SealModule.cc
 cp UserCode/ferriff/S9Clustering/BuildFile_Producers RecoEcal/EgammaClusterProducers/BuildFile
 cp UserCode/ferriff/S9Clustering/S9SuperClusters.cfi RecoEcal/EgammaClusterProducers/data
+cp UserCode/ferriff/S9Clustering/TestS9Producer.cfg RecoEcal/EgammaClusterProducers/test
+
+scramv1 b
+
+cd RecoEcal/EgammaClusterProducers/test
+
+# edit TestS9Producer.cfg to read the file and the number of events you whish
+cmsRun TestS9Producer.cfg
