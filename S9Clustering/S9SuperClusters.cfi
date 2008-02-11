@@ -1,0 +1,32 @@
+###################################################
+# Producer for S9 BasicClusters and SuperClusters #
+###################################################
+
+
+
+ module S9SuperClusters = S9ClusterProducer
+  {
+    # input collection
+    string ecalhitproducer = "ecalRecHit"
+    string ecalhitcollection = "EcalRecHitsEB"
+
+    # clustering parameters
+    double ES1       = 0.3
+    double ES2       = 0.011
+    double ETSG      = 1.0
+    int32 PhiStepsMax  = 20
+    int32 EtaStepsMax  = 1
+
+    // S9 algorithm logposition measuremement parameters
+     double X0 = 0.89
+     double W0 = 4.6
+     double T0 = 7.0	# 7.0 for electrons ---- 7.5 for photons
+
+
+     int32 ParticleType  =  11 # 11 = Electrons ----- 22 = Photons 
+
+  
+    string superclusterCollection = ""
+    
+
+  }
