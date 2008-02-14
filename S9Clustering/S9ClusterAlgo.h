@@ -44,6 +44,8 @@ typedef struct CellGC
 
   int iEta;
   int iPhi;
+
+  DetId detId;
  
   bool FlagUsed;           // Flag is true if the cell is already used
 
@@ -66,6 +68,7 @@ typedef struct CellGC
 
     iEta =  -999;
     iPhi =  -999;
+    detId = 0;
   }
     
 }CellGC;
@@ -88,6 +91,7 @@ typedef struct CellsGC
   double MapY[170][360];
   double MapZ[170][360];
   double MapEm16[170][360];       //ES2 threshold mapping
+  DetId MapDetId[170][360];
 
 
   
@@ -106,6 +110,7 @@ typedef struct CellsGC
 	  MapY[i][j]  = -33;
 	  MapZ[i][j]  = -33;
 	  MapEm16[i][j]  = -33.;
+	  MapDetId[i][j]  = 0;
 
 	}
     
@@ -203,6 +208,7 @@ typedef struct Sum9GC
 	S9Cells[i].Phi   =  -9999;
 	S9Cells[i].iEta =  -9999;
 	S9Cells[i].iPhi = -9999;
+	S9Cells[i].detId = 0;
 
       }
       
@@ -324,7 +330,8 @@ public:
   
   ~S9ClusterAlgo();
 
-  reco::SuperClusterCollection makeSuperClusters(const EcalRecHitCollection *recColl,const CaloSubdetectorGeometry *geometry);
+  reco::BasicClusterCollection makeBasicClusters(const EcalRecHitCollection *recColl,const CaloSubdetectorGeometry *geometry);
+  reco::SuperClusterCollection makeSuperClusters(const EcalRecHitCollection *recColl,const CaloSubdetectorGeometry *geometry, reco::BasicClusterRefVector &clusterRefVector_p);
  
 };
 #endif

@@ -17,8 +17,8 @@ cp UserCode/ferriff/S9Clustering/S9ClusterAlgo*.h RecoEcal/EgammaClusterAlgos/in
 cp UserCode/ferriff/S9Clustering/S9Cluster*Algo.cc RecoEcal/EgammaClusterAlgos/src
 cp UserCode/ferriff/S9Clustering/BuildFile_Algos RecoEcal/EgammaClusterAlgos/BuildFile
 
-cp UserCode/ferriff/S9Clustering/S9ClusterProducer.h RecoEcal/EgammaClusterProducers/interface/S9ClusterProducer.h
-cp UserCode/ferriff/S9Clustering/S9ClusterProducer.cc RecoEcal/EgammaClusterProducers/src/S9ClusterProducer.cc
+cp UserCode/ferriff/S9Clustering/S9*Producer.h RecoEcal/EgammaClusterProducers/interface/
+cp UserCode/ferriff/S9Clustering/S9*Producer.cc RecoEcal/EgammaClusterProducers/src/
 cp UserCode/ferriff/S9Clustering/SealModule.cc RecoEcal/EgammaClusterProducers/src/SealModule.cc
 cp UserCode/ferriff/S9Clustering/BuildFile_Producers RecoEcal/EgammaClusterProducers/BuildFile
 cp UserCode/ferriff/S9Clustering/S9SuperClusters.cfi RecoEcal/EgammaClusterProducers/data

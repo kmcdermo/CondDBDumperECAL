@@ -1,7 +1,7 @@
 
 ///////////////////////////////////////////////////////////////////
 //                                                               //
-//                  class S9ClusterProducer                      //
+//                  class S9SuperClusterProducer                      //
 //                                                               //
 //   Author: Julien DESCAMPS, CEA Saclay DAPNIA/SPP, Sept 2007   //
 //                                                               //
@@ -41,7 +41,7 @@
 
 
 // Class header file
-#include "RecoEcal/EgammaClusterProducers/interface/S9ClusterProducer.h"
+#include "RecoEcal/EgammaClusterProducers/interface/S9SuperClusterProducer.h"
 #include "RecoEcal/EgammaClusterAlgos/interface/S9ClusterAlgo.h"
 #include "RecoEcal/EgammaCoreTools/interface/ClusterShapeAlgo.h"
 #include "DataFormats/EgammaReco/interface/ClusterShape.h"
@@ -49,7 +49,7 @@
 #include "RecoEcal/EgammaCoreTools/interface/PositionCalc.h"
 
 
-S9ClusterProducer::S9ClusterProducer(const edm::ParameterSet & ps)
+S9SuperClusterProducer::S9SuperClusterProducer(const edm::ParameterSet & ps)
 {
 	// use configuration file to setup input/output collection names
 	nMaxPrintout_ = ps.getUntrackedParameter < int >("nMaxPrintout", 1);
@@ -57,6 +57,8 @@ S9ClusterProducer::S9ClusterProducer(const edm::ParameterSet & ps)
 	hitproducer_ = ps.getParameter < std::string > ("ecalhitproducer");
 	hitcollection_ = ps.getParameter < std::string > ("ecalhitcollection");
 	basicClusterCollection_ = ps.getParameter < std::string > ("basicClusterCollection");
+	basicClusterProducer_ = ps.getParameter < std::string > ("basicClusterProducer");
+	superclusterCollection_ = ps.getParameter < std::string > ("superClusterCollection");
 
 	// S9 algorithm parameters
 	double ES1 = ps.getParameter < double >("ES1");
@@ -73,17 +75,17 @@ S9ClusterProducer::S9ClusterProducer(const edm::ParameterSet & ps)
 	int ParticleType = ps.getParameter < int >("ParticleType");
 
 	algo_ = new S9ClusterAlgo(ES1, ES2, ETSG, PhiStepsMax, EtaStepsMax, X0, W0, T0, ParticleType);
-	produces < reco::BasicClusterCollection > (basicClusterCollection_);
+	produces < reco::SuperClusterCollection > (superclusterCollection_);
 }
 
-S9ClusterProducer::~S9ClusterProducer()
+S9SuperClusterProducer::~S9SuperClusterProducer()
 {
 	delete algo_;
 }
 
 
 void
- S9ClusterProducer::produce(edm::Event & evt, const edm::EventSetup & es)
+ S9SuperClusterProducer::produce(edm::Event & evt, const edm::EventSetup & es)
 {
 	// get the hit collection from the event:
 	edm::Handle < EcalRecHitCollection > rhcHandle;
@@ -109,7 +111,20 @@ void
 	} else
 		throw(std::runtime_error("\n\nHybrid Cluster Producer encountered invalied ecalhitcollection type.\n\n"));
 
-	// make the clusters by passing rechits to the agorithm
-	std::auto_ptr < reco::BasicClusterCollection > basic_clusters(new reco::BasicClusterCollection(algo_->makeBasicClusters(hit_collection, geometry_p)));
-	evt.put(basic_clusters, basicClusterCollection_);
+        std::cout << "Trying to get the basic cluster collection freshly produced" << std::endl;
+        edm::Handle<reco::BasicClusterCollection> pBasicClusters;
+        evt.getByLabel(basicClusterProducer_, basicClusterCollection_, pBasicClusters);
+
+        const reco::BasicClusterCollection *clusterCollection_p = pBasicClusters.product();
+        reco::BasicClusterRefVector clusterRefVector_p;
+        for (unsigned int i = 0; i < clusterCollection_p->size(); i++)
+        {
+                clusterRefVector_p.push_back(reco::BasicClusterRef(pBasicClusters, i));
+        }
+        std::cout << "Done" << std::endl;
+
+	std::auto_ptr < reco::SuperClusterCollection > clusters(new reco::SuperClusterCollection(algo_->makeSuperClusters(hit_collection, geometry_p, clusterRefVector_p)));
+	//std::auto_ptr < reco::SuperClusterCollection > clusters(new reco::SuperClusterCollection());
+	// put the product in the event
+	evt.put(clusters, superclusterCollection_);
 }

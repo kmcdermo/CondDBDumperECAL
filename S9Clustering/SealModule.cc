@@ -12,6 +12,7 @@
 #include "RecoEcal/EgammaClusterProducers/interface/RecHitFilter.h"
 
 #include "RecoEcal/EgammaClusterProducers/interface/S9ClusterProducer.h"
+#include "RecoEcal/EgammaClusterProducers/interface/S9SuperClusterProducer.h"
 
 DEFINE_SEAL_MODULE();
 
@@ -27,4 +28,4 @@ DEFINE_ANOTHER_FWK_MODULE(PiZeroDiscriminatorProducer);
 DEFINE_ANOTHER_FWK_MODULE(RecHitFilter);
 
 DEFINE_ANOTHER_FWK_MODULE(S9ClusterProducer);
-
+DEFINE_ANOTHER_FWK_MODULE(S9SuperClusterProducer);
