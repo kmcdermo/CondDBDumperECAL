@@ -1,0 +1,9 @@
+// Put here the modules you want the cfg file to use,
+// then include this file in your cfg file.
+// i.e. in MuRecal.cfg replace 'module demo = MuRecal {} '
+// with 'include "anlyzerDir/MuRecal/data/MuRecal.cfi" '.
+// (Remember that filenames are case sensitive.)
+
+module demo = MuRecal {
+
+}
