@@ -1,0 +1,13 @@
+<use name=DataFormats/Common>
+<use name=DataFormats/Math>
+<use name=FWCore/ServiceRegistry>
+<use name=FWCore/Utilities>
+<use name=clhep>
+<use name=rootmath>
+<use name=EgammaAnalysis/ElectronIDAlgos>
+<export>
+  <use name=DataFormats/Common>
+  <use name=DataFormats/Math>
+  <use name=rootmath>
+  <lib name=SystematicUncertaintiesIsolation>
+</export>

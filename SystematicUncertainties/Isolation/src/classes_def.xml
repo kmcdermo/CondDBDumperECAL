@@ -1,0 +1,9 @@
+<lcgdict>
+<selection>
+  <class name="ConeGenerator"/>
+  <class name="std::pair< math::RhoEtaPhiVector, math::XYZPoint >"/>
+  <class name="std::vector< std::pair< math::RhoEtaPhiVector, math::XYZPoint > >"/>
+  <class pattern="CLHEP::Ran*"/>
+</selection>
+</lcgdict>
+
