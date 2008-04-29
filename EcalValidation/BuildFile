@@ -1,0 +1,12 @@
+<use name=FWCore/Framework>
+<use name=FWCore/PluginManager>
+<use name=FWCore/ParameterSet>
+<flags EDM_PLUGIN=1>
+<use name=PhysicsTools/UtilAlgos>
+<export>
+   <lib name=ValidationEcalValidation>
+   <use name=FWCore/Framework>
+   <use name=FWCore/PluginManager>
+   <use name=FWCore/ParameterSet>
+   <use name=PhysicsTools/UtilAlgos> 
+</export>
