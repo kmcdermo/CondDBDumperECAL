@@ -2,6 +2,9 @@
 <use name=FWCore/PluginManager>
 <use name=FWCore/ParameterSet>
 <use name=SimDataFormats/HepMCProduct>
+<use name=DataFormats/EgammaCandidates>
+<use name=Diphoton/HafHistogram>
+<use name=PhysicsTools/UtilAlgos>
 <flags EDM_PLUGIN=1>
 <export>
    <lib name=DiphotonValidation>
