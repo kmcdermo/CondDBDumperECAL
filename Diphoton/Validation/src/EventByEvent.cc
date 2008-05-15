@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  "Federico Ferri federi
 //         Created:  Mon Apr  7 14:11:00 CEST 2008
-// $Id: EventByEvent.cc,v 1.1.1.1 2008/04/09 15:56:16 ferriff Exp $
+// $Id: EventByEvent.cc,v 1.1 2008/05/05 15:20:10 ferriff Exp $
 //
 //
 
@@ -87,8 +87,9 @@ EventByEvent::~EventByEvent()
 
 void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photons1, const reco::PhotonCollection *photons2, const HepMC::GenEvent *genEvent, HTuple *ntu )
 {
-        std::cout << "Number of photons: " << photons1->size() << std::endl;
+        //std::cout << "Number of photons: " << photons1->size() << std::endl;
         ntu->Column("nPhotons", (int)photons1->size());
+        ntu->Column("dN", (int)(photons1->size() - photons2->size()));
         // build map of Dr (i.e. matching criterion)
         HTValVector<float> venergy;
         HTValVector<float> veta;
@@ -118,10 +119,12 @@ void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photo
                                 matchedPhoton = &(*jph);
                         }
                 }
-                vmatch.append( match );
-                vdEnergy.append( iph->energy() - matchedPhoton->energy() );
-                vdEta.append( iph->eta() - matchedPhoton->eta() );
-                vdPhi.append( iph->phi() - matchedPhoton->phi() );
+                if ( matchedPhoton != 0 ) {
+                        vmatch.append( match );
+                        vdEnergy.append( iph->energy() - matchedPhoton->energy() );
+                        vdEta.append( iph->eta() - matchedPhoton->eta() );
+                        vdPhi.append( iph->phi() - matchedPhoton->phi() );
+                }
 
                 // --- match with Monte Carlo
                 float mcMatch = 1000.;
@@ -136,11 +139,14 @@ void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photo
                                 }
                         }
                 }
-                vmcMatch.append( mcMatch );
-                vdMCEnergy.append( iph->energy() - mcPhoton.e() );
-                vdMCEta.append( iph->eta() - mcPhoton.eta() );
-                vdMCPhi.append( iph->phi() - mcPhoton.phi() );
+                if ( mcPhoton != 0 ) {
+                        vmcMatch.append( mcMatch );
+                        vdMCEnergy.append( iph->energy() - mcPhoton.e() );
+                        vdMCEta.append( iph->eta() - mcPhoton.eta() );
+                        vdMCPhi.append( iph->phi() - mcPhoton.phi() );
+                }
         }
+
         ntu->Column("energy",    venergy,    "nPhotons");
         ntu->Column("eta",       veta,       "nPhotons");
         ntu->Column("phi",       vphi,       "nPhotons");
@@ -174,14 +180,8 @@ void EventByEvent::analyze(const edm::Event& ev, const edm::EventSetup& es)
         ev.getByLabel( edm::InputTag("source"), pMCTruth );
         const HepMC::GenEvent * genEvent = pMCTruth->GetEvent();
 
-
         comparePhotonCollections( photonsFull, photonsFast, genEvent, ntu_photons_full_ );
-
-        for ( HepMC::GenEvent::particle_const_iterator ipl = genEvent->particles_begin(); ipl != genEvent->particles_end(); ++ipl ) {
-                if ( (*ipl)->status() == 1 && abs( (*ipl)->pdg_id() ) == 22 ) {
-                        std::cout << "    " << (*ipl)->momentum().e() << " " << (*ipl)->momentum().eta() << " " << (*ipl)->momentum().phi() << std::endl;
-                }
-        }
+        comparePhotonCollections( photonsFast, photonsFull, genEvent, ntu_photons_fast_ );
 }
 
 
