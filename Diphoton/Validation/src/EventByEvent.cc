@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  "Federico Ferri federi
 //         Created:  Mon Apr  7 14:11:00 CEST 2008
-// $Id: EventByEvent.cc,v 1.1 2008/05/05 15:20:10 ferriff Exp $
+// $Id: EventByEvent.cc,v 1.2 2008/05/15 11:51:58 ferriff Exp $
 //
 //
 
@@ -30,6 +30,7 @@ Implementation:
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
 #include "DataFormats/EgammaCandidates/interface/Photon.h"
 #include "DataFormats/EgammaCandidates/interface/PhotonFwd.h"
 
@@ -99,6 +100,14 @@ void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photo
         HTValVector<float> vdEnergy;
         HTValVector<float> vdEta;
         HTValVector<float> vdPhi;
+        HTValVector<float> vdESC;
+        HTValVector<float> vdr9;
+        HTValVector<float> vdr19;
+        HTValVector<float> vde5x5;
+        HTValVector<int> vdPixelSeed;
+        HTValVector<float> vdCaloPositionEta;
+        HTValVector<float> vdCaloPositionPhi;
+        
         HTValVector<float> vdMCEnergy;
         HTValVector<float> vdMCEta;
         HTValVector<float> vdMCPhi;
@@ -124,6 +133,13 @@ void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photo
                         vdEnergy.append( iph->energy() - matchedPhoton->energy() );
                         vdEta.append( iph->eta() - matchedPhoton->eta() );
                         vdPhi.append( iph->phi() - matchedPhoton->phi() );
+                        vdESC.append( iph->superCluster()->energy() - matchedPhoton->superCluster()->energy() );
+                        vdr9.append( iph->r9() - matchedPhoton->r9() );
+                        vdr19.append( iph->r19() - matchedPhoton->r19() );
+                        vde5x5.append( iph->e5x5() - matchedPhoton->e5x5() );
+                        vdPixelSeed.append( iph->hasPixelSeed() - matchedPhoton->hasPixelSeed() );
+                        vdCaloPositionEta.append( iph->caloPosition().eta() - matchedPhoton->caloPosition().eta() );
+                        vdCaloPositionPhi.append( iph->caloPosition().phi() - matchedPhoton->caloPosition().phi() );
                 }
 
                 // --- match with Monte Carlo
@@ -147,17 +163,24 @@ void EventByEvent::comparePhotonCollections( const reco::PhotonCollection *photo
                 }
         }
 
-        ntu->Column("energy",    venergy,    "nPhotons");
-        ntu->Column("eta",       veta,       "nPhotons");
-        ntu->Column("phi",       vphi,       "nPhotons");
-        ntu->Column("match",     vmatch,     "nPhotons");
-        ntu->Column("dEnergy",   vdEnergy,   "nPhotons");
-        ntu->Column("dEta",      vdEta,      "nPhotons");
-        ntu->Column("dPhi",      vdPhi,      "nPhotons");
-        ntu->Column("mcMatch",   vmcMatch,   "nPhotons");
-        ntu->Column("dMCEnergy", vdMCEnergy, "nPhotons");
-        ntu->Column("dMCEta",    vdMCEta,    "nPhotons");
-        ntu->Column("dMCPhi",    vdMCPhi,    "nPhotons");
+        ntu->Column("energy",           venergy,           "nPhotons");
+        ntu->Column("eta",              veta,              "nPhotons");
+        ntu->Column("phi",              vphi,              "nPhotons");
+        ntu->Column("match",            vmatch,            "nPhotons");
+        ntu->Column("dEnergy",          vdEnergy,          "nPhotons");
+        ntu->Column("dEta",             vdEta,             "nPhotons");
+        ntu->Column("dPhi",             vdPhi,             "nPhotons");
+        ntu->Column("dESC",             vdESC,             "nPhotons");
+        ntu->Column("dR9",              vdr9,              "nPhotons");
+        ntu->Column("dR19",             vdr19,             "nPhotons");
+        ntu->Column("dE5x5",            vde5x5,            "nPhotons");
+        ntu->Column("dPixelSeed",       vdPixelSeed,       "nPhotons");
+        ntu->Column("dCaloPositionEta", vdCaloPositionEta, "nPhotons");
+        ntu->Column("dCaloPositionPhi", vdCaloPositionPhi, "nPhotons");
+        ntu->Column("mcMatch",          vmcMatch,          "nPhotons");
+        ntu->Column("dMCEnergy",        vdMCEnergy,        "nPhotons");
+        ntu->Column("dMCEta",           vdMCEta,           "nPhotons");
+        ntu->Column("dMCPhi",           vdMCPhi,           "nPhotons");
         ntu->DumpData();
 }
 
