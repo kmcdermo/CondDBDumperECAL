@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id$
+// $Id: EcalValidation.cc,v 1.1.1.1 2008/04/29 07:33:57 ferriff Exp $
 //
 //
 
@@ -59,7 +59,7 @@ class EcalValidation : public edm::EDAnalyzer {
                 edm::InputTag eeRecHitCollection_;
                 // RecHits ----------------------------------------------
                 // ... barrel 
-                TH1D * h_recHitsEB_size; 
+                TH1D *h_recHitsEB_size; 
                 TH1D *h_recHitsEB_energy;
                 // ... endcap
                 TH1D *h_recHitsEE_size;
@@ -168,6 +168,9 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
 {
         edm::Handle<EcalRecHitCollection> recHitsEB;
         ev.getByLabel( ebRecHitCollection_, recHitsEB );
+        if ( ! recHitsEB.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> recHitsEB not found" << std::endl; 
+        }
         h_recHitsEB_size->Fill( recHitsEB->size() );
         for (unsigned int irh = 0; irh < recHitsEB->size(); ++irh) {
                 h_recHitsEB_energy->Fill( (*recHitsEB)[irh].energy() );
@@ -175,6 +178,9 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
 
         edm::Handle<EcalRecHitCollection> recHitsEE;
         ev.getByLabel( eeRecHitCollection_, recHitsEE );
+        if ( ! recHitsEE.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> recHitsEE not found" << std::endl; 
+        }
         h_recHitsEE_size->Fill( recHitsEE->size() );
         for (unsigned int irh = 0; irh < recHitsEE->size(); ++irh) {
                 h_recHitsEE_energy->Fill( (*recHitsEE)[irh].energy() );
@@ -183,7 +189,10 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         // Clusters / SuperClusters
         // ... hybrid
         edm::Handle<reco::SuperClusterCollection> clHybrid;
-        ev.getByLabel( edm::InputTag( "hybridSuperClusters", "", "ALL" ), clHybrid );
+        ev.getByLabel( edm::InputTag( "hybridSuperClusters", "", "" ), clHybrid );
+        if ( ! clHybrid.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> clHybrid not found" << std::endl; 
+        }
         h_clustersHybrid_size->Fill( clHybrid->size() );
         for (unsigned int icl = 0; icl < clHybrid->size(); ++icl) {
                 h_clustersHybrid_energy->Fill( (*clHybrid)[icl].energy() );
@@ -193,7 +202,10 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         }
         // ... island barrel
         edm::Handle<reco::BasicClusterCollection> clIslandEB;
-        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandBarrelBasicClusters","ALL"), clIslandEB);
+        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandBarrelBasicClusters",""), clIslandEB);
+        if ( ! clIslandEB.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> clIslandEB not found" << std::endl; 
+        }
         h_clustersIslandEB_size->Fill( clIslandEB->size() );
         for (unsigned int icl = 0; icl < clIslandEB->size(); ++icl) {
                 h_clustersIslandEB_energy->Fill( (*clIslandEB)[icl].energy() );
@@ -202,7 +214,10 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         }
         // ... island endcap
         edm::Handle<reco::BasicClusterCollection> clIslandEE;
-        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandEndcapBasicClusters","ALL"), clIslandEE );
+        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandEndcapBasicClusters",""), clIslandEE );
+        if ( ! clIslandEE.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> clIslandEE not found" << std::endl; 
+        }
         h_clustersIslandEE_size->Fill( clIslandEE->size() );
         for (unsigned int icl = 0; icl < clIslandEE->size(); ++icl) {
                 h_clustersIslandEE_energy->Fill( (*clIslandEE)[icl].energy() );
@@ -211,7 +226,10 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         }
         // ... island superclusters barrel
         edm::Handle<reco::SuperClusterCollection> clIslandSCEB;
-        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandBarrelSuperClusters","ALL"), clIslandSCEB );
+        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandBarrelSuperClusters",""), clIslandSCEB );
+        if ( ! clIslandSCEB.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> clIslandSCEB not found" << std::endl; 
+        }
         h_clustersIslandSCEB_size->Fill( clIslandSCEB->size() );
         for (unsigned int icl = 0; icl < clIslandSCEB->size(); ++icl) {
                 h_clustersIslandSCEB_energy->Fill( (*clIslandSCEB)[icl].energy() );
@@ -221,7 +239,10 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         }
         // ... island superclusters endcap
         edm::Handle<reco::SuperClusterCollection> clIslandSCEE;
-        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandEndcapSuperClusters","ALL"), clIslandSCEE );
+        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandEndcapSuperClusters",""), clIslandSCEE );
+        if ( ! clIslandSCEE.isValid() ) {
+                std::cerr << "EcalValidation::analyze --> clIslandSCEE not found" << std::endl; 
+        }
         h_clustersIslandSCEE_size->Fill( clIslandSCEE->size() );
         for (unsigned int icl = 0; icl < clIslandSCEE->size(); ++icl) {
                 h_clustersIslandSCEE_energy->Fill( (*clIslandSCEE)[icl].energy() );
