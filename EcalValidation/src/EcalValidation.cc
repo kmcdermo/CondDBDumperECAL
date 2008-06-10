@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.2 2008/06/10 07:14:12 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.3 2008/06/10 12:24:19 ferriff Exp $
 //
 //
 
@@ -121,23 +121,23 @@ EcalValidation::EcalValidation(const edm::ParameterSet& ps)
         // ... hybrid
         h_clustersHybrid_size = fs->make<TH1D>("h_clustersHybrid_size","h_clustersHybrid_size",200,0.,200.);
         h_clustersHybrid_xtals = fs->make<TH1D>("h_clustersHybrid_xtals","h_clustersHybrid_xtals",100,0.,100.);
-        h_clustersHybrid_energy = fs->make<TH1D>("h_clustersHybrid_energy","h_clustersHybrid_energy",1000,0.,200.);
+        h_clustersHybrid_energy = fs->make<TH1D>("h_clustersHybrid_energy","h_clustersHybrid_energy",2000,0.,400.);
         h_clustersHybrid_eta = fs->make<TH1D>("h_clustersHybrid_eta","h_clustersHybrid_eta",250,-2.7,2.7);
         h_clustersHybrid_phi = fs->make<TH1D>("h_clustersHybrid_phi","h_clustersHybrid_phi",250,-3.2,3.2);
         // ... island barrel
         h_clustersIslandEB_size = fs->make<TH1D>("h_clustersIslandEB_size","h_clustersIslandEB_size",200,0.,200.);
-        h_clustersIslandEB_energy = fs->make<TH1D>("h_clustersIslandEB_energy","h_clustersIslandEB_energy",1000,0.,200.);
+        h_clustersIslandEB_energy = fs->make<TH1D>("h_clustersIslandEB_energy","h_clustersIslandEB_energy",2000,0.,400.);
         h_clustersIslandEB_eta = fs->make<TH1D>("h_clustersIslandEB_eta","h_clustersIslandEB_eta",250,-2.7,2.7);
         h_clustersIslandEB_phi = fs->make<TH1D>("h_clustersIslandEB_phi","h_clustersIslandEB_phi",250,-3.2,3.2);
         // ... island endcap
         h_clustersIslandEE_size = fs->make<TH1D>("h_clustersIslandEE_size","h_clustersIslandEE_size",200,0.,200.);
-        h_clustersIslandEE_energy = fs->make<TH1D>("h_clustersIslandEE_energy","h_clustersIslandEE_energy",1000,0.,200.);
+        h_clustersIslandEE_energy = fs->make<TH1D>("h_clustersIslandEE_energy","h_clustersIslandEE_energy",2000,0.,400.);
         h_clustersIslandEE_eta = fs->make<TH1D>("h_clustersIslandEE_eta","h_clustersIslandEE_eta",250,-2.7,2.7);
         h_clustersIslandEE_phi = fs->make<TH1D>("h_clustersIslandEE_phi","h_clustersIslandEE_phi",250,-3.2,3.2);
         // ... island supercluster barrel
         h_clustersIslandSCEB_size = fs->make<TH1D>("h_clustersIslandSCEB_size","h_clustersIslandSCEB_size",200,0.,200.);
         h_clustersIslandSCEB_xtals = fs->make<TH1D>("h_clustersIslandSCEB_xtals","h_clustersIslandSCEB_xtals",100,0.,100.);
-        h_clustersIslandSCEB_energy = fs->make<TH1D>("h_clustersIslandSCEB_energy","h_clustersIslandSCEB_energy",1000,0.,200.);
+        h_clustersIslandSCEB_energy = fs->make<TH1D>("h_clustersIslandSCEB_energy","h_clustersIslandSCEB_energy",2000,0.,400.);
         h_clustersIslandSCEB_eta = fs->make<TH1D>("h_clustersIslandSCEB_eta","h_clustersIslandSCEB_eta",250,-2.7,2.7);
         h_clustersIslandSCEB_phi = fs->make<TH1D>("h_clustersIslandSCEB_phi","h_clustersIslandSCEB_phi",250,-3.2,3.2);
         // ... island supercluster endcap
