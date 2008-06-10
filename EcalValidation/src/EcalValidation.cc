@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.3 2008/06/10 12:24:19 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.4 2008/06/10 12:35:49 ferriff Exp $
 //
 //
 
@@ -113,10 +113,10 @@ EcalValidation::EcalValidation(const edm::ParameterSet& ps)
         eeRecHitCollection_ = ps.getParameter<edm::InputTag>("eeRecHitCollection");
         edm::Service<TFileService> fs;
         h_recHitsEB_size = fs->make<TH1D>( "h_recHitsEB_size", "h_recHitsEB_size", 1000, 0, 10000 );
-        h_recHitsEB_energy = fs->make<TH1D>("h_recHitsEB_energy","h_recHitsEB_energy",1000,-100,100);
+        h_recHitsEB_energy = fs->make<TH1D>("h_recHitsEB_energy","h_recHitsEB_energy",2000,-50,350);
         // ... endcap
         h_recHitsEE_size = fs->make<TH1D>("h_recHitsEE_size","h_recHitsEE_size",1000,0,10000);
-        h_recHitsEE_energy = fs->make<TH1D>("h_recHitsEE_energy","h_recHitsEE_energy",1000,-100,100);
+        h_recHitsEE_energy = fs->make<TH1D>("h_recHitsEE_energy","h_recHitsEE_energy",2000,-50,350);
         // Clusters ----------------------------------------------
         // ... hybrid
         h_clustersHybrid_size = fs->make<TH1D>("h_clustersHybrid_size","h_clustersHybrid_size",200,0.,200.);
