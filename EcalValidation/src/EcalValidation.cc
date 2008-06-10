@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.1.1.1 2008/04/29 07:33:57 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.2 2008/06/10 07:14:12 ferriff Exp $
 //
 //
 
@@ -143,7 +143,7 @@ EcalValidation::EcalValidation(const edm::ParameterSet& ps)
         // ... island supercluster endcap
         h_clustersIslandSCEE_size = fs->make<TH1D>("h_clustersIslandSCEE_size","h_clustersIslandSCEE_size",200,0.,200.);
         h_clustersIslandSCEE_xtals = fs->make<TH1D>("h_clustersIslandSCEE_xtals","h_clustersIslandSCEE_xtals",100,0.,100.);
-        h_clustersIslandSCEE_energy = fs->make<TH1D>("h_clustersIslandSCEE_energy","h_clustersIslandSCEE_energy",1000,0.,200.);
+        h_clustersIslandSCEE_energy = fs->make<TH1D>("h_clustersIslandSCEE_energy","h_clustersIslandSCEE_energy",2000,0.,400.);
         h_clustersIslandSCEE_eta = fs->make<TH1D>("h_clustersIslandSCEE_eta","h_clustersIslandSCEE_eta",250,-2.7,2.7);
         h_clustersIslandSCEE_phi = fs->make<TH1D>("h_clustersIslandSCEE_phi","h_clustersIslandSCEE_phi",250,-3.2,3.2);
 
