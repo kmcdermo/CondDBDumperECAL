@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.6 2008/07/28 16:13:06 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.7 2008/07/29 07:03:38 ferriff Exp $
 //
 //
 
@@ -125,26 +125,26 @@ EcalValidation::EcalValidation(const edm::ParameterSet& ps)
         // Basic Clusters ----------------------------------------------
         // ... barrel
         h_basicClusters_EB_size = fs->make<TH1D>("h_basicClusters_EB_size","h_basicClusters_EB_size",200,0.,200.);
-        h_basicClusters_EB_nXtals = fs->make<TH1D>("h_basicClusters_EB_nXtals","h_basicClusters_EB_nXtals",100,0.,100.);
+        h_basicClusters_EB_nXtals = fs->make<TH1D>("h_basicClusters_EB_nXtals","h_basicClusters_EB_nXtals",400,0.,400.);
         h_basicClusters_EB_energy = fs->make<TH1D>("h_basicClusters_EB_energy","h_basicClusters_EB_energy",2000,0.,400.);
         h_basicClusters_EB_eta = fs->make<TH1D>("h_basicClusters_EB_eta","h_basicClusters_EB_eta",250,-2.7,2.7);
         h_basicClusters_EB_phi = fs->make<TH1D>("h_basicClusters_EB_phi","h_basicClusters_EB_phi",250,-3.2,3.2);
         // ... endcap
         h_basicClusters_EE_size = fs->make<TH1D>("h_basicClusters_EE_size","h_basicClusters_EE_size",200,0.,200.);
-        h_basicClusters_EE_nXtals = fs->make<TH1D>("h_basicClusters_EE_nXtals","h_basicClusters_EE_nXtals",100,0.,100.);
+        h_basicClusters_EE_nXtals = fs->make<TH1D>("h_basicClusters_EE_nXtals","h_basicClusters_EE_nXtals",400,0.,400.);
         h_basicClusters_EE_energy = fs->make<TH1D>("h_basicClusters_EE_energy","h_basicClusters_EE_energy",2000,0.,400.);
         h_basicClusters_EE_eta = fs->make<TH1D>("h_basicClusters_EE_eta","h_basicClusters_EE_eta",250,-2.7,2.7);
         h_basicClusters_EE_phi = fs->make<TH1D>("h_basicClusters_EE_phi","h_basicClusters_EE_phi",250,-3.2,3.2);
         // Super Clusters ----------------------------------------------
         // ... barrel
         h_superClusters_EB_size = fs->make<TH1D>("h_superClusters_EB_size","h_superClusters_EB_size",200,0.,200.);
-        h_superClusters_EB_nXtals = fs->make<TH1D>("h_superClusters_EB_nXtals","h_superClusters_EB_nXtals",100,0.,100.);
+        h_superClusters_EB_nXtals = fs->make<TH1D>("h_superClusters_EB_nXtals","h_superClusters_EB_nXtals",400,0.,400.);
         h_superClusters_EB_energy = fs->make<TH1D>("h_superClusters_EB_energy","h_superClusters_EB_energy",2000,0.,400.);
         h_superClusters_EB_eta = fs->make<TH1D>("h_superClusters_EB_eta","h_superClusters_EB_eta",250,-2.7,2.7);
         h_superClusters_EB_phi = fs->make<TH1D>("h_superClusters_EB_phi","h_superClusters_EB_phi",250,-3.2,3.2);
         // ... endcap
         h_superClusters_EE_size = fs->make<TH1D>("h_superClusters_EE_size","h_superClusters_EE_size",200,0.,200.);
-        h_superClusters_EE_nXtals = fs->make<TH1D>("h_superClusters_EE_nXtals","h_superClusters_EE_nXtals",100,0.,100.);
+        h_superClusters_EE_nXtals = fs->make<TH1D>("h_superClusters_EE_nXtals","h_superClusters_EE_nXtals",400,0.,400.);
         h_superClusters_EE_energy = fs->make<TH1D>("h_superClusters_EE_energy","h_superClusters_EE_energy",2000,0.,400.);
         h_superClusters_EE_eta = fs->make<TH1D>("h_superClusters_EE_eta","h_superClusters_EE_eta",250,-2.7,2.7);
         h_superClusters_EE_phi = fs->make<TH1D>("h_superClusters_EE_phi","h_superClusters_EE_phi",250,-3.2,3.2);
