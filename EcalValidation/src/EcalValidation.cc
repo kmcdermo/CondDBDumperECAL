@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.5 2008/06/10 13:45:21 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.6 2008/07/28 16:13:06 ferriff Exp $
 //
 //
 
@@ -209,6 +209,7 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         h_basicClusters_EE_size->Fill( basicClusters_EE_h->size() );
         for (unsigned int icl = 0; icl < basicClusters_EE_h->size(); ++icl) {
                 h_basicClusters_EE_energy->Fill( (*basicClusters_EE_h)[icl].energy() );
+                h_basicClusters_EE_nXtals->Fill( (*basicClusters_EE_h)[icl].getHitsByDetId().size() );
                 h_basicClusters_EE_eta->Fill( (*basicClusters_EE_h)[icl].eta() );
                 h_basicClusters_EE_phi->Fill( (*basicClusters_EE_h)[icl].phi() );
         }
