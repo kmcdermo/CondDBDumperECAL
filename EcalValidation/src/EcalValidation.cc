@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.7 2008/07/29 07:03:38 ferriff Exp $
+// $Id: EcalValidation.cc,v 1.8 2008/07/29 13:22:55 ferriff Exp $
 //
 //
 
@@ -196,7 +196,7 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         h_basicClusters_EB_size->Fill( basicClusters_EB_h->size() );
         for (unsigned int icl = 0; icl < basicClusters_EB_h->size(); ++icl) {
                 h_basicClusters_EB_energy->Fill( (*basicClusters_EB_h)[icl].energy() );
-                h_basicClusters_EB_nXtals->Fill( (*basicClusters_EB_h)[icl].getHitsByDetId().size() );
+                h_basicClusters_EB_nXtals->Fill( (*basicClusters_EB_h)[icl].hitsAndFractions().size() );
                 h_basicClusters_EB_eta->Fill( (*basicClusters_EB_h)[icl].eta() );
                 h_basicClusters_EB_phi->Fill( (*basicClusters_EB_h)[icl].phi() );
         }
@@ -209,7 +209,7 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         h_basicClusters_EE_size->Fill( basicClusters_EE_h->size() );
         for (unsigned int icl = 0; icl < basicClusters_EE_h->size(); ++icl) {
                 h_basicClusters_EE_energy->Fill( (*basicClusters_EE_h)[icl].energy() );
-                h_basicClusters_EE_nXtals->Fill( (*basicClusters_EE_h)[icl].getHitsByDetId().size() );
+                h_basicClusters_EE_nXtals->Fill( (*basicClusters_EE_h)[icl].hitsAndFractions().size() );
                 h_basicClusters_EE_eta->Fill( (*basicClusters_EE_h)[icl].eta() );
                 h_basicClusters_EE_phi->Fill( (*basicClusters_EE_h)[icl].phi() );
         }
@@ -223,7 +223,7 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         h_superClusters_EB_size->Fill( superClusters_EB_h->size() );
         for (unsigned int icl = 0; icl < superClusters_EB_h->size(); ++icl) {
                 h_superClusters_EB_energy->Fill( (*superClusters_EB_h)[icl].energy() );
-                h_superClusters_EB_nXtals->Fill( (*superClusters_EB_h)[icl].getHitsByDetId().size() );
+                h_superClusters_EB_nXtals->Fill( (*superClusters_EB_h)[icl].hitsAndFractions().size() );
                 h_superClusters_EB_eta->Fill( (*superClusters_EB_h)[icl].eta() );
                 h_superClusters_EB_phi->Fill( (*superClusters_EB_h)[icl].phi() );
         }
@@ -236,7 +236,7 @@ void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup
         h_superClusters_EE_size->Fill( superClusters_EE_h->size() );
         for (unsigned int icl = 0; icl < superClusters_EE_h->size(); ++icl) {
                 h_superClusters_EE_energy->Fill( (*superClusters_EE_h)[icl].energy() );
-                h_superClusters_EE_nXtals->Fill( (*superClusters_EE_h)[icl].getHitsByDetId().size() );
+                h_superClusters_EE_nXtals->Fill( (*superClusters_EE_h)[icl].hitsAndFractions().size() );
                 h_superClusters_EE_eta->Fill( (*superClusters_EE_h)[icl].eta() );
                 h_superClusters_EE_phi->Fill( (*superClusters_EE_h)[icl].phi() );
         }
