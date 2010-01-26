@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Sun Oct 14 21:03:33 CEST 2007
-// $Id: TracksForIsolation.cc,v 1.1.1.1 2008/03/28 14:03:25 ferriff Exp $
+// $Id$
 //
 //
 
@@ -91,8 +91,8 @@ void TracksForIsolation::produce(edm::Event& iEvent, const edm::EventSetup& iSet
                 for (size_t j = 0; j < particles->size(); ++j) {
                         reco::GsfTrackRef ptk = (*particles)[j].gsfTrack();
                         //for (size_t i = 0; i < tk->recHitsSize(); ++i ) {
-                        //std::cout << "..  tk " <<  tk.momentum().x() << " " <<  tk.momentum().y() << " " <<  tk.momentum().z() << std::endl;
-                        //std::cout << ".. ptk " << ptk->innerMomentum().x() << " " << ptk->innerMomentum().y() << " " << ptk->innerMomentum().z() << std::endl;
+                        std::cout << "..  tk " <<  tk.momentum().x() << " " <<  tk.momentum().y() << " " <<  tk.momentum().z() << std::endl;
+                        std::cout << ".. ptk " << ptk->innerMomentum().x() << " " << ptk->innerMomentum().y() << " " << ptk->innerMomentum().z() << std::endl;
                         for( trackingRecHit_iterator hit = tk.recHitsBegin(); hit != tk.recHitsEnd(); ++hit ) {
                                 if ( ! (*hit)->isValid() ) {
                                         continue;

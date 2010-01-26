@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.1.1.1 2010/01/12 09:43:14 ferriff Exp $
+// $Id$
 //
 //
 
@@ -276,8 +276,8 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 }
                                 if ( dumpPedestals_ ) {
                                         if( itPed != ped_->end() ) {
-                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
-                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
+                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(0) << "_" << (*itPed).mean(1) << "_" << (*itPed).mean(2);
+                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(0) << "_" << (*itPed).rms(1) << "_" << (*itPed).rms(2);
                                         } else  ofile_ << "  ped= " << "NA";
                                 }
                                 if ( dumpGainRatios_ ) {
@@ -289,11 +289,8 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                         if ( itAPDPN != apdpn_->getLaserMap().end() ) {
                                                 ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
                                                         << ev.time().value() 
-                                                        << "_" << ts.t1.value() << "_" << ts.t2.value() 
-                                                        //<< "_" << ts.t3.value() 
-                                                        << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
-                                                        //<< "_" << (*itAPDPN).p3
-                                                        ;
+                                                        << "_" << ts.t1.value() << "_" << ts.t2.value() << "_" << ts.t3.value() << "_"
+                                                        << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 << "_" << (*itAPDPN).p3;
                                         }
                                 }
                                 ofile_ << "\n";
@@ -361,8 +358,8 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 }
                                 if ( dumpPedestals_ ) {
                                         if( itPed != ped_->end() ) {
-                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
-                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
+                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(0) << "_" << (*itPed).mean(1) << "_" << (*itPed).mean(2);
+                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(0) << "_" << (*itPed).rms(1) << "_" << (*itPed).rms(2);
                                         } else  ofile_ << "  ped= " << "NA";
                                 }
                                 if ( dumpGainRatios_ ) {

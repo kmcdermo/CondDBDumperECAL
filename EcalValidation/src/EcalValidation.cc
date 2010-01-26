@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: EcalValidation.cc,v 1.8 2008/07/29 13:22:55 ferriff Exp $
+// $Id$
 //
 //
 
@@ -55,45 +55,44 @@ class EcalValidation : public edm::EDAnalyzer {
                 virtual void endJob() ;
 
                 // ----------member data ---------------------------
-                edm::InputTag recHitCollection_EB_;
-                edm::InputTag recHitCollection_EE_;
-                edm::InputTag basicClusterCollection_EB_;
-                edm::InputTag basicClusterCollection_EE_;
-                edm::InputTag superClusterCollection_EB_;
-                edm::InputTag superClusterCollection_EE_;
+                edm::InputTag ebRecHitCollection_;
+                edm::InputTag eeRecHitCollection_;
                 // RecHits ----------------------------------------------
                 // ... barrel 
-                TH1D *h_recHitsEB_size; 
+                TH1D * h_recHitsEB_size; 
                 TH1D *h_recHitsEB_energy;
                 // ... endcap
                 TH1D *h_recHitsEE_size;
                 TH1D *h_recHitsEE_energy;
-                // Basic Clusters ----------------------------------------------
-                // ... barrel
-                TH1D *h_basicClusters_EB_size;
-                TH1D *h_basicClusters_EB_nXtals;
-                TH1D *h_basicClusters_EB_energy;
-                TH1D *h_basicClusters_EB_eta;
-                TH1D *h_basicClusters_EB_phi;
-                // ... endcap
-                TH1D *h_basicClusters_EE_size;
-                TH1D *h_basicClusters_EE_nXtals;
-                TH1D *h_basicClusters_EE_energy;
-                TH1D *h_basicClusters_EE_eta;
-                TH1D *h_basicClusters_EE_phi;
-                // Super Clusters ----------------------------------------------
-                // ... barrel
-                TH1D *h_superClusters_EB_size;
-                TH1D *h_superClusters_EB_nXtals;
-                TH1D *h_superClusters_EB_energy;
-                TH1D *h_superClusters_EB_eta;
-                TH1D *h_superClusters_EB_phi;
-                // ... endcap
-                TH1D *h_superClusters_EE_size;
-                TH1D *h_superClusters_EE_nXtals;
-                TH1D *h_superClusters_EE_energy;
-                TH1D *h_superClusters_EE_eta;
-                TH1D *h_superClusters_EE_phi;
+                // Clusters ----------------------------------------------
+                // ... hybrid
+                TH1D *h_clustersHybrid_size;
+                TH1D *h_clustersHybrid_xtals;
+                TH1D *h_clustersHybrid_energy;
+                TH1D *h_clustersHybrid_eta;
+                TH1D *h_clustersHybrid_phi;
+                // ... island barrel
+                TH1D *h_clustersIslandEB_size;
+                TH1D *h_clustersIslandEB_energy;
+                TH1D *h_clustersIslandEB_eta;
+                TH1D *h_clustersIslandEB_phi;
+                // ... island endcap
+                TH1D *h_clustersIslandEE_size;
+                TH1D *h_clustersIslandEE_energy;
+                TH1D *h_clustersIslandEE_eta;
+                TH1D *h_clustersIslandEE_phi;
+                // ... island supercluster barrel
+                TH1D *h_clustersIslandSCEB_size;
+                TH1D *h_clustersIslandSCEB_xtals;
+                TH1D *h_clustersIslandSCEB_energy;
+                TH1D *h_clustersIslandSCEB_eta;
+                TH1D *h_clustersIslandSCEB_phi;
+                // ... island supercluster endcap
+                TH1D *h_clustersIslandSCEE_size;
+                TH1D *h_clustersIslandSCEE_xtals;
+                TH1D *h_clustersIslandSCEE_energy;
+                TH1D *h_clustersIslandSCEE_eta;
+                TH1D *h_clustersIslandSCEE_phi;
 };
 
 //
@@ -110,52 +109,53 @@ class EcalValidation : public edm::EDAnalyzer {
 EcalValidation::EcalValidation(const edm::ParameterSet& ps)
 {
         //now do what ever initialization is needed
-        recHitCollection_EB_ = ps.getParameter<edm::InputTag>("recHitCollection_EB");
-        recHitCollection_EE_ = ps.getParameter<edm::InputTag>("recHitCollection_EE");
-        basicClusterCollection_EB_ = ps.getParameter<edm::InputTag>("basicClusterCollection_EB");
-        basicClusterCollection_EE_ = ps.getParameter<edm::InputTag>("basicClusterCollection_EE");
-        superClusterCollection_EB_ = ps.getParameter<edm::InputTag>("superClusterCollection_EB");
-        superClusterCollection_EE_ = ps.getParameter<edm::InputTag>("superClusterCollection_EE");
+        ebRecHitCollection_ = ps.getParameter<edm::InputTag>("ebRecHitCollection");
+        eeRecHitCollection_ = ps.getParameter<edm::InputTag>("eeRecHitCollection");
         edm::Service<TFileService> fs;
         h_recHitsEB_size = fs->make<TH1D>( "h_recHitsEB_size", "h_recHitsEB_size", 1000, 0, 10000 );
-        h_recHitsEB_energy = fs->make<TH1D>("h_recHitsEB_energy","h_recHitsEB_energy",2000,-50,350);
+        h_recHitsEB_energy = fs->make<TH1D>("h_recHitsEB_energy","h_recHitsEB_energy",1000,-100,100);
         // ... endcap
         h_recHitsEE_size = fs->make<TH1D>("h_recHitsEE_size","h_recHitsEE_size",1000,0,10000);
-        h_recHitsEE_energy = fs->make<TH1D>("h_recHitsEE_energy","h_recHitsEE_energy",2000,-50,350);
-        // Basic Clusters ----------------------------------------------
-        // ... barrel
-        h_basicClusters_EB_size = fs->make<TH1D>("h_basicClusters_EB_size","h_basicClusters_EB_size",200,0.,200.);
-        h_basicClusters_EB_nXtals = fs->make<TH1D>("h_basicClusters_EB_nXtals","h_basicClusters_EB_nXtals",400,0.,400.);
-        h_basicClusters_EB_energy = fs->make<TH1D>("h_basicClusters_EB_energy","h_basicClusters_EB_energy",2000,0.,400.);
-        h_basicClusters_EB_eta = fs->make<TH1D>("h_basicClusters_EB_eta","h_basicClusters_EB_eta",250,-2.7,2.7);
-        h_basicClusters_EB_phi = fs->make<TH1D>("h_basicClusters_EB_phi","h_basicClusters_EB_phi",250,-3.2,3.2);
-        // ... endcap
-        h_basicClusters_EE_size = fs->make<TH1D>("h_basicClusters_EE_size","h_basicClusters_EE_size",200,0.,200.);
-        h_basicClusters_EE_nXtals = fs->make<TH1D>("h_basicClusters_EE_nXtals","h_basicClusters_EE_nXtals",400,0.,400.);
-        h_basicClusters_EE_energy = fs->make<TH1D>("h_basicClusters_EE_energy","h_basicClusters_EE_energy",2000,0.,400.);
-        h_basicClusters_EE_eta = fs->make<TH1D>("h_basicClusters_EE_eta","h_basicClusters_EE_eta",250,-2.7,2.7);
-        h_basicClusters_EE_phi = fs->make<TH1D>("h_basicClusters_EE_phi","h_basicClusters_EE_phi",250,-3.2,3.2);
-        // Super Clusters ----------------------------------------------
-        // ... barrel
-        h_superClusters_EB_size = fs->make<TH1D>("h_superClusters_EB_size","h_superClusters_EB_size",200,0.,200.);
-        h_superClusters_EB_nXtals = fs->make<TH1D>("h_superClusters_EB_nXtals","h_superClusters_EB_nXtals",400,0.,400.);
-        h_superClusters_EB_energy = fs->make<TH1D>("h_superClusters_EB_energy","h_superClusters_EB_energy",2000,0.,400.);
-        h_superClusters_EB_eta = fs->make<TH1D>("h_superClusters_EB_eta","h_superClusters_EB_eta",250,-2.7,2.7);
-        h_superClusters_EB_phi = fs->make<TH1D>("h_superClusters_EB_phi","h_superClusters_EB_phi",250,-3.2,3.2);
-        // ... endcap
-        h_superClusters_EE_size = fs->make<TH1D>("h_superClusters_EE_size","h_superClusters_EE_size",200,0.,200.);
-        h_superClusters_EE_nXtals = fs->make<TH1D>("h_superClusters_EE_nXtals","h_superClusters_EE_nXtals",400,0.,400.);
-        h_superClusters_EE_energy = fs->make<TH1D>("h_superClusters_EE_energy","h_superClusters_EE_energy",2000,0.,400.);
-        h_superClusters_EE_eta = fs->make<TH1D>("h_superClusters_EE_eta","h_superClusters_EE_eta",250,-2.7,2.7);
-        h_superClusters_EE_phi = fs->make<TH1D>("h_superClusters_EE_phi","h_superClusters_EE_phi",250,-3.2,3.2);
+        h_recHitsEE_energy = fs->make<TH1D>("h_recHitsEE_energy","h_recHitsEE_energy",1000,-100,100);
+        // Clusters ----------------------------------------------
+        // ... hybrid
+        h_clustersHybrid_size = fs->make<TH1D>("h_clustersHybrid_size","h_clustersHybrid_size",200,0.,200.);
+        h_clustersHybrid_xtals = fs->make<TH1D>("h_clustersHybrid_xtals","h_clustersHybrid_xtals",100,0.,100.);
+        h_clustersHybrid_energy = fs->make<TH1D>("h_clustersHybrid_energy","h_clustersHybrid_energy",1000,0.,200.);
+        h_clustersHybrid_eta = fs->make<TH1D>("h_clustersHybrid_eta","h_clustersHybrid_eta",250,-2.7,2.7);
+        h_clustersHybrid_phi = fs->make<TH1D>("h_clustersHybrid_phi","h_clustersHybrid_phi",250,-3.2,3.2);
+        // ... island barrel
+        h_clustersIslandEB_size = fs->make<TH1D>("h_clustersIslandEB_size","h_clustersIslandEB_size",200,0.,200.);
+        h_clustersIslandEB_energy = fs->make<TH1D>("h_clustersIslandEB_energy","h_clustersIslandEB_energy",1000,0.,200.);
+        h_clustersIslandEB_eta = fs->make<TH1D>("h_clustersIslandEB_eta","h_clustersIslandEB_eta",250,-2.7,2.7);
+        h_clustersIslandEB_phi = fs->make<TH1D>("h_clustersIslandEB_phi","h_clustersIslandEB_phi",250,-3.2,3.2);
+        // ... island endcap
+        h_clustersIslandEE_size = fs->make<TH1D>("h_clustersIslandEE_size","h_clustersIslandEE_size",200,0.,200.);
+        h_clustersIslandEE_energy = fs->make<TH1D>("h_clustersIslandEE_energy","h_clustersIslandEE_energy",1000,0.,200.);
+        h_clustersIslandEE_eta = fs->make<TH1D>("h_clustersIslandEE_eta","h_clustersIslandEE_eta",250,-2.7,2.7);
+        h_clustersIslandEE_phi = fs->make<TH1D>("h_clustersIslandEE_phi","h_clustersIslandEE_phi",250,-3.2,3.2);
+        // ... island supercluster barrel
+        h_clustersIslandSCEB_size = fs->make<TH1D>("h_clustersIslandSCEB_size","h_clustersIslandSCEB_size",200,0.,200.);
+        h_clustersIslandSCEB_xtals = fs->make<TH1D>("h_clustersIslandSCEB_xtals","h_clustersIslandSCEB_xtals",100,0.,100.);
+        h_clustersIslandSCEB_energy = fs->make<TH1D>("h_clustersIslandSCEB_energy","h_clustersIslandSCEB_energy",1000,0.,200.);
+        h_clustersIslandSCEB_eta = fs->make<TH1D>("h_clustersIslandSCEB_eta","h_clustersIslandSCEB_eta",250,-2.7,2.7);
+        h_clustersIslandSCEB_phi = fs->make<TH1D>("h_clustersIslandSCEB_phi","h_clustersIslandSCEB_phi",250,-3.2,3.2);
+        // ... island supercluster endcap
+        h_clustersIslandSCEE_size = fs->make<TH1D>("h_clustersIslandSCEE_size","h_clustersIslandSCEE_size",200,0.,200.);
+        h_clustersIslandSCEE_xtals = fs->make<TH1D>("h_clustersIslandSCEE_xtals","h_clustersIslandSCEE_xtals",100,0.,100.);
+        h_clustersIslandSCEE_energy = fs->make<TH1D>("h_clustersIslandSCEE_energy","h_clustersIslandSCEE_energy",1000,0.,200.);
+        h_clustersIslandSCEE_eta = fs->make<TH1D>("h_clustersIslandSCEE_eta","h_clustersIslandSCEE_eta",250,-2.7,2.7);
+        h_clustersIslandSCEE_phi = fs->make<TH1D>("h_clustersIslandSCEE_phi","h_clustersIslandSCEE_phi",250,-3.2,3.2);
 
 }
 
 
 EcalValidation::~EcalValidation()
 {
+
         // do anything here that needs to be done at desctruction time
         // (e.g. close files, deallocate resources etc.)
+
 }
 
 
@@ -167,78 +167,67 @@ EcalValidation::~EcalValidation()
 void EcalValidation::analyze(const edm::Event& ev, const edm::EventSetup& iSetup)
 {
         edm::Handle<EcalRecHitCollection> recHitsEB;
-        ev.getByLabel( recHitCollection_EB_, recHitsEB );
-        if ( ! recHitsEB.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> recHitsEB not found" << std::endl; 
-        }
+        ev.getByLabel( ebRecHitCollection_, recHitsEB );
         h_recHitsEB_size->Fill( recHitsEB->size() );
         for (unsigned int irh = 0; irh < recHitsEB->size(); ++irh) {
                 h_recHitsEB_energy->Fill( (*recHitsEB)[irh].energy() );
         }
 
         edm::Handle<EcalRecHitCollection> recHitsEE;
-        ev.getByLabel( recHitCollection_EE_, recHitsEE );
-        if ( ! recHitsEE.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> recHitsEE not found" << std::endl; 
-        }
+        ev.getByLabel( eeRecHitCollection_, recHitsEE );
         h_recHitsEE_size->Fill( recHitsEE->size() );
         for (unsigned int irh = 0; irh < recHitsEE->size(); ++irh) {
                 h_recHitsEE_energy->Fill( (*recHitsEE)[irh].energy() );
         }
 
-        // Basic Clusters
-        // ... barrel
-        edm::Handle<reco::BasicClusterCollection> basicClusters_EB_h;
-        ev.getByLabel( basicClusterCollection_EB_, basicClusters_EB_h );
-        if ( ! basicClusters_EB_h.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> basicClusters_EB_h not found" << std::endl; 
+        // Clusters / SuperClusters
+        // ... hybrid
+        edm::Handle<reco::SuperClusterCollection> clHybrid;
+        ev.getByLabel( edm::InputTag( "hybridSuperClusters", "", "ALL" ), clHybrid );
+        h_clustersHybrid_size->Fill( clHybrid->size() );
+        for (unsigned int icl = 0; icl < clHybrid->size(); ++icl) {
+                h_clustersHybrid_energy->Fill( (*clHybrid)[icl].energy() );
+                h_clustersHybrid_xtals->Fill( (*clHybrid)[icl].getHitsByDetId().size() );
+                h_clustersHybrid_eta->Fill( (*clHybrid)[icl].eta() );
+                h_clustersHybrid_phi->Fill( (*clHybrid)[icl].phi() );
         }
-        h_basicClusters_EB_size->Fill( basicClusters_EB_h->size() );
-        for (unsigned int icl = 0; icl < basicClusters_EB_h->size(); ++icl) {
-                h_basicClusters_EB_energy->Fill( (*basicClusters_EB_h)[icl].energy() );
-                h_basicClusters_EB_nXtals->Fill( (*basicClusters_EB_h)[icl].hitsAndFractions().size() );
-                h_basicClusters_EB_eta->Fill( (*basicClusters_EB_h)[icl].eta() );
-                h_basicClusters_EB_phi->Fill( (*basicClusters_EB_h)[icl].phi() );
+        // ... island barrel
+        edm::Handle<reco::BasicClusterCollection> clIslandEB;
+        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandBarrelBasicClusters","ALL"), clIslandEB);
+        h_clustersIslandEB_size->Fill( clIslandEB->size() );
+        for (unsigned int icl = 0; icl < clIslandEB->size(); ++icl) {
+                h_clustersIslandEB_energy->Fill( (*clIslandEB)[icl].energy() );
+                h_clustersIslandEB_eta->Fill( (*clIslandEB)[icl].eta() );
+                h_clustersIslandEB_phi->Fill( (*clIslandEB)[icl].phi() );
         }
-        // ... endcap
-        edm::Handle<reco::BasicClusterCollection> basicClusters_EE_h;
-        ev.getByLabel( basicClusterCollection_EE_, basicClusters_EE_h );
-        if ( ! basicClusters_EE_h.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> basicClusters_EE_h not found" << std::endl; 
+        // ... island endcap
+        edm::Handle<reco::BasicClusterCollection> clIslandEE;
+        ev.getByLabel( edm::InputTag( "islandBasicClusters","islandEndcapBasicClusters","ALL"), clIslandEE );
+        h_clustersIslandEE_size->Fill( clIslandEE->size() );
+        for (unsigned int icl = 0; icl < clIslandEE->size(); ++icl) {
+                h_clustersIslandEE_energy->Fill( (*clIslandEE)[icl].energy() );
+                h_clustersIslandEE_eta->Fill( (*clIslandEE)[icl].eta() );
+                h_clustersIslandEE_phi->Fill( (*clIslandEE)[icl].phi() );
         }
-        h_basicClusters_EE_size->Fill( basicClusters_EE_h->size() );
-        for (unsigned int icl = 0; icl < basicClusters_EE_h->size(); ++icl) {
-                h_basicClusters_EE_energy->Fill( (*basicClusters_EE_h)[icl].energy() );
-                h_basicClusters_EE_nXtals->Fill( (*basicClusters_EE_h)[icl].hitsAndFractions().size() );
-                h_basicClusters_EE_eta->Fill( (*basicClusters_EE_h)[icl].eta() );
-                h_basicClusters_EE_phi->Fill( (*basicClusters_EE_h)[icl].phi() );
+        // ... island superclusters barrel
+        edm::Handle<reco::SuperClusterCollection> clIslandSCEB;
+        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandBarrelSuperClusters","ALL"), clIslandSCEB );
+        h_clustersIslandSCEB_size->Fill( clIslandSCEB->size() );
+        for (unsigned int icl = 0; icl < clIslandSCEB->size(); ++icl) {
+                h_clustersIslandSCEB_energy->Fill( (*clIslandSCEB)[icl].energy() );
+                h_clustersIslandSCEB_xtals->Fill( (*clIslandSCEB)[icl].getHitsByDetId().size() );
+                h_clustersIslandSCEB_eta->Fill( (*clIslandSCEB)[icl].eta() );
+                h_clustersIslandSCEB_phi->Fill( (*clIslandSCEB)[icl].phi() );
         }
-        // Super Clusters
-        // ... barrel
-        edm::Handle<reco::SuperClusterCollection> superClusters_EB_h;
-        ev.getByLabel( superClusterCollection_EB_, superClusters_EB_h );
-        if ( ! superClusters_EB_h.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> superClusters_EB_h not found" << std::endl; 
-        }
-        h_superClusters_EB_size->Fill( superClusters_EB_h->size() );
-        for (unsigned int icl = 0; icl < superClusters_EB_h->size(); ++icl) {
-                h_superClusters_EB_energy->Fill( (*superClusters_EB_h)[icl].energy() );
-                h_superClusters_EB_nXtals->Fill( (*superClusters_EB_h)[icl].hitsAndFractions().size() );
-                h_superClusters_EB_eta->Fill( (*superClusters_EB_h)[icl].eta() );
-                h_superClusters_EB_phi->Fill( (*superClusters_EB_h)[icl].phi() );
-        }
-        // ... endcap
-        edm::Handle<reco::SuperClusterCollection> superClusters_EE_h;
-        ev.getByLabel( superClusterCollection_EE_, superClusters_EE_h );
-        if ( ! superClusters_EE_h.isValid() ) {
-                std::cerr << "EcalValidation::analyze --> superClusters_EE_h not found" << std::endl; 
-        }
-        h_superClusters_EE_size->Fill( superClusters_EE_h->size() );
-        for (unsigned int icl = 0; icl < superClusters_EE_h->size(); ++icl) {
-                h_superClusters_EE_energy->Fill( (*superClusters_EE_h)[icl].energy() );
-                h_superClusters_EE_nXtals->Fill( (*superClusters_EE_h)[icl].hitsAndFractions().size() );
-                h_superClusters_EE_eta->Fill( (*superClusters_EE_h)[icl].eta() );
-                h_superClusters_EE_phi->Fill( (*superClusters_EE_h)[icl].phi() );
+        // ... island superclusters endcap
+        edm::Handle<reco::SuperClusterCollection> clIslandSCEE;
+        ev.getByLabel( edm::InputTag( "islandSuperClusters","islandEndcapSuperClusters","ALL"), clIslandSCEE );
+        h_clustersIslandSCEE_size->Fill( clIslandSCEE->size() );
+        for (unsigned int icl = 0; icl < clIslandSCEE->size(); ++icl) {
+                h_clustersIslandSCEE_energy->Fill( (*clIslandSCEE)[icl].energy() );
+                h_clustersIslandSCEE_xtals->Fill( (*clIslandSCEE)[icl].getHitsByDetId().size() );
+                h_clustersIslandSCEE_eta->Fill( (*clIslandSCEE)[icl].eta() );
+                h_clustersIslandSCEE_phi->Fill( (*clIslandSCEE)[icl].phi() );
         }
 }
 
