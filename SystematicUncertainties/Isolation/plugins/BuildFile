@@ -8,13 +8,8 @@
 <use name=FWCore/ServiceRegistry>
 <use name=PhysicsTools/UtilAlgos>
 <use name=SystematicUncertainties/Isolation>
-<use name=SystematicUncertainties/HafHistogram>
 <use name=clhep>
 <use name=rootcore>
 <use name=rootmath>
 
-<library file=IsoAnalyzer.cc></library>
-<library file=IsoEdmNtupleDumper.cc></library>
-<library file=IsoHistogrammer.cc></library>
-<library file=KineEdmNtupleDumper.cc></library>
-<library file=TracksForIsolation.cc></library>
+<library file=RandomAnalyser.cc></library>
