@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: NtupleMaker.cc,v 1.9 2010/01/10 12:27:08 ferriff Exp $
+// $Id: NtupleMaker.cc,v 1.1 2010/03/03 13:51:15 ferriff Exp $
 //
 //
 
@@ -29,7 +29,7 @@ Implementation:
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 //#include "FWCore/ServiceRegistry/interface/Service.h"
@@ -51,6 +51,7 @@ Implementation:
 
 #include "CondFormats/L1TObjects/interface/L1GtTriggerMenu.h"
 #include "CondFormats/DataRecord/interface/L1GtTriggerMenuRcd.h"
+
 
 #include "RecoLocalCalo/EcalRecAlgos/interface/EcalSeverityLevelAlgo.h"
 
@@ -177,7 +178,7 @@ void NtupleMaker::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 std::cerr << "NtupleMaker::analyze --> TriggerResults not found" << std::endl; 
         } else {
                 hltResults = hltResults_h.product();
-                hltTriggerNames_.init( *hltResults );
+                hltTriggerNames_ = ev.triggerNames( *(hltResults_h.product()) );
         }
         unsigned npaths = hltResults->size();
         TBits * hltBits = new TBits( npaths );

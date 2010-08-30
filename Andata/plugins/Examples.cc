@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico Ferri
 //         Created:  Fri Mar 21 18:06:59 CET 2008
-// $Id: Examples.cc,v 1.1 2010/03/03 13:51:15 ferriff Exp $
+// $Id: Examples.cc,v 1.1 2010/03/18 18:29:26 ferriff Exp $
 //
 //
 
@@ -28,7 +28,7 @@ Implementation:
 #include "FWCore/Framework/interface/Event.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
-#include "FWCore/Framework/interface/TriggerNames.h"
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "DataFormats/Common/interface/TriggerResults.h"
@@ -166,7 +166,7 @@ void Examples::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 std::cerr << "Examples::analyze --> TriggerResults not found" << std::endl; 
         } else {
                 hltResults = hltResults_h.product();
-                hltTriggerNames_.init( *hltResults );
+                hltTriggerNames_ = ev.triggerNames( *(hltResults_h.product()) );
         }
 
 
