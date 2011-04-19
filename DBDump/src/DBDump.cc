@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.2 2010/01/12 13:46:26 ferriff Exp $
+// $Id: DBDump.cc,v 1.3 2011/04/19 09:29:02 ferriff Exp $
 //
 //
 
@@ -52,6 +52,10 @@
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRcd.h"
 #include "CondFormats/DataRecord/interface/EcalPedestalsRcd.h"
 #include "CondFormats/DataRecord/interface/EcalTimeCalibConstantsRcd.h"
+
+#include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbService.h"
+#include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbRecord.h"
+
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
@@ -103,6 +107,11 @@ class DBDump : public edm::EDAnalyzer {
       bool dumpTransp_;
       bool plotTransp_;
       edm::ESHandle<EcalLaserAPDPNRatios> apdpn_;
+
+      // laser transparency corrections
+      bool dumpTranspCorr_;
+      bool plotTranspCorr_;
+      edm::ESHandle<EcalLaserDbService> laser_;
 
       // channel status map
       bool dumpChStatus_;
@@ -235,6 +244,7 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 if ( dumpPedestals_ || plotPedestals_ ) es.get<EcalPedestalsRcd>().get(ped_);
                 if ( dumpGainRatios_ || plotGainRatios_ ) es.get<EcalGainRatiosRcd>().get(gr_);
                 if ( dumpTransp_ || plotTransp_ ) es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
+                if ( dumpTranspCorr_ || plotTranspCorr_ ) es.get<EcalLaserDbRecord>().get(laser_);
 
                 for ( int hi = EBDetId::MIN_HASH; hi < EBDetId::MAX_HASH; ++hi ) {
                         EBDetId ebId = EBDetId::unhashIndex( hi );
@@ -260,6 +270,10 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                         if ( iLM-1 < apdpn_->getTimeMap().size() ) {
                                                 ts = apdpn_->getTimeMap()[iLM];
                                         }
+                                }
+                                float transpCorr = -1234567890.;
+                                if (dumpTranspCorr_ || plotTranspCorr_) {
+                                        transpCorr = laser_->getLaserCorrection( ebId, ev.time());
                                 }
 
                                 ofile_ << "EB  rawId= " << ebId.rawId() 
@@ -297,6 +311,10 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                         ;
                                         }
                                 }
+                                if (dumpTranspCorr_) {
+                                        ofile_ << "  transpCorr= " 
+                                                << transpCorr;
+                                }
                                 ofile_ << "\n";
                                 // for plotting
                                 int ieta = ebId.ieta();
@@ -326,6 +344,9 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 histos.h<TH2D>( "EBh2", "gr_g6/1"  )->Fill( iphi, ieta, (*itGR).gain6Over1() );
                                         }
                                 }
+                                if (plotTranspCorr_) {
+                                        histos.h<TH2D>( "EBh2", "transpCorr" )->Fill( iphi, ieta, transpCorr );
+                                }
                         }
                 }
                 
@@ -344,6 +365,20 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 if ( dumpPedestals_ || plotPedestals_ ) itPed = ped_->find( eeId );
                                 EcalGainRatioMap::const_iterator itGR;
                                 if ( dumpGainRatios_ || plotGainRatios_ ) itGR = gr_->find( eeId );
+                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+                                size_t iLM = 0;
+                                if ( dumpTransp_ || plotTransp_ ) {
+                                        itAPDPN = apdpn_->getLaserMap().find( eeId );
+                                        iLM = getLMNumber( eeId );
+                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                                ts = apdpn_->getTimeMap()[iLM];
+                                        }
+                                }
+                                float transpCorr = -1234567890.;
+                                if (dumpTranspCorr_ || plotTranspCorr_) {
+                                        transpCorr = laser_->getLaserCorrection( eeId, ev.time());
+                                }
 
                                 ofile_ << "EE  rawId= " << eeId.rawId() 
                                         << "  ix= " << eeId.ix() 
@@ -370,6 +405,21 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                         if ( itGR != gr_->end() ) {
                                                 ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
                                         }
+                                }
+                                if ( dumpTransp_ ) {
+                                        if ( itAPDPN != apdpn_->getLaserMap().end() ) {
+                                                ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
+                                                        << ev.time().value() 
+                                                        << "_" << ts.t1.value() << "_" << ts.t2.value() 
+                                                        //<< "_" << ts.t3.value() 
+                                                        << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
+                                                        //<< "_" << (*itAPDPN).p3
+                                                        ;
+                                        }
+                                }
+                                if (dumpTranspCorr_) {
+                                        ofile_ << "  transpCorr= " 
+                                                << transpCorr;
                                 }
                                 ofile_ << "\n";
                                 int ix = eeId.ix();
@@ -423,6 +473,13 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                         }
                                                 }
                                         }
+                                        if (plotTranspCorr_) {
+                                                if ( id > 0 ) {
+                                                        histos.h<TH2D>("EEh2", "negZ:d1:transpCorr")->Fill( ix, iy, transpCorr );
+                                                } else {
+                                                        histos.h<TH2D>("EEh2", "negZ:d2:transpCorr")->Fill( ix, iy, transpCorr );
+                                                }
+                                        }
                                 } else {
                                         if ( plotIC_ ) {
                                                 if ( itIC != ic_->end() ) {
@@ -462,6 +519,13 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 } else {
                                                         histos.h<TH2D>("EEh2", "negZ:d4:gr12/6")->Fill( ix, iy, (*itGR).gain12Over6() );
                                                         histos.h<TH2D>("EEh2", "negZ:d4:gr6/1" )->Fill( ix, iy, (*itGR).gain6Over1() );
+                                                }
+                                        }
+                                        if (plotTranspCorr_) {
+                                                if ( id > 0 ) {
+                                                        histos.h<TH2D>("EEh2", "negZ:d3:transpCorr")->Fill( ix, iy, transpCorr );
+                                                } else {
+                                                        histos.h<TH2D>("EEh2", "negZ:d4:transpCorr")->Fill( ix, iy, transpCorr );
                                                 }
                                         }
                                 }
