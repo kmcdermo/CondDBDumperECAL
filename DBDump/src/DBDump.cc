@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.3 2011/04/19 09:29:02 ferriff Exp $
+// $Id: DBDump.cc,v 1.4 2011/04/19 09:48:47 ferriff Exp $
 //
 //
 
@@ -305,9 +305,9 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
                                                         << ev.time().value() 
                                                         << "_" << ts.t1.value() << "_" << ts.t2.value() 
-                                                        //<< "_" << ts.t3.value() 
+                                                        << "_" << ts.t3.value() 
                                                         << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
-                                                        //<< "_" << (*itAPDPN).p3
+                                                        << "_" << (*itAPDPN).p3
                                                         ;
                                         }
                                 }
