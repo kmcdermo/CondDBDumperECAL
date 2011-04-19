@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.1.1.1 2010/01/12 09:43:14 ferriff Exp $
+// $Id: DBDump.cc,v 1.2 2010/01/12 13:46:26 ferriff Exp $
 //
 //
 
@@ -28,6 +28,7 @@
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 
 #include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
 #include "FWCore/Framework/interface/ESHandle.h"
 #include "FWCore/Framework/interface/MakerMacros.h"
 
