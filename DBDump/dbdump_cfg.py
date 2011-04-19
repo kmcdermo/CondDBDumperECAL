@@ -4,14 +4,14 @@ process = cms.Process("Demo")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-gTag = 'MC_31X_V2::All'
+gTag = 'GR_R_311_V2::All'
 #gTag = 'GR09_31X_V1::All'
 #gTag = 'DESIGN_31X_V1::All'
 #gTag = 'STARTUP31X_V1::All'
 #lTag = 'no_local_tags'
 #lTag = 'EcalChannelStatus_CRAFT_offline'
 #lTag = 'EcalLaserAPDPNRatios_online'
-lTag = 'EcalLaserAPDPNRatios_online_hlt'
+lTag = 'EcalLaserAPDPNRatios_v3_online'
 
 #process.load("CalibCalorimetry.EcalTrivialCondModules.EcalTrivialCondRetriever_cfi")
 
@@ -65,8 +65,9 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
             record = cms.string('EcalLaserAPDPNRatiosRcd'),
             ###record = cms.string('EcalLaserAPDPNRatiosRcd'),
             ###tag = cms.string('EcalLaserAPDPNRatios_mc')
-            tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
+            #tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
             ###tag = cms.string('EcalLaserAPDPNRatios_v2_online')
+            tag = cms.string('EcalLaserAPDPNRatios_v3_online')
         ), 
         ###cms.PSet(
         ###    record = cms.string('EcalLaserAPDPNRatiosRefRcd'),
@@ -80,7 +81,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
     ##connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'), ##cms_conditions_data/CMS_COND_ECAL"
     #####connect = cms.string('frontier://cms_conditions_data/CMS_COND_31X_ECAL'),
     #####connect = cms.string('oracle://cms_orcon_prod/CMS_COND_31X_ECAL'),
-    connect = cms.string('frontier://FrontierProd/CMS_COND_31X_ECAL'),
+    connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LAS'),
     #####connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'),
     ###connect = cms.string('oracle://cms_orcoff_prep/CMS_COND_ECAL_LT'),
     # at P5
@@ -103,7 +104,7 @@ process.source = cms.Source("EmptySource",
         #firstTime = cms.untracked.uint32( 1224188905 ), # beginning of run 66615
         ##firstTime = cms.untracked.uint32( 1224147420 ), # inside t1 and t2 of a DB IOV before run 65940
         ##firstTime = cms.untracked.uint32( 1224146163 ),
-        firstTime = cms.untracked.uint32( 1242674170 ),
+        firstTime = cms.untracked.uint32( (1303120805 - 10*3600) ),
         timeBetweenEvents = cms.untracked.uint32(10)
 )
 
