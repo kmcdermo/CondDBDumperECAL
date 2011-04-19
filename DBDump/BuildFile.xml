@@ -4,6 +4,7 @@
 <use   name="PhysicsTools/UtilAlgos"/>
 <use   name="CondFormats/EcalObjects"/>
 <use   name="CondFormats/DataRecord"/>
+<use   name="CalibCalorimetry/EcalLaserCorrection"/>
 <flags   EDM_PLUGIN="1"/>
 <export>
 </export>
