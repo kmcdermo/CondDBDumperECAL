@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.5 2011/04/19 10:16:18 ferriff Exp $
+// $Id: DBDump.cc,v 1.6 2011/04/19 10:17:07 ferriff Exp $
 //
 //
 
@@ -159,6 +159,9 @@ DBDump::DBDump(const edm::ParameterSet& ps)
         // gain ratios
         dumpGainRatios_ = ps.getParameter<bool>("dumpGainRatios");
         plotGainRatios_ = ps.getParameter<bool>("plotGainRatios");
+        // laser transparency corrections
+        dumpTranspCorr_ = ps.getParameter<bool>("dumpTranspCorr");
+        plotTranspCorr_ = ps.getParameter<bool>("plotTranspCorr");
 
         if ( outDumpFile_ != "" ) {
                 ofile_.open( outDumpFile_.c_str(), std::ios::out );
@@ -189,6 +192,7 @@ void DBDump::setDumpFalse()
         dumpTC_ = false;
         dumpADCToGeV_ = false;
         dumpTransp_ = false;
+        dumpTranspCorr_ = false;
         dumpChStatus_ = false;
         dumpPedestals_ = false;
 }
@@ -198,6 +202,7 @@ void DBDump::setPlotFalse()
         plotIC_ = false;
         plotTC_ = false;
         plotTransp_ = false;
+        plotTranspCorr_ = false;
         plotChStatus_ = false;
         plotPedestals_ = false;
 }
@@ -232,8 +237,8 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 {
         //es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
 
-        bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_;
-        bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_;
+        bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
+        bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_ || plotTranspCorr_;
         if ( atLeastOneDump || atLeastOnePlot ) {
 
                 if ( dumpIC_ || plotIC_ ) {
