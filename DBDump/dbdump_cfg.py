@@ -4,7 +4,7 @@ process = cms.Process("Demo")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-gTag = 'GR_R_311_V2::All'
+gTag = 'GR_R_42_V19::All'
 #gTag = 'GR09_31X_V1::All'
 #gTag = 'DESIGN_31X_V1::All'
 #gTag = 'STARTUP31X_V1::All'
@@ -16,6 +16,7 @@ lTag = 'EcalLaserAPDPNRatios_v3_online'
 #process.load("CalibCalorimetry.EcalTrivialCondModules.EcalTrivialCondRetriever_cfi")
 
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
+process.load('Configuration.StandardSequences.GeometryDB_cff')
 #process.GlobalTag.globaltag = 'IDEAL_31X::All'
 #process.GlobalTag.globaltag = 'MC_31X_V1::All'
 #process.GlobalTag.globaltag = 'GR09_31X_V1::All'
@@ -67,7 +68,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
             ###tag = cms.string('EcalLaserAPDPNRatios_mc')
             #tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
             ###tag = cms.string('EcalLaserAPDPNRatios_v2_online')
-            tag = cms.string('EcalLaserAPDPNRatios_v3_online')
+            tag = cms.string('EcalLaserAPDPNRatios_last')
         ), 
         ###cms.PSet(
         ###    record = cms.string('EcalLaserAPDPNRatiosRefRcd'),
@@ -81,7 +82,9 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
     ##connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'), ##cms_conditions_data/CMS_COND_ECAL"
     #####connect = cms.string('frontier://cms_conditions_data/CMS_COND_31X_ECAL'),
     #####connect = cms.string('oracle://cms_orcon_prod/CMS_COND_31X_ECAL'),
-    connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LAS'),
+    ##connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LAS'),
+    connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LASP'),
+    ##connect = cms.string('oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP'),
     #####connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'),
     ###connect = cms.string('oracle://cms_orcoff_prep/CMS_COND_ECAL_LT'),
     # at P5
@@ -94,7 +97,8 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
 
 
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
+#process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(2628) )
+process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
 
 process.source = cms.Source("EmptySource",
         firstRun = cms.untracked.uint32(96888),
@@ -120,7 +124,7 @@ process.demo = cms.EDAnalyzer('DBDump',
         dumpADCToGeV   = cms.bool(False),
         dumpTransp     = cms.bool(True),
         plotTransp     = cms.bool(False),
-        dumpTranspCorr = cms.bool(True),
+        dumpTranspCorr = cms.bool(False),
         plotTranspCorr = cms.bool(True),
         dumpChStatus   = cms.bool(False),
         plotChStatus   = cms.bool(False),

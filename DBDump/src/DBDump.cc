@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.6 2011/04/19 10:17:07 ferriff Exp $
+// $Id: DBDump.cc,v 1.7 2011/04/20 00:11:50 ferriff Exp $
 //
 //
 
@@ -56,13 +56,20 @@
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbService.h"
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbRecord.h"
 
+#include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
+//#include "Geometry/Records/interface/IdealGeometryRecord.h"
+//#include "Geometry/EcalMapping/interface/EcalMappingRcd.h"
+#include "Geometry/CaloGeometry/interface/CaloGeometry.h"
+
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "HistoManager.h"
 
 #include "TProfile.h"
+#include "TH1D.h"
 #include "TH2D.h"
+#include "TGraph.h"
 
 
 class DBDump : public edm::EDAnalyzer {
@@ -129,6 +136,10 @@ class DBDump : public edm::EDAnalyzer {
       edm::ESHandle<EcalGainRatios> gr_;
 
       HistoManager histos;
+
+      edm::ESHandle<CaloGeometry> caloGeometry_;
+      const CaloGeometry * geo_;
+
 };
 
 
@@ -181,6 +192,9 @@ DBDump::DBDump(const edm::ParameterSet& ps)
                 histos.addTemplate<TH2D>( "EEh2", new TH2D( "EE", "EE", 100, 0., 100., 100, 0., 100. ) );
                 histos.addTemplate<TProfile>( "EEprof", new TProfile( "EE", "EE", 55, 0., 55.) );
                 histos.addTemplate<TProfile>( "EBprof", new TProfile( "EB", "EB", 171, -85.5, 85.5) );
+                histos.addTemplate<TGraph>("history", new TGraph());
+                histos.addTemplate<TH1D>("distr", new TH1D("distribution", "distribution", 2000, 0., 2.));
+                histos.addTemplate<TProfile>("etaProf", new TProfile("etaProf", "etaProf", 250, -2.75, 2.75));
         } else {
                 setPlotFalse();
         }
@@ -236,6 +250,8 @@ void
 DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 {
         //es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
+        es.get<CaloGeometryRecord>().get(caloGeometry_);                                                
+        geo_ = caloGeometry_.product();                                                                 
 
         bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
         bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_ || plotTranspCorr_;
@@ -251,7 +267,62 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 if ( dumpTransp_ || plotTransp_ ) es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
                 if ( dumpTranspCorr_ || plotTranspCorr_ ) es.get<EcalLaserDbRecord>().get(laser_);
 
-                for ( int hi = EBDetId::MIN_HASH; hi < EBDetId::MAX_HASH; ++hi ) {
+                // if you need to average and use the average later on...
+                //histos.h<TProfile>("etaProf", "p2")->Reset();
+                for ( int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
+                        EBDetId ebId = EBDetId::unhashIndex( hi );
+                        if ( ebId != EBDetId() ) {
+                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+                                size_t iLM = 0;
+                                if ( dumpTransp_ || plotTransp_ ) {
+                                        itAPDPN = apdpn_->getLaserMap().find( ebId );
+                                        iLM = getLMNumber( ebId );
+                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                                ts = apdpn_->getTimeMap()[iLM];
+                                        }
+                                }
+                                //float transpCorr = -1234567890.;
+                                float p2         = -1234567890.;
+                                float eta = 99999;
+                                char name[64];
+                                sprintf(name, "%d_p2", ev.time().unixTime());
+                                if (dumpTranspCorr_ || plotTranspCorr_) {
+                                        //transpCorr = laser_->getLaserCorrection( ebId, ev.time());
+                                        p2 = (*itAPDPN).p2;
+                                        eta = geo_->getPosition(ebId).eta();
+                                        histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
+                                }
+                        }
+                }
+                for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
+                        EEDetId eeId = EEDetId::unhashIndex( hi );
+                        if ( eeId != EEDetId() ) {
+                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+                                size_t iLM = 0;
+                                if ( dumpTransp_ || plotTransp_ ) {
+                                        itAPDPN = apdpn_->getLaserMap().find( eeId );
+                                        iLM = getLMNumber( eeId );
+                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                                ts = apdpn_->getTimeMap()[iLM];
+                                        }
+                                }
+                                //float transpCorr = -1234567890.;
+                                float p2         = -1234567890.;
+                                float eta = 99999;
+                                char name[64];
+                                sprintf(name, "%d_p2", ev.time().unixTime());
+                                if (dumpTranspCorr_ || plotTranspCorr_) {
+                                        //transpCorr = laser_->getLaserCorrection( ebId, ev.time());
+                                        p2 = (*itAPDPN).p2;
+                                        eta = geo_->getPosition(eeId).eta();
+                                        histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
+                                }
+                        }
+                }
+
+                for ( int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
                         EBDetId ebId = EBDetId::unhashIndex( hi );
                         if ( ebId != EBDetId() ) {
                                 EcalIntercalibConstantMap::const_iterator itIC;
@@ -351,6 +422,12 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 }
                                 if (plotTranspCorr_) {
                                         histos.h<TH2D>( "EBh2", "transpCorr" )->Fill( iphi, ieta, transpCorr );
+                                        float eta = geo_->getPosition(ebId).eta();
+                                        char name[64];
+                                        sprintf(name, "%d_p2", ev.time().unixTime());
+                                        TProfile * p = histos.h<TProfile>("etaProf", name);
+                                        float p2_mean = p->GetBinContent(p->FindBin(eta));
+                                        histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
                                 }
                         }
                 }
@@ -479,6 +556,12 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 }
                                         }
                                         if (plotTranspCorr_) {
+                                                char name[64];
+                                                sprintf(name, "%d_p2", ev.time().unixTime());
+                                                float eta = geo_->getPosition(eeId).eta();
+                                                TProfile * p = histos.h<TProfile>("etaProf", name);
+                                                float p2_mean = p->GetBinContent(p->FindBin(eta));
+                                                histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
                                                 if ( id > 0 ) {
                                                         histos.h<TH2D>("EEh2", "negZ:d1:transpCorr")->Fill( ix, iy, transpCorr );
                                                 } else {
@@ -527,6 +610,12 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 }
                                         }
                                         if (plotTranspCorr_) {
+                                                float eta = geo_->getPosition(eeId).eta();
+                                                char name[64];
+                                                sprintf(name, "%d_p2", ev.time().unixTime());
+                                                TProfile * p = histos.h<TProfile>("etaProf", name);
+                                                float p2_mean = p->GetBinContent(p->FindBin(eta));
+                                                histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
                                                 if ( id > 0 ) {
                                                         histos.h<TH2D>("EEh2", "negZ:d3:transpCorr")->Fill( ix, iy, transpCorr );
                                                 } else {
