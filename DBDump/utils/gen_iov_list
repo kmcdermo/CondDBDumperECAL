@@ -1,0 +1,95 @@
+#/bin/bash
+
+presc=1
+tmin=0
+tmax=$((2**32-1))
+dorand=0
+
+LAS_DBCONNECT=${LAS_DBCONNET:-frontier://FrontierProd/CMS_COND_311X_ECAL_LASP}
+LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
+
+# Note that we use `"$@"' to let each command-line parameter expand to a
+# separate word. The quotes around `$@' are essential!
+# We need TEMP as the `eval set --' would nuke the return value of getopt.
+temp=`getopt -o hHt:T:c:p: --long help,rand,tmin:,tmax: \
+     -n 'last_laser_iov' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+    # Note the quotes around `$TEMP': they are essential!
+eval set -- "$temp"
+ 
+
+help(){
+    fmt <<EOF
+ 
+ Usage: gen_iov_list [OPTION]
+ 
+ Retrieves list of IOV start times of a condition tag.
+
+ -h --help    display this help
+
+ -c DBCONNECT specify condition database connection string (default: $LAS_DBCONNECT)
+
+ -t TAG       specify condition local tag
+
+ -T TAG       specify conditionglobal tag
+
+ -p N         specify an IOV prescale value (default: 1, no prescale)
+
+ --tmin T     starts IOV after T (unix time)
+
+ --tmax T     stop IOV at T (unix time)
+
+ --rand       when used with prescale, select random IOVs (uniform distribution)
+
+ -H           display IOV start time in a human readable format
+ 
+EOF
+
+} 
+
+
+while true; do
+     case "$1" in
+         -H) date_format=human; shift;;
+         -h|--help) help; exit 0;;
+	 -c) LAS_DBCONNET=$2; shift 2;;
+         -t) LAS_LTAG=$2; shift 2;;
+         -T) LAS_GTAG=$2; shift 2;;
+	 -p) presc=$2; shift 2;;
+         --tmin) tmin=$2; shift 2;;
+         --tmax) tmax=$2l shift 2;;
+         --rand) dorand=1; shift;;
+         --) shift; break;;
+         *) echo "Internal error!"; exit 1;;
+     esac
+ done
+
+if [ -n "$LAS_LTAG" ]; then
+   TAG_OPT="-t $LAS_LTAG"
+else
+   TAG_OPT="-T $LAS_GTAG"
+fi
+ 
+date_format(){
+    if [ X$date_format = Xhuman ]; then
+        while read d; do
+	    date -d @$d
+	done
+    else
+        cat
+    fi
+}
+
+cmscond_list_iov \
+-c $LAS_DBCONNECT \
+-P/afs/cern.ch/cms/DB/conddb \
+$TAG_OPT \
+| grep '^[[:digit:]]' | awk "BEGIN {inext=$presc} 
+{ a = \$1 / 2^32; 
+    if(a >= $tmin && a <= $tmax && i == inext) { 
+	    print a; i=0; 
+	    if( $dorand !=0) inext = int(2 * rand() * $presc); 
+	} }
+{i=i+1;}"  | date_format
