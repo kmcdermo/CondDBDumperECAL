@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.9 2011/08/02 17:43:46 ferriff Exp $
+// $Id: DBDump.cc,v 1.10 2011/08/02 21:16:28 ecalmon Exp $
 //
 //
 
@@ -93,8 +93,9 @@ class DBDump : public edm::EDAnalyzer {
       void printSummary();
 
 	int etabin(float eta){
-		const int etamin  =  -2.964;
-		const int etamax  =  2.964;
+		const float etamin  =  -2.964;
+		const float etamax  =  2.964;
+		//		if(!(etamin < eta && eta < etamax)){ printf("---> %f\n", eta); }
 		assert(etamin < eta && eta < etamax);
 		return int((eta - etamin) / (etamax - etamin) * netabins_);
 	}
@@ -367,15 +368,15 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 p2 = (*itAPDPN).p2;
                                 eta = geo_->getPosition(id).eta();
 
-				static float ebmax = 0;
-				static float eemax = 0;
-				static float ebmin = 0;
-				static float eemin = 0;
-				if(iid< 61200 && eta > ebmax) ebmax = eta;
-				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
-				if(iid< 61200 && eta  < ebmin) ebmin = eta;
-				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
-				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
+// 				static float ebmax = 0;
+// 				static float eemax = 0;
+// 				static float ebmin = 0;
+// 				static float eemin = 0;
+// 				if(iid< 61200 && eta > ebmax) ebmax = eta;
+// 				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
+// 				if(iid< 61200 && eta  < ebmin) ebmin = eta;
+// 				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
+// 				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
 
                                 histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
                                 q_[0].fill(p2);
