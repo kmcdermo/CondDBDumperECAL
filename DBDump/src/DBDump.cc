@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.7 2011/04/20 00:11:50 ferriff Exp $
+// $Id: DBDump.cc,v 1.8 2011/07/27 16:14:52 ferriff Exp $
 //
 //
 
@@ -65,11 +65,14 @@
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
 #include "HistoManager.h"
+#include "Quantile.h"
 
 #include "TProfile.h"
+#include "TProfile2D.h"
 #include "TH1D.h"
 #include "TH2D.h"
 #include "TGraph.h"
+#include "TGraphAsymmErrors.h"
 
 
 class DBDump : public edm::EDAnalyzer {
@@ -87,6 +90,7 @@ class DBDump : public edm::EDAnalyzer {
       virtual void endJob() ;
 
       int getLMNumber(DetId const & xid) const;
+      void printSummary();
 
       // output files
       bool outPlot_;
@@ -140,11 +144,36 @@ class DBDump : public edm::EDAnalyzer {
       edm::ESHandle<CaloGeometry> caloGeometry_;
       const CaloGeometry * geo_;
 
+      std::vector<DetId> ecalDetIds_;
+
+      // number of IOVs, first and last
+      int niov_;
+      time_t iov_first_;
+      time_t iov_last_;
+
+      // job start and stop time
+      time_t jstart_;
+      time_t jstop_;
+
+      time_t il_;
+      char weekly_[128];
+
+      // all, EE-, EB-, EB+, EE+, and 92 LMR
+      const static int nq_ = 97;
+      Quantile q_[nq_];
+      char qname_[nq_][32];
+
 };
 
 
 
-DBDump::DBDump(const edm::ParameterSet& ps)
+DBDump::DBDump(const edm::ParameterSet& ps) :
+        niov_(0),
+        iov_first_(-1),
+        iov_last_(0),
+        jstart_(time(NULL)),
+        jstop_(0),
+        il_(0)
 {
         outPlot_ = ps.getParameter<bool>("outPlot");
         outDump_ = ps.getParameter<bool>("outDump");
@@ -174,29 +203,56 @@ DBDump::DBDump(const edm::ParameterSet& ps)
         dumpTranspCorr_ = ps.getParameter<bool>("dumpTranspCorr");
         plotTranspCorr_ = ps.getParameter<bool>("plotTranspCorr");
 
-        if ( outDumpFile_ != "" ) {
-                ofile_.open( outDumpFile_.c_str(), std::ios::out );
-                if ( ! ofile_.is_open() ) {
+        if (outDumpFile_ != "") {
+                ofile_.open(outDumpFile_.c_str(), std::ios::out);
+                if (!ofile_.is_open()) {
                         edm::LogError("DBDump") << "DBDump::DBDump cannot open output file " << outDumpFile_;
                         setDumpFalse();
                 }
-        } else if ( outDump_ ) {
+        } else if (outDump_) {
                 edm::LogError("DBDump") << "DBDump::DBDump mismatch in your config file, setting outDump to false.";
                 setDumpFalse();
         } else {
                 setDumpFalse();
         }
 
-        if ( outPlot_ ) {
+        if (outPlot_) {
                 histos.addTemplate<TH2D>( "EBh2", new TH2D( "EB", "EB", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
                 histos.addTemplate<TH2D>( "EEh2", new TH2D( "EE", "EE", 100, 0., 100., 100, 0., 100. ) );
+                histos.addTemplate<TProfile2D>( "EBprof2", new TProfile2D( "EB", "EB", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
+                histos.addTemplate<TProfile2D>( "EEprof2", new TProfile2D( "EE", "EE", 100, 0., 100., 100, 0., 100. ) );
                 histos.addTemplate<TProfile>( "EEprof", new TProfile( "EE", "EE", 55, 0., 55.) );
                 histos.addTemplate<TProfile>( "EBprof", new TProfile( "EB", "EB", 171, -85.5, 85.5) );
-                histos.addTemplate<TGraph>("history", new TGraph());
+                histos.addTemplate<TGraphAsymmErrors>("history", new TGraphAsymmErrors());
                 histos.addTemplate<TH1D>("distr", new TH1D("distribution", "distribution", 2000, 0., 2.));
                 histos.addTemplate<TProfile>("etaProf", new TProfile("etaProf", "etaProf", 250, -2.75, 2.75));
         } else {
                 setPlotFalse();
+        }
+
+        // initialise ECAL DetId vector
+        for (int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
+                EBDetId ebId = EBDetId::unhashIndex(hi);
+                if (ebId != EBDetId()) {
+                        ecalDetIds_.push_back(ebId);
+                }
+        }
+        for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
+                EEDetId eeId = EEDetId::unhashIndex(hi);
+                if (eeId != EEDetId()) {
+                        ecalDetIds_.push_back(eeId);
+                }
+        }
+        assert(ecalDetIds_.size() == 75848);
+
+        // initialise quantile names
+        sprintf(qname_[0], "All");
+        sprintf(qname_[1], "EE-");
+        sprintf(qname_[2], "EB-");
+        sprintf(qname_[3], "EB+");
+        sprintf(qname_[4], "EE+");
+        for (int i = 0; i < nq_ - 5; ++i) {
+                sprintf(qname_[i + 5], "LM%02d", i + 1);
         }
 }
 
@@ -224,26 +280,25 @@ void DBDump::setPlotFalse()
 
 DBDump::~DBDump()
 {
-        if ( plotIC_ ) {
-                histos.h<TProfile>("EBprof", "IC")->SetMarkerColor(4);
-                histos.h<TProfile>("EBprof", "IC")->SetMarkerStyle(20);
-                histos.h<TProfile>("EEprof", "posZ:d1:IC")->SetMarkerColor(4);                                   
-                histos.h<TProfile>("EEprof", "posZ:d1:IC")->SetMarkerStyle(20);                                  
-                histos.h<TProfile>("EEprof", "posZ:d2:IC")->SetMarkerColor(2);                                   
-                histos.h<TProfile>("EEprof", "posZ:d2:IC")->SetMarkerStyle(20);                                  
-                histos.h<TProfile>("EEprof", "negZ:d3:IC")->SetMarkerColor(7);                                   
-                histos.h<TProfile>("EEprof", "negZ:d3:IC")->SetMarkerStyle(20);                                  
-                histos.h<TProfile>("EEprof", "negZ:d4:IC")->SetMarkerColor(6);
-                histos.h<TProfile>("EEprof", "negZ:d4:IC")->SetMarkerStyle(20);
+        if (outPlot_) {
+                histos.save(outPlotFile_.c_str());
         }
-        if ( outPlot_ ) {
-                histos.save( outPlotFile_.c_str() );
-        }
-        if ( ofile_.is_open() ) {
+        if (ofile_.is_open()) {
                 ofile_.close();
         }
+        jstop_ = time(NULL);
+        printSummary();
 }
 
+void DBDump::printSummary()
+{
+        printf("%d IOV(s) analysed in %ld s (%.2f h).\n", niov_, jstop_ - jstart_, (float)(jstop_ - jstart_) / 3600.);
+        char buf[128];
+        strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&iov_first_));
+        printf("First IOV: %ld (%s UTC)\n", iov_first_, buf);
+        strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&iov_last_));
+        printf(" Last IOV: %ld (%s UTC)\n", iov_last_, buf);
+}
 
 // ------------ method called to for each event  ------------
 void
@@ -253,376 +308,274 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
         es.get<CaloGeometryRecord>().get(caloGeometry_);                                                
         geo_ = caloGeometry_.product();                                                                 
 
+        iov_last_ = ev.time().unixTime();
+        if (iov_first_ == -1) iov_first_ = iov_last_;
+
+        if (iov_last_ - il_ > 3600 * 24 * 7) {
+                il_ = iov_last_;
+                sprintf(weekly_, "week_%ld", il_);
+        }
+
         bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
         bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_ || plotTranspCorr_;
-        if ( atLeastOneDump || atLeastOnePlot ) {
+        if (atLeastOneDump || atLeastOnePlot) {
 
-                if ( dumpIC_ || plotIC_ ) {
+                if (dumpIC_ || plotIC_) {
                         es.get<EcalIntercalibConstantsRcd>().get(ic_);
                         es.get<EcalIntercalibConstantsRcd>().get(icMC_);
                 }
-                if ( dumpChStatus_ || plotChStatus_ ) es.get<EcalChannelStatusRcd>().get(chStatus_);
-                if ( dumpPedestals_ || plotPedestals_ ) es.get<EcalPedestalsRcd>().get(ped_);
-                if ( dumpGainRatios_ || plotGainRatios_ ) es.get<EcalGainRatiosRcd>().get(gr_);
-                if ( dumpTransp_ || plotTransp_ ) es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
-                if ( dumpTranspCorr_ || plotTranspCorr_ ) es.get<EcalLaserDbRecord>().get(laser_);
+                if (dumpChStatus_   || plotChStatus_)   es.get<EcalChannelStatusRcd>().get(chStatus_);
+                if (dumpPedestals_  || plotPedestals_)  es.get<EcalPedestalsRcd>().get(ped_);
+                if (dumpGainRatios_ || plotGainRatios_) es.get<EcalGainRatiosRcd>().get(gr_);
+                if (dumpTransp_     || plotTransp_)     es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
+                if (dumpTranspCorr_ || plotTranspCorr_) es.get<EcalLaserDbRecord>().get(laser_);
 
                 // if you need to average and use the average later on...
-                //histos.h<TProfile>("etaProf", "p2")->Reset();
-                for ( int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
-                        EBDetId ebId = EBDetId::unhashIndex( hi );
-                        if ( ebId != EBDetId() ) {
+                if (dumpTranspCorr_ || plotTranspCorr_) {
+                        for (int i = 0; i < nq_; ) q_[i++].reset();
+                        for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                                DetId id(ecalDetIds_[iid]);
                                 EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
                                 EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
                                 size_t iLM = 0;
-                                if ( dumpTransp_ || plotTransp_ ) {
-                                        itAPDPN = apdpn_->getLaserMap().find( ebId );
-                                        iLM = getLMNumber( ebId );
-                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-                                                ts = apdpn_->getTimeMap()[iLM];
-                                        }
+                                itAPDPN = apdpn_->getLaserMap().find(id);
+                                iLM = getLMNumber(id);
+                                if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                        ts = apdpn_->getTimeMap()[iLM];
                                 }
                                 //float transpCorr = -1234567890.;
-                                float p2         = -1234567890.;
+                                float p2  = -1234567890.;
                                 float eta = 99999;
                                 char name[64];
-                                sprintf(name, "%d_p2", ev.time().unixTime());
-                                if (dumpTranspCorr_ || plotTranspCorr_) {
-                                        //transpCorr = laser_->getLaserCorrection( ebId, ev.time());
-                                        p2 = (*itAPDPN).p2;
-                                        eta = geo_->getPosition(ebId).eta();
-                                        histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
-                                }
-                        }
-                }
-                for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
-                        EEDetId eeId = EEDetId::unhashIndex( hi );
-                        if ( eeId != EEDetId() ) {
-                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
-                                size_t iLM = 0;
-                                if ( dumpTransp_ || plotTransp_ ) {
-                                        itAPDPN = apdpn_->getLaserMap().find( eeId );
-                                        iLM = getLMNumber( eeId );
-                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-                                                ts = apdpn_->getTimeMap()[iLM];
-                                        }
-                                }
-                                //float transpCorr = -1234567890.;
-                                float p2         = -1234567890.;
-                                float eta = 99999;
-                                char name[64];
-                                sprintf(name, "%d_p2", ev.time().unixTime());
-                                if (dumpTranspCorr_ || plotTranspCorr_) {
-                                        //transpCorr = laser_->getLaserCorrection( ebId, ev.time());
-                                        p2 = (*itAPDPN).p2;
-                                        eta = geo_->getPosition(eeId).eta();
-                                        histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
-                                }
-                        }
-                }
-
-                for ( int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
-                        EBDetId ebId = EBDetId::unhashIndex( hi );
-                        if ( ebId != EBDetId() ) {
-                                EcalIntercalibConstantMap::const_iterator itIC;
-                                EcalIntercalibConstantMap::const_iterator itICMC;
-                                if ( dumpIC_ || plotIC_ ) {
-                                        itIC = ic_->find( ebId );
-                                        itICMC = icMC_->find( ebId );
-                                }
-                                EcalChannelStatusMap::const_iterator itChStatus;
-                                if ( dumpChStatus_ || plotChStatus_ ) itChStatus = chStatus_->find( ebId );
-                                EcalPedestalsMap::const_iterator itPed;
-                                if ( dumpPedestals_ || plotPedestals_ ) itPed = ped_->find( ebId );
-                                EcalGainRatioMap::const_iterator itGR;
-                                if ( dumpGainRatios_ || plotGainRatios_ ) itGR = gr_->find( ebId );
-                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
-                                size_t iLM = 0;
-                                if ( dumpTransp_ || plotTransp_ ) {
-                                        itAPDPN = apdpn_->getLaserMap().find( ebId );
-                                        iLM = getLMNumber( ebId );
-                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-                                                ts = apdpn_->getTimeMap()[iLM];
-                                        }
-                                }
-                                float transpCorr = -1234567890.;
-                                if (dumpTranspCorr_ || plotTranspCorr_) {
-                                        transpCorr = laser_->getLaserCorrection( ebId, ev.time());
-                                }
-
-                                ofile_ << "EB  rawId= " << ebId.rawId() 
-                                        << "  ieta= " << ebId.ieta() 
-                                        << "  iphi= " << ebId.iphi();
-                                if ( dumpIC_ ) {
-                                        if( itIC != ic_->end() ) ofile_ << "  ic= " << *itIC;
-                                        else                     ofile_ << "  ic= " << "NA";
-                                        if( itICMC != icMC_->end() ) ofile_ << "  icMC= " << *itIC;
-                                        else                         ofile_ << "  icMC= " << "NA";
-                                }
-                                if ( dumpChStatus_ ) {
-                                        if( itChStatus != chStatus_->end() ) ofile_ << "  chSt= " << (*itChStatus).getStatusCode();
-                                        else                                 ofile_ << "  chSt= " << "NA";
-                                }
-                                if ( dumpPedestals_ ) {
-                                        if( itPed != ped_->end() ) {
-                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
-                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
-                                        } else  ofile_ << "  ped= " << "NA";
-                                }
-                                if ( dumpGainRatios_ ) {
-                                        if ( itGR != gr_->end() ) {
-                                                ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
-                                        }
-                                }
-                                if ( dumpTransp_ ) {
-                                        if ( itAPDPN != apdpn_->getLaserMap().end() ) {
-                                                ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
-                                                        << ev.time().value() 
-                                                        << "_" << ts.t1.value() << "_" << ts.t2.value() 
-                                                        << "_" << ts.t3.value() 
-                                                        << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
-                                                        << "_" << (*itAPDPN).p3
-                                                        ;
-                                        }
-                                }
-                                if (dumpTranspCorr_) {
-                                        ofile_ << "  transpCorr= " 
-                                                << transpCorr;
-                                }
-                                ofile_ << "\n";
-                                // for plotting
-                                int ieta = ebId.ieta();
-                                int iphi = ebId.iphi();
-                                if ( plotIC_ ) {
-                                        //h_EB_ic->Fill( ieta, *itIC);
-                                        if ( itIC != ic_->end() ) histos.h<TProfile>("EBprof", "IC")->Fill( ieta, *itIC);
-                                        if ( itICMC != icMC_->end() ) histos.h<TProfile>("EBprof", "ICMC")->Fill( ieta, *itICMC);
-                                }
-                                if ( plotChStatus_ ) {
-                                        //h_EB_chStatus->Fill( iphi, ieta, (*itChStatus).getStatusCode() );
-                                        if ( itChStatus != chStatus_->end() ) histos.h<TH2D>( "EBh2", "chStatus" )->Fill( iphi, ieta, (*itChStatus).getStatusCode() );
-                                }
-                                if ( plotPedestals_ ) {
-                                        if ( itPed != ped_->end() ) {
-                                                histos.h<TH2D>( "EBh2", "ped_g12" )->Fill( iphi, ieta, (*itPed).mean(0) );
-                                                histos.h<TH2D>( "EBh2", "ped_g6"  )->Fill( iphi, ieta, (*itPed).mean(1) );
-                                                histos.h<TH2D>( "EBh2", "ped_g1"  )->Fill( iphi, ieta, (*itPed).mean(2) );
-                                                histos.h<TH2D>( "EBh2", "ped_rms_g12" )->Fill( iphi, ieta, (*itPed).rms(0) );
-                                                histos.h<TH2D>( "EBh2", "ped_rms_g6"  )->Fill( iphi, ieta, (*itPed).rms(1) );
-                                                histos.h<TH2D>( "EBh2", "ped_rms_g1"  )->Fill( iphi, ieta, (*itPed).rms(2) );
-                                        }
-                                }
-                                if ( plotGainRatios_ ) {
-                                        if ( itGR != gr_->end() ) {
-                                                histos.h<TH2D>( "EBh2", "gr_g12/6" )->Fill( iphi, ieta, (*itGR).gain12Over6() );
-                                                histos.h<TH2D>( "EBh2", "gr_g6/1"  )->Fill( iphi, ieta, (*itGR).gain6Over1() );
-                                        }
-                                }
-                                if (plotTranspCorr_) {
-                                        histos.h<TH2D>( "EBh2", "transpCorr" )->Fill( iphi, ieta, transpCorr );
-                                        float eta = geo_->getPosition(ebId).eta();
-                                        char name[64];
-                                        sprintf(name, "%d_p2", ev.time().unixTime());
-                                        TProfile * p = histos.h<TProfile>("etaProf", name);
-                                        float p2_mean = p->GetBinContent(p->FindBin(eta));
-                                        histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
-                                }
-                        }
-                }
-                
-                for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
-                        EEDetId eeId = EEDetId::unhashIndex( hi );
-                        if ( eeId != EEDetId() ) {
-                                EcalIntercalibConstantMap::const_iterator itIC;
-                                EcalIntercalibConstantMap::const_iterator itICMC;
-                                if ( dumpIC_ || plotIC_ ) {
-                                        itIC = ic_->find( eeId );
-                                        itICMC = icMC_->find( eeId );
-                                }
-                                EcalChannelStatusMap::const_iterator itChStatus;
-                                if ( dumpChStatus_ || plotChStatus_ ) itChStatus = chStatus_->find( eeId );
-                                EcalPedestalsMap::const_iterator itPed;
-                                if ( dumpPedestals_ || plotPedestals_ ) itPed = ped_->find( eeId );
-                                EcalGainRatioMap::const_iterator itGR;
-                                if ( dumpGainRatios_ || plotGainRatios_ ) itGR = gr_->find( eeId );
-                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
-                                size_t iLM = 0;
-                                if ( dumpTransp_ || plotTransp_ ) {
-                                        itAPDPN = apdpn_->getLaserMap().find( eeId );
-                                        iLM = getLMNumber( eeId );
-                                        if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-                                                ts = apdpn_->getTimeMap()[iLM];
-                                        }
-                                }
-                                float transpCorr = -1234567890.;
-                                if (dumpTranspCorr_ || plotTranspCorr_) {
-                                        transpCorr = laser_->getLaserCorrection( eeId, ev.time());
-                                }
-
-                                ofile_ << "EE  rawId= " << eeId.rawId() 
-                                        << "  ix= " << eeId.ix() 
-                                        << "  iy= " << eeId.ix()
-                                        << "  iz= " << eeId.zside();
-
-                                if ( dumpIC_ ) {
-                                        if( itIC != ic_->end() ) ofile_ << "  ic= " << *itIC;
-                                        else                     ofile_ << "  ic= " << "NA";
-                                        if( itICMC != icMC_->end() ) ofile_ << "  icMC= " << *itICMC;
-                                        else                         ofile_ << "  icMC= " << "NA";
-                                }
-                                if ( dumpChStatus_ ) {
-                                        if( itChStatus != chStatus_->end() ) ofile_ << "  chSt= " << (*itChStatus).getStatusCode();
-                                        else                                 ofile_ << "  chSt= " << "NA";
-                                }
-                                if ( dumpPedestals_ ) {
-                                        if( itPed != ped_->end() ) {
-                                                ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
-                                                ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
-                                        } else  ofile_ << "  ped= " << "NA";
-                                }
-                                if ( dumpGainRatios_ ) {
-                                        if ( itGR != gr_->end() ) {
-                                                ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
-                                        }
-                                }
-                                if ( dumpTransp_ ) {
-                                        if ( itAPDPN != apdpn_->getLaserMap().end() ) {
-                                                ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
-                                                        << ev.time().value() 
-                                                        << "_" << ts.t1.value() << "_" << ts.t2.value() 
-                                                        << "_" << ts.t3.value() 
-                                                        << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
-                                                        << "_" << (*itAPDPN).p3
-                                                        ;
-                                        }
-                                }
-                                if (dumpTranspCorr_) {
-                                        ofile_ << "  transpCorr= " 
-                                                << transpCorr;
-                                }
-                                ofile_ << "\n";
-                                int ix = eeId.ix();
-                                int iy = eeId.iy();
-                                int id = eeId.ix() - 50;
-                                float r = sqrt( (ix-50)*(ix-50) + (iy-50)*(iy-50) );
-                                if ( eeId.zside() > 0 ) {
-                                        if ( plotIC_ ) {
-                                                if ( itIC != ic_->end() ) {
-                                                        if ( id < 0 ) histos.h<TProfile>("EEprof", "posZ:d1:IC")->Fill( r, *itIC );
-                                                        else          histos.h<TProfile>("EEprof", "posZ:d2:IC")->Fill( r, *itIC );
-                                                }
-                                                if ( itICMC != icMC_->end() ) {
-                                                        if ( id < 0 ) histos.h<TProfile>("EEprof", "posZ:d1:ICMC")->Fill( r, *itICMC );
-                                                        else          histos.h<TProfile>("EEprof", "posZ:d2:ICMC")->Fill( r, *itICMC );
-                                                }
-                                        }
-                                        if ( plotChStatus_ ) {
-                                                if ( itChStatus != chStatus_->end() ) {
-                                                        if ( id < 0 ) histos.h<TH2D>("EEh2","posZ:d1:chStatus")->Fill( ix, iy, (*itChStatus).getStatusCode() );
-                                                        else          histos.h<TH2D>("EEh2","posZ:d2:chStatus")->Fill( ix, iy, (*itChStatus).getStatusCode() );
-                                                }
-                                        }
-                                        if ( plotPedestals_ ) {
-                                                if ( itPed != ped_->end() ) {
-                                                        if ( id < 0 ) {
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_g12")->Fill( ix, iy, (*itPed).mean(0) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_g6" )->Fill( ix, iy, (*itPed).mean(1) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_g1" )->Fill( ix, iy, (*itPed).mean(2) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_rms_g12")->Fill( ix, iy, (*itPed).rms(0) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_rms_g6" )->Fill( ix, iy, (*itPed).rms(1) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d1:ped_rms_g1" )->Fill( ix, iy, (*itPed).rms(2) );
-                                                        } else {
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_g12")->Fill( ix, iy, (*itPed).mean(0) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_g6" )->Fill( ix, iy, (*itPed).mean(1) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_g1" )->Fill( ix, iy, (*itPed).mean(2) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_rms_g12")->Fill( ix, iy, (*itPed).rms(0) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_rms_g6" )->Fill( ix, iy, (*itPed).rms(1) );
-                                                                histos.h<TH2D>("EEh2", "posZ:d2:ped_rms_g1" )->Fill( ix, iy, (*itPed).rms(2) );
-                                                        }
-                                                }
-                                        }
-                                        if ( plotGainRatios_ ) {
-                                                if ( itGR != gr_->end() ) {
-                                                        if ( id > 0 ) {
-                                                                histos.h<TH2D>("EEh2", "negZ:d1:gr12/6")->Fill( ix, iy, (*itGR).gain12Over6() );
-                                                                histos.h<TH2D>("EEh2", "negZ:d1:gr6/1" )->Fill( ix, iy, (*itGR).gain6Over1() );
-                                                        } else {
-                                                                histos.h<TH2D>("EEh2", "negZ:d2:gr12/6")->Fill( ix, iy, (*itGR).gain12Over6() );
-                                                                histos.h<TH2D>("EEh2", "negZ:d2:gr6/1" )->Fill( ix, iy, (*itGR).gain6Over1() );
-                                                        }
-                                                }
-                                        }
-                                        if (plotTranspCorr_) {
-                                                char name[64];
-                                                sprintf(name, "%d_p2", ev.time().unixTime());
-                                                float eta = geo_->getPosition(eeId).eta();
-                                                TProfile * p = histos.h<TProfile>("etaProf", name);
-                                                float p2_mean = p->GetBinContent(p->FindBin(eta));
-                                                histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
-                                                if ( id > 0 ) {
-                                                        histos.h<TH2D>("EEh2", "negZ:d1:transpCorr")->Fill( ix, iy, transpCorr );
-                                                } else {
-                                                        histos.h<TH2D>("EEh2", "negZ:d2:transpCorr")->Fill( ix, iy, transpCorr );
-                                                }
-                                        }
+                                sprintf(name, "p2_%d", ev.time().unixTime());
+                                p2 = (*itAPDPN).p2;
+                                eta = geo_->getPosition(id).eta();
+                                histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
+                                q_[0].fill(p2);
+                                if (id.subdetId() == EcalBarrel) {
+                                        if (EBDetId(id).ieta() < 0) q_[2].fill(p2);
+                                        else                        q_[3].fill(p2);
                                 } else {
-                                        if ( plotIC_ ) {
-                                                if ( itIC != ic_->end() ) {
-                                                        if ( id > 0 ) histos.h<TProfile>("EEprof", "negZ:d3:IC")->Fill( r, *itIC );
-                                                        else          histos.h<TProfile>("EEprof", "negZ:d4:IC")->Fill( r, *itIC );
-                                                }
-                                                if ( itICMC != icMC_->end() ) {
-                                                        if ( id > 0 ) histos.h<TProfile>("EEprof", "negZ:d3:ICMC")->Fill( r, *itICMC );
-                                                        else          histos.h<TProfile>("EEprof", "negZ:d4:ICMC")->Fill( r, *itICMC );
-                                                }
-                                        }
-                                        if ( plotChStatus_ ) {
-                                                if ( id < 0 ) histos.h<TH2D>("EEh2","negZ:d3:chStatus")->Fill( ix, iy, (*itChStatus).getStatusCode() );
-                                                else          histos.h<TH2D>("EEh2","negZ:d4:chStatus")->Fill( ix, iy, (*itChStatus).getStatusCode() );
-                                        }
-                                        if ( plotPedestals_ ) {
-                                                if ( id > 0 ) {
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_g12")->Fill( ix, iy, (*itPed).mean(0) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_g6" )->Fill( ix, iy, (*itPed).mean(1) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_g1" )->Fill( ix, iy, (*itPed).mean(2) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_rms_g12")->Fill( ix, iy, (*itPed).rms(0) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_rms_g6" )->Fill( ix, iy, (*itPed).rms(1) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:ped_rms_g1" )->Fill( ix, iy, (*itPed).rms(2) );
-                                                } else {
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_g12")->Fill( ix, iy, (*itPed).mean(0) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_g6" )->Fill( ix, iy, (*itPed).mean(1) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_g1" )->Fill( ix, iy, (*itPed).mean(2) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_rms_g12")->Fill( ix, iy, (*itPed).rms(0) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_rms_g6" )->Fill( ix, iy, (*itPed).rms(1) );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:ped_rms_g1" )->Fill( ix, iy, (*itPed).rms(2) );
-                                                }
-                                        }
-                                        if ( plotGainRatios_ ) {
-                                                if ( id > 0 ) {
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:gr12/6")->Fill( ix, iy, (*itGR).gain12Over6() );
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:gr6/1" )->Fill( ix, iy, (*itGR).gain6Over1() );
-                                                } else {
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:gr12/6")->Fill( ix, iy, (*itGR).gain12Over6() );
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:gr6/1" )->Fill( ix, iy, (*itGR).gain6Over1() );
-                                                }
-                                        }
-                                        if (plotTranspCorr_) {
-                                                float eta = geo_->getPosition(eeId).eta();
-                                                char name[64];
-                                                sprintf(name, "%d_p2", ev.time().unixTime());
-                                                TProfile * p = histos.h<TProfile>("etaProf", name);
-                                                float p2_mean = p->GetBinContent(p->FindBin(eta));
-                                                histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
-                                                if ( id > 0 ) {
-                                                        histos.h<TH2D>("EEh2", "negZ:d3:transpCorr")->Fill( ix, iy, transpCorr );
-                                                } else {
-                                                        histos.h<TH2D>("EEh2", "negZ:d4:transpCorr")->Fill( ix, iy, transpCorr );
-                                                }
+                                        if (EEDetId(id).zside() < 0) q_[1].fill(p2);
+                                        else                         q_[4].fill(p2);
+                                }
+                                q_[5 + iLM - 1].fill(p2);
+                        }
+                }
+       
+                EcalIntercalibConstantMap::const_iterator itIC;
+                EcalIntercalibConstantMap::const_iterator itICMC;
+                EcalChannelStatusMap::const_iterator itChStatus;
+                EcalPedestalsMap::const_iterator itPed;
+                EcalGainRatioMap::const_iterator itGR;
+                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+
+                char ecalPart[3] = "E*";
+                //char eename[6] = "*Z:d*";
+                char eename[3] = "*Z";
+
+                char str[128];
+
+                for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                        DetId id(ecalDetIds_[iid]);
+
+                        //  ix = ieta() for EB, ix() for EE
+                        //  iy = iphi() for EB, iy() for EE
+                        int ix = -1, iy = -1, iz = -1, r = -1;
+                        int isEB = 0;
+
+                        if (id.subdetId() == EcalBarrel) {
+                                ecalPart[1] = 'B';
+                                ix = EBDetId(id).ieta();
+                                iy = EBDetId(id).iphi();
+                                iz = 0;
+                                isEB = 1;
+                        } else if (id.subdetId() == EcalEndcap) {
+                                ecalPart[1] = 'E';
+                                ix = EEDetId(id).ix();
+                                iy = EEDetId(id).iy();
+                                iz = EEDetId(id).zside();
+                                r = sqrt((ix - 50) * (ix - 50) + (iy - 50) * (iy - 50));
+                                if (iz > 0) {
+                                        eename[0] = 'p';
+                                        //eename[4] = ix < 50 ? '1' : '2';
+                                } else {
+                                        eename[0] = 'n';
+                                        //eename[4] = ix < 50 ? '3' : '4';
+                                }
+
+                        }
+
+                        if (dumpIC_ || plotIC_) {
+                                itIC = ic_->find(id);
+                                itICMC = icMC_->find(id);
+                        }
+                        if (dumpChStatus_ || plotChStatus_)     itChStatus = chStatus_->find(id);
+                        if (dumpPedestals_ || plotPedestals_)   itPed = ped_->find(id);
+                        if (dumpGainRatios_ || plotGainRatios_) itGR = gr_->find(id);
+                        if (dumpTransp_ || plotTransp_) {
+                                size_t iLM = 0;
+                                itAPDPN = apdpn_->getLaserMap().find(id);
+                                iLM = getLMNumber(id);
+                                if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                        ts = apdpn_->getTimeMap()[iLM];
+                                }
+                        }
+                        float transpCorr = -1234567890.;
+                        if (dumpTranspCorr_ || plotTranspCorr_) {
+                                transpCorr = laser_->getLaserCorrection(id, ev.time());
+                        }
+
+                        if (atLeastOneDump) {
+                                ofile_ << ecalPart << "  rawId= " << id.rawId()
+                                        << "  ieta/ix= " << ix
+                                        << "  iphi/iy= " << iy
+                                        << "  0/iz= " << iz;
+                        }
+                        if (dumpIC_) {
+                                if(itIC != ic_->end()) ofile_ << "  ic= " << *itIC;
+                                else                   ofile_ << "  ic= " << "NA";
+                                if(itICMC != icMC_->end()) ofile_ << "  icMC= " << *itIC;
+                                else                       ofile_ << "  icMC= " << "NA";
+                        }
+                        if (dumpChStatus_) {
+                                if(itChStatus != chStatus_->end()) ofile_ << "  chSt= " << (*itChStatus).getStatusCode();
+                                else                               ofile_ << "  chSt= " << "NA";
+                        }
+                        if (dumpPedestals_) {
+                                if(itPed != ped_->end()) {
+                                        ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
+                                        ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
+                                } else  ofile_ << "  ped= " << "NA";
+                        }
+                        if (dumpGainRatios_) {
+                                if (itGR != gr_->end()) {
+                                        ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
+                                }
+                        }
+                        if (dumpTransp_) {
+                                if ( itAPDPN != apdpn_->getLaserMap().end() ) {
+                                        ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
+                                                << ev.time().value() 
+                                                << "_" << ts.t1.value() << "_" << ts.t2.value() 
+                                                << "_" << ts.t3.value() 
+                                                << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
+                                                << "_" << (*itAPDPN).p3
+                                                ;
+                                }
+                        }
+                        if (dumpTranspCorr_) {
+                                ofile_ << "  transpCorr= " 
+                                        << transpCorr;
+                        }
+                        if (atLeastOneDump) ofile_ << "\n";
+
+                        // plotting:
+                        if (plotIC_) {
+                                if (itIC != ic_->end()) {
+                                        if (isEB) {
+                                                histos.h<TProfile>("EBprof", "IC")->Fill(ix, *itIC);
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:IC", eename);
+                                                histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
                                         }
                                 }
+                                if (itICMC != icMC_->end()) {
+                                        if (isEB) {
+                                                histos.h<TProfile>("EBprof", "ICMC")->Fill(ix, *itICMC);
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:ICMC", eename);
+                                                histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
+                                        }
+                                }
+                        }
+                        if (plotChStatus_) {
+                                if (itChStatus != chStatus_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "chStatus")->Fill(iy, ix, (*itChStatus).getStatusCode());
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:chStatus", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill(ix, iy, (*itChStatus).getStatusCode());
+                                        }
+                                }
+                        }
+                        if (plotPedestals_) {
+                                if (itPed != ped_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "ped_g12" )->Fill(iy, ix, (*itPed).mean(0));
+                                                histos.h<TH2D>("EBh2", "ped_g6"  )->Fill(iy, ix, (*itPed).mean(1));
+                                                histos.h<TH2D>("EBh2", "ped_g1"  )->Fill(iy, ix, (*itPed).mean(2));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g12" )->Fill(iy, ix, (*itPed).rms(0));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g6"  )->Fill(iy, ix, (*itPed).rms(1));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g1"  )->Fill(iy, ix, (*itPed).rms(2));
+                                        } else {
+                                                sprintf(str, "%s:ped_g12", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(0) );
+                                                sprintf(str, "%s:ped_g6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(1) );
+                                                sprintf(str, "%s:ped_g1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(2) );
+                                                sprintf(str, "%s:ped_rms_g12", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(0) );
+                                                sprintf(str, "%s:ped_rms_g6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(1) );
+                                                sprintf(str, "%s:ped_rms_g1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(2) );
+                                        }
+                                }
+                        }
+                        if (plotGainRatios_) {
+                                if (itGR != gr_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "gr_g12/6")->Fill(iy, ix, (*itGR).gain12Over6());
+                                                histos.h<TH2D>("EBh2", "gr_g6/1" )->Fill(iy, ix, (*itGR).gain6Over1());
+                                        } else {
+                                                sprintf(str, "%s:gr12/6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain12Over6() );
+                                                sprintf(str, "%s:gr6/1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain6Over1() );
+                                        }
+                                }
+                        }
+                        if (plotTranspCorr_) {
+                                if (isEB) {
+                                        //histos.h<TH2D>("EBh2", "transpCorr" )->Fill(iy, ix, transpCorr);
+                                        histos.h<TProfile2D>( "EBprof2", "transpCorr" )->Fill(iy, ix, transpCorr);
+                                        sprintf(str, "transpCorr_%s", weekly_);
+                                        histos.h<TProfile2D>("EBprof2", str )->Fill(iy, ix, transpCorr);
+                                } else {
+                                        //sprintf(str, "%s_transpCorr", eename);
+                                        //histos.h<TH2D>("EEh2", str)->Fill( ix, iy, transpCorr );
+                                        sprintf(str, "%s_transpCorr", eename);
+                                        histos.h<TProfile2D>( "EEprof2", str)->Fill(iy, ix, transpCorr);
+                                        sprintf(str, "%s_transpCorr_%s", eename, weekly_);
+                                        histos.h<TProfile2D>( "EEprof2", str )->Fill(iy, ix, transpCorr);
+                                }
+                                float eta = geo_->getPosition(id).eta();
+                                char name[64];
+                                sprintf(name, "p2_%d", ev.time().unixTime());
+                                TProfile * p = histos.h<TProfile>("etaProf", name);
+                                float p2_mean = p->GetBinContent(p->FindBin(eta));
+                                histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
+                        }
+                }
+                //// history plots
+                float fracs[] = { 0.5 * (1 - 0.997), 0.5 * (1 - 0.954), 0.5 * (1 - 0.682), 0 };
+                const char * nfrac[] = { "3S", "2S", "1S", "E" };
+                for (int i = 0; i < nq_; ++i) {
+                        float xm = q_[i].xlow(0.5);
+                        for (size_t j = 0; j < sizeof(fracs)/sizeof(float); ++j) {
+                                sprintf(str, "p2_%s_%s", qname_[i], nfrac[j]);
+                                TGraphAsymmErrors * g = histos.h<TGraphAsymmErrors>("history", str);
+                                g->SetPoint(niov_, ev.time().unixTime(), xm);
+                                g->SetPointEYlow(niov_, xm - q_[i].xlow(fracs[j]));
+                                g->SetPointEYhigh(niov_, q_[i].xhigh(fracs[j]) - xm);
+                                //sprintf(str, "p2_%s_%s_H", qname_[i], nfrac[j]);
+                                //histos.h<TGraphAsymmErrors>("history", str)->SetPoint(niov_, ev.time().unixTime(), q_[i].xhigh(fracs[j]));
                         }
                 }
         }
@@ -630,6 +583,7 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 es.get<EcalADCToGeVConstantRcd>().get(adcToGeV_);
                 ofile_ << "ADCToGeV  EB= " << adcToGeV_->getEBValue() << "  EE= " << adcToGeV_->getEEValue() << "\n";
         }
+        ++niov_;
 }
 
 
@@ -645,7 +599,6 @@ DBDump::endJob() {
 }
 
 int DBDump::getLMNumber(DetId const & xid) const {
-
         int iLM = 0;
 
         if (xid.subdetId()==EcalBarrel) {
@@ -738,7 +691,6 @@ int DBDump::getLMNumber(DetId const & xid) const {
         }
 
         return iLM;
-
 }
 
 //define this as a plug-in

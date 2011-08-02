@@ -26,7 +26,7 @@ class HistoManager {
                 {
                         assert( m_templates.find( type ) != m_templates.end() );
                         std::string id(type);
-                        id += std::string(":") + name;
+                        id += std::string("_") + name;
                         if ( m_histos.find( id ) != m_histos.end() ) {
                                 return (T*)m_histos[id];
                         } else {

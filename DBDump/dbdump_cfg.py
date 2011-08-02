@@ -11,7 +11,7 @@ gTag = 'GR_R_42_V19::All'
 #lTag = 'no_local_tags'
 #lTag = 'EcalChannelStatus_CRAFT_offline'
 #lTag = 'EcalLaserAPDPNRatios_online'
-lTag = 'EcalLaserAPDPNRatios_v3_online'
+lTag = 'EcalLaserAPDPNRatios_V3_160400_172308_110802'
 
 #process.load("CalibCalorimetry.EcalTrivialCondModules.EcalTrivialCondRetriever_cfi")
 
@@ -68,7 +68,9 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
             ###tag = cms.string('EcalLaserAPDPNRatios_mc')
             #tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
             ###tag = cms.string('EcalLaserAPDPNRatios_v2_online')
-            tag = cms.string('EcalLaserAPDPNRatios_last')
+            #####################tag = cms.string('EcalLaserAPDPNRatios_last')
+            ##tag = cms.string('EcalLaserAPDPNRatios_V3_160400_172308_110802')
+            tag = cms.string(lTag)
         ), 
         ###cms.PSet(
         ###    record = cms.string('EcalLaserAPDPNRatiosRefRcd'),
@@ -83,7 +85,9 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
     #####connect = cms.string('frontier://cms_conditions_data/CMS_COND_31X_ECAL'),
     #####connect = cms.string('oracle://cms_orcon_prod/CMS_COND_31X_ECAL'),
     ##connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LAS'),
-    connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LASP'),
+    ###############################connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LASP'),
+    ###connect = cms.string('sqlite:////tmp/ferriff/model_V3_lumiOK_160400_172308_110802.db'),
+    connect = cms.string('sqlite:///tmp/ferriff/model_V4_160400_172308_110802.db'),
     ##connect = cms.string('oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP'),
     #####connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'),
     ###connect = cms.string('oracle://cms_orcoff_prep/CMS_COND_ECAL_LT'),
@@ -116,14 +120,15 @@ process.demo = cms.EDAnalyzer('DBDump',
         outPlot = cms.bool(True),
         outDump = cms.bool(True),
         outDumpFile = cms.string('out_dump_' + gTag + '_' + lTag + '.log'),
-        outPlotFile = cms.string('out_plot_' + gTag + '_' + lTag + '.root'),
+        #outPlotFile = cms.string('out_plot_' + gTag + '_' + lTag + '.root'),
+        outPlotFile = cms.string('/tmp/ferriff/out_plot_' + 'EcalLaserAPDPNRatios_V4_160400_172308_110802' + '.root'),
         dumpIC         = cms.bool(False),
         plotIC         = cms.bool(False),
         dumpTC         = cms.bool(False),
         plotTC         = cms.bool(False),
         dumpADCToGeV   = cms.bool(False),
-        dumpTransp     = cms.bool(True),
-        plotTransp     = cms.bool(False),
+        dumpTransp     = cms.bool(False),
+        plotTransp     = cms.bool(True),
         dumpTranspCorr = cms.bool(False),
         plotTranspCorr = cms.bool(True),
         dumpChStatus   = cms.bool(False),
