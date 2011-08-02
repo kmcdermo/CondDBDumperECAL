@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; c-basic-offset:8; -*-
 //
 // Package:    DBDump
 // Class:      DBDump
@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.8 2011/07/27 16:14:52 ferriff Exp $
+// $Id: DBDump.cc,v 1.9 2011/08/02 17:43:46 ferriff Exp $
 //
 //
 
@@ -92,6 +92,13 @@ class DBDump : public edm::EDAnalyzer {
       int getLMNumber(DetId const & xid) const;
       void printSummary();
 
+	int etabin(float eta){
+		const int etamin  =  -2.964;
+		const int etamax  =  2.964;
+		assert(etamin < eta && eta < etamax);
+		return int((eta - etamin) / (etamax - etamin) * netabins_);
+	}
+
       // output files
       bool outPlot_;
       bool outDump_;
@@ -158,8 +165,12 @@ class DBDump : public edm::EDAnalyzer {
       time_t il_;
       char weekly_[128];
 
-      // all, EE-, EB-, EB+, EE+, and 92 LMR
-      const static int nq_ = 97;
+	//number of bins for plots of corrections in an eta ring
+	const static int netabins_ = 20;
+
+      // all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
+      const static int nq_ = 97 + netabins_;
+	const static int qetaoffs_ = 97;
       Quantile q_[nq_];
       char qname_[nq_][32];
 
@@ -246,14 +257,19 @@ DBDump::DBDump(const edm::ParameterSet& ps) :
         assert(ecalDetIds_.size() == 75848);
 
         // initialise quantile names
-        sprintf(qname_[0], "All");
-        sprintf(qname_[1], "EE-");
-        sprintf(qname_[2], "EB-");
-        sprintf(qname_[3], "EB+");
-        sprintf(qname_[4], "EE+");
-        for (int i = 0; i < nq_ - 5; ++i) {
-                sprintf(qname_[i + 5], "LM%02d", i + 1);
+	int i =0;
+        sprintf(qname_[i++], "All");
+        sprintf(qname_[i++], "EE-");
+        sprintf(qname_[i++], "EB-");
+        sprintf(qname_[i++], "EB+");
+        sprintf(qname_[i++], "EE+");
+        for (int j = 1; j <= 92; ++j) {
+                sprintf(qname_[i++], "LM%02d", j);
         }
+	for(int j = 1; j <= netabins_; ++j){
+		sprintf(qname_[i++], "eta%02d", j);
+	}
+	assert(i == sizeof(qname_)/sizeof(qname_[0]));
 }
 
 void DBDump::setDumpFalse()
@@ -350,6 +366,17 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                 sprintf(name, "p2_%d", ev.time().unixTime());
                                 p2 = (*itAPDPN).p2;
                                 eta = geo_->getPosition(id).eta();
+
+				static float ebmax = 0;
+				static float eemax = 0;
+				static float ebmin = 0;
+				static float eemin = 0;
+				if(iid< 61200 && eta > ebmax) ebmax = eta;
+				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
+				if(iid< 61200 && eta  < ebmin) ebmin = eta;
+				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
+				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
+
                                 histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
                                 q_[0].fill(p2);
                                 if (id.subdetId() == EcalBarrel) {
@@ -360,6 +387,7 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                         else                         q_[4].fill(p2);
                                 }
                                 q_[5 + iLM - 1].fill(p2);
+				q_[qetaoffs_ + etabin(eta) ].fill(p2);
                         }
                 }
        
