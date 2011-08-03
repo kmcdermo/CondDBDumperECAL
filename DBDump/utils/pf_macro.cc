@@ -5,6 +5,10 @@
 #include "drawGraphEnv.C"
 #include "tdrstyle.C"
 
+void pf_macro(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root"){
+  all(filename);
+}
+
 template<class T>
 void draw(T* h, const char* opt = "")
 {
@@ -97,7 +101,7 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     printf("opening file %s\n", filename);
     TFile * fin = TFile::Open(filename);
     TCanvas * c = new TCanvas("history", "history", 800, 400);
-    if (fin->IsZombie()) {
+    if (!fin || fin->IsZombie()) {
         return 0;
     }
     gplot(fin, "history_p2_All", "All ECAL");
@@ -106,3 +110,4 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     gplot(fin, "history_p2_EB+", "EB+");
     gplot(fin, "history_p2_EE+", "EE+");
 }
+
