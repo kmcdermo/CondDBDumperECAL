@@ -9,7 +9,6 @@ export LAS_DBCONNECT=${LAS_DBCONNET:-frontier://FrontierProd/CMS_COND_311X_ECAL_
 export LAS_GTAG=GR_R_42_V19
 export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
-export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
 export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
 presc=1
 
@@ -18,7 +17,7 @@ DATE=`date +%F-%H:%M`
 # Note that we use `"$@"' to let each command-line parameter expand to a
 # separate word. The quotes around `$@' are essential!
 # We need TEMP as the `eval set --' would nuke the return value of getopt.
-temp=`getopt -o hHt:T:c:p: --long help,rand,tmin:,tmax:,d:,D: \
+temp=`getopt -o hHt:T:c:p:d:D: --long help,rand,tmin:,tmax:,last: \
      -n 'last_laser_iov' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -52,6 +51,8 @@ help(){
 
  --tmax T     stop IOV at T (unix time)
 
+ --last N     select latest N IOVs
+
  --rand       when used with prescale, select random IOVs (uniform distribution)
 
  -H           display IOV start time in a human readable format
@@ -62,6 +63,8 @@ EOF
 
 }
 
+unset last
+
 while true; do
      case "$1" in
          -H) date_format=human; shift;;
@@ -69,15 +72,16 @@ while true; do
 	 -c) LAS_DBCONNET=$2; shift 2;;
          -t) LAS_LTAG=$2; shift 2;;
          -T) LAS_GTAG=$2; shift 2;;
-	 -d) LAS_PLOTDIR=$2; shift 2;;
+	 -d) LAS_HISTDIR=$2; shift 2;;
 	 -D) LAS_DUMPDIR=$2; shift 2;;
 	 -p) presc=$2; shift 2;;
          --tmin) tmin=$2; shift 2;;
-         --tmax) tmax=$2l shift 2;;
+         --tmax) tmax=$2; shift 2;;
+	 --last) last=$2; shift 2;;
          --rand) dorand=1; shift;;
          --) shift; break;;
          *) echo "Internal error!"; exit 1;;
-     esac
+     esac	
  done
 
 if [ -n "$LAS_LTAG" ]; then
@@ -88,6 +92,7 @@ fi
 
 mkdir -p "$LAS_HISTDIR"
 mkdir -p "$LAS_DUMPDIR"
+export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
 
 d="`pwd`"
 cd "$CODEDIR"
@@ -101,9 +106,14 @@ trap "[ -d $tmpdir ] && rm -r $tmpdir; exit" INT TERM EXIT
 
 echo "CMSSW will be run in $tmpdir"
 
-$mydir/gen_iov_list -p $presc > iov_time.txt
+GEN_IOV_OPT=
+[ -n "$last" ] && GEN_IOV_OPT="--last $last"
+
+$mydir/gen_iov_list --tmin $tmin --tmax $tmax -p $presc $GEN_IOV_OPT > iov_time.txt
 
 gzip -c iov_time.txt > $LAS_HISTDIR/iov_time.txt.gz
+
+export MAX_EVENTS=`wc -l iov_time.txt | awk '{print $1}'`
 
 cmsRun $CMSSW_CFG
 
