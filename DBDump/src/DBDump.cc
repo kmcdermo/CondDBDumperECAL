@@ -13,7 +13,7 @@
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.10 2011/08/02 21:16:28 ecalmon Exp $
+// $Id: DBDump.cc,v 1.11 2011/08/02 22:49:56 ecalmon Exp $
 //
 //
 
@@ -172,7 +172,7 @@ class DBDump : public edm::EDAnalyzer {
       // all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
       const static int nq_ = 97 + netabins_;
 	const static int qetaoffs_ = 97;
-      Quantile q_[nq_];
+      Quantile<int> q_[nq_];
       char qname_[nq_][32];
 
 };
@@ -379,16 +379,16 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 // 				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
 
                                 histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
-                                q_[0].fill(p2);
+                                q_[0].fill(p2, iid);
                                 if (id.subdetId() == EcalBarrel) {
-                                        if (EBDetId(id).ieta() < 0) q_[2].fill(p2);
-                                        else                        q_[3].fill(p2);
+                                        if (EBDetId(id).ieta() < 0) q_[2].fill(p2, iid);
+                                        else                        q_[3].fill(p2, iid);
                                 } else {
-                                        if (EEDetId(id).zside() < 0) q_[1].fill(p2);
-                                        else                         q_[4].fill(p2);
+                                        if (EEDetId(id).zside() < 0) q_[1].fill(p2, iid);
+                                        else                         q_[4].fill(p2, iid);
                                 }
-                                q_[5 + iLM - 1].fill(p2);
-				q_[qetaoffs_ + etabin(eta) ].fill(p2);
+                                q_[5 + iLM - 1].fill(p2, iid);
+				q_[qetaoffs_ + etabin(eta) ].fill(p2, iid);
                         }
                 }
        
