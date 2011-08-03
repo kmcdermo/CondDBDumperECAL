@@ -88,11 +88,14 @@ void gplot(TFile * f, char * gname, char * title = 0)
 int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root")
 {
     gROOT->SetStyle("Plain");
+    gStyle->SetPalette(1);
     gStyle->SetTitleFont(42, "XYZ");
     gStyle->SetTitleSize(0.055, "XYZ");
     gStyle->SetTitleOffset(.75, "Y");
     gStyle->SetLabelFont(42, "XYZ");
     gStyle->SetLabelSize(0.055, "XYZ");
+
+    gStyle->SetTimeOffset(0);
 
     gStyle->SetPadTopMargin(0.05);
     gStyle->SetPadBottomMargin(0.13);
@@ -100,7 +103,6 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     gStyle->SetPadRightMargin(0.26);
 
     //gStyle->SetOptTitle(1);
-    gStyle->SetPalette(1);
 
     printf("opening file %s\n", filename);
     TFile * fin = TFile::Open(filename);
