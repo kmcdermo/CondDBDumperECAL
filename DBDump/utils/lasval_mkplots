@@ -1,0 +1,126 @@
+#/bin/bash
+
+myself="`readlink -f "$0"`"
+mydir="`dirname "$myself"`"
+
+CODEDIR=$mydir
+CMSSW_CFG=$mydir/dbdump_cfg.py
+export LAS_DBCONNECT=${LAS_DBCONNET:-frontier://FrontierProd/CMS_COND_311X_ECAL_LASP}
+export LAS_GTAG=GR_R_42_V19
+export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
+LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
+export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
+export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
+presc=200
+
+DATE=`date +%F-%H:%M`
+
+# Note that we use `"$@"' to let each command-line parameter expand to a
+# separate word. The quotes around `$@' are essential!
+# We need TEMP as the `eval set --' would nuke the return value of getopt.
+temp=`getopt -o hHt:T:c:p: --long help,rand,tmin:,tmax:,d:,D: \
+     -n 'last_laser_iov' -- "$@"`
+
+if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
+
+    # Note the quotes around `$TEMP': they are essential!
+eval set -- "$temp"
+ 
+
+help(){
+    fmt <<EOF
+ 
+ Usage: lasval_mkplots [OPTION]
+ 
+ Produces validation plots of ECAL laser correction.
+
+ -h --help    display this help
+
+ -c DBCONNECT specify condition database connection string (default: $LAS_DBCONNECT)
+
+ -t TAG       specify condition local tag
+
+ -T TAG       specify conditionglobal tag
+
+ -p N         specify an IOV prescale value (default: 1, no prescale)
+
+ -d DIR       specify destination directory for the plots (default: $LAS_PLOTDIR)
+
+ -D DIR       specify destination directory for correction dumps (default: $LAS_DUMPDIR)
+
+ --tmin T     starts IOV after T (unix time)
+
+ --tmax T     stop IOV at T (unix time)
+
+ --rand       when used with prescale, select random IOVs (uniform distribution)
+
+ -H           display IOV start time in a human readable format
+
+ Authors: F. Ferri and Ph. Gras. CEA/Salcay
+ 
+EOF
+
+}
+
+while true; do
+     case "$1" in
+         -H) date_format=human; shift;;
+         -h|--help) help; exit 0;;
+	 -c) LAS_DBCONNET=$2; shift 2;;
+         -t) LAS_LTAG=$2; shift 2;;
+         -T) LAS_GTAG=$2; shift 2;;
+	 -d) LAS_PLOTDIR=$2; shift 2;;
+	 -D) LAS_DUMPDIR=$2; shift 2;;
+	 -p) presc=$2; shift 2;;
+         --tmin) tmin=$2; shift 2;;
+         --tmax) tmax=$2l shift 2;;
+         --rand) dorand=1; shift;;
+         --) shift; break;;
+         *) echo "Internal error!"; exit 1;;
+     esac
+ done
+
+if [ -n "$LAS_LTAG" ]; then
+   TAG_OPT="-t $LAS_LTAG"
+else
+   TAG_OPT="-T $LAS_GTAG"
+fi
+
+mkdir -p "$LAS_HISTDIR"
+mkdir -p "$LAS_DUMPDIR"
+
+d="`pwd`"
+cd "$CODEDIR"
+eval `scramv1 runtime -sh`
+cd "$d"
+
+tmpdir="`mktemp -d`"
+cd "$tmpdir"
+
+trap "[ -d $tmpdir ] && rm -r $tmpdir; exit" INT TERM EXIT
+
+echo "CMSSW will be run in $tmpdir"
+
+$mydir/gen_iov_list -p $presc > iov_time.txt
+
+gzip -c iov_time.txt > $LAS_HISTDIR/iov_time.txt.gz
+
+cmsRun $CMSSW_CFG
+
+cd "$LAS_HISTDIR"
+
+root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
+
+sed "s/%GTAG%/$LAS_GTAG/
+s/%LTAG%/$LAS_TAG/
+s/%DATE%/$DATE/
+s/%PRESC%/$presc/
+" < $mydir/webtemplate.html > "$LAS_HISTDIR/index.html"
+
+cp "$mydir/style.css" "$LAS_HISTDIR"
+
+echo "Histograms written in: $LAS_HISTDIR"
+
+URL=`echo $LAS_HISTDIR | sed -n 's@/afs/cern.ch/user/e/ecalmon/www/@http://www.cern.ch/ecalmon/@p'`
+
+[ -n "$URL" ] && echo "    $URL"
