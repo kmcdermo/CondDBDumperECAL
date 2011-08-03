@@ -11,7 +11,7 @@ export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
 export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
 export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
-presc=200
+presc=1
 
 DATE=`date +%F-%H:%M`
 
@@ -112,7 +112,7 @@ cd "$LAS_HISTDIR"
 root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
 
 sed "s/%GTAG%/$LAS_GTAG/
-s/%LTAG%/$LAS_TAG/
+s/%LTAG%/$LAS_LTAG/
 s/%DATE%/$DATE/
 s/%PRESC%/$presc/
 " < $mydir/webtemplate.html > "$LAS_HISTDIR/index.html"
