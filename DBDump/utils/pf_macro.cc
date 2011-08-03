@@ -4,6 +4,7 @@
 
 #include "drawGraphEnv.C"
 #include "tdrstyle.C"
+#include "TMath.h"
 
 void pf_macro(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root"){
   all(filename);
@@ -42,18 +43,19 @@ void gplot(TFile * f, char * gname, char * title = 0)
     TGraphAsymmErrors * g = 0;
     TH1 * gg = 0;
 
-    TLatex  * t = new TLatex(0.8, 0.8, title);
+    TLatex  * t = new TLatex(0.87, 0.8, title);
+    t->SetTextAlign(21);
     t->SetNDC();
     t->SetTextFont(42);
-    t->SetTextSize(0.08);
+    t->SetTextSize(0.06);
     TLegend * l = new TLegend(0.775, 0.13, 0.95, 0.13 + 0.35);
 
     for (int i = 0; i < sizeof(nfrac)/sizeof(char*); ++i) {
         sprintf(str, "%s_%s", gname, nfrac[i]);
-        printf("--> %s\n", str);
+	//        printf("--> %s\n", str);
         //g = (TGraphAsymmErrors*)gDirectory->Get(str);
         g = (TGraphAsymmErrors*)f->Get(str);
-        printf("--> %p\n", g);
+	//        printf("--> %p\n", g);
         g->SetMarkerStyle(20);
         g->SetMarkerSize(.5);
         g->SetFillColor(ncol[i]);
@@ -109,5 +111,26 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     gplot(fin, "history_p2_EB-", "EB-");
     gplot(fin, "history_p2_EB+", "EB+");
     gplot(fin, "history_p2_EE+", "EE+");
+
+
+    char buf1[256];
+    char buf2[256];
+    for(int i=1; i <= 92; ++i){
+      sprintf(buf1, "LM%02d", i);
+      sprintf(buf2, "history_p2_%s", buf1);
+      gplot(fin, buf2, buf1);
+    }
+    
+    const int netabins = 20;
+    const float deta = 2*2.964 / netabins;
+    for(int i=1; i <= 20; ++i){
+      float etamin = -2.964 + (i-1) * deta;
+      float etamax = etamin + deta;
+      etamin = TMath::Nint(etamin  * 100) / 100.;
+      etamax = TMath::Nint(etamax  * 100) / 100.;
+      sprintf(buf1, "%.2g < eta < %.2g", etamin, etamax);
+      sprintf(buf2, "history_p2_eta%02d", i);
+      gplot(fin, buf2, buf1);
+    }
 }
 
