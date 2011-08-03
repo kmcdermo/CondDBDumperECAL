@@ -60,8 +60,8 @@ void gplot(TFile * f, char * gname, char * title = 0)
         g->SetMarkerStyle(20);
         g->SetMarkerSize(.5);
         g->SetFillColor(ncol[i]);
-        //draw(g, i == 0 ? "ape3" : "e3");
-        if (i != 3) draw(g, i == 0 ? "ape3" : "e3");
+        //draw(g, i == 0 ? "ae3" : "e3");
+        if (i != 3) draw(g, i == 0 ? "ae3" : "e3");
         else {
             drawGraphEnv(g, 0.1, false, 7, 2, 1, false, &gg);
         }
@@ -72,7 +72,7 @@ void gplot(TFile * f, char * gname, char * title = 0)
         //g->GetYaxis()->SetRangeUser(0.5, 1.15);
         gPad->SetTicks();
         //if (title) g->SetTitle(title);
-        if (i == 0) draw(g, i == 0 ? "ape3" : "e3");
+        if (i == 0) draw(g, i == 0 ? "ae3" : "e3");
         if (i == 0) l->AddEntry(g, "median", "l");
         l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
     }
@@ -95,12 +95,12 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     gStyle->SetLabelFont(42, "XYZ");
     gStyle->SetLabelSize(0.055, "XYZ");
 
-    gStyle->SetTimeOffset(0);
-
     gStyle->SetPadTopMargin(0.05);
     gStyle->SetPadBottomMargin(0.13);
     gStyle->SetPadLeftMargin(0.10);
     gStyle->SetPadRightMargin(0.26);
+
+    gStyle->SetTimeOffset(0);
 
     //gStyle->SetOptTitle(1);
 
