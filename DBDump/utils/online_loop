@@ -1,0 +1,11 @@
+#!/bin/bash
+myself="`readlink -f "$0"`"
+mydir="`dirname "$myself"`"
+
+last_iovs=10
+cycle=60
+
+while true; do
+	"$mydir"/lasval_mkplots --last $last_iovs -d /afs/cern.ch/user/e/ecalmon/www/online
+	sleep $cycle
+done
