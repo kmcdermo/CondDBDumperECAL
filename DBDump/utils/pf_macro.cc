@@ -2,6 +2,7 @@
 //#include "TFile.h"
 //#include "TGraphAsymmErrors.h"
 
+#include "autozoom.C"
 #include "drawGraphEnv.C"
 #include "tdrstyle.C"
 #include "TMath.h"
@@ -36,7 +37,7 @@ void draw(T* h, const char* opt = "")
 void gplot(TFile * f, char * gname, char * title = 0)
 {
     const char * nfrac[] = { "3S", "2S", "1S", "E" };
-    const char * nleg[] = { "99.7% of points", "95.4% of points", "68.2% of points", "extrema #times 0.1" };
+    const char * nleg[] = { "99.7% of channels", "95.4% of channels", "68.2% of channels", "extrema #times 0.1" };
     //const int ncol[] = { kOrange + 1, TColor::GetColor("#ffff00"), TColor::GetColor("#33ee33"), 0 };
     const int ncol[] = { kOrange + 1, TColor::GetColor("#ffff00"), 8, 0 };
     char str[64];
@@ -67,8 +68,8 @@ void gplot(TFile * f, char * gname, char * title = 0)
         if (i == 3) draw(g, "xl");
         g->GetXaxis()->SetTimeDisplay(1);
         g->GetXaxis()->SetTitle("time");
-        g->GetYaxis()->SetTitle("laser correction");
-        g->GetYaxis()->SetRangeUser(0.5, 1.15);
+        g->GetYaxis()->SetTitle("transparency change");
+        //g->GetYaxis()->SetRangeUser(0.5, 1.15);
         gPad->SetTicks();
         //if (title) g->SetTitle(title);
         if (i == 0) draw(g, i == 0 ? "ape3" : "e3");
@@ -99,6 +100,7 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     gStyle->SetPadRightMargin(0.26);
 
     //gStyle->SetOptTitle(1);
+    gStyle->SetPalette(1);
 
     printf("opening file %s\n", filename);
     TFile * fin = TFile::Open(filename);
@@ -131,6 +133,21 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
       sprintf(buf1, "%.2g < eta < %.2g", etamin, etamax);
       sprintf(buf2, "history_p2_eta%02d", i);
       gplot(fin, buf2, buf1);
+    }
+
+    TProfile2D * pm = (TProfile2D*)gDirectory->Get("EBprof2_transpCorr_week");
+    TIter next(gDirectory->GetListOfKeys());
+    int n, t;
+    while(1) {
+        TObject * o = next();
+        if (o == 0) break;
+        if ((n = sscanf(o->GetName(), "EBprof2_transpCorr_week_%d", &t)) == 1) {
+            printf("%s\n", o->GetName());
+            TProfile2D * p = (TProfile2D*)gDirectory->Get(o->GetName());
+            autozoom((TH2F*)p);
+            p->Draw("colz");
+            gPad->Print((std::string(o->GetName()) + ".png").c_str());
+        }
     }
 }
 
