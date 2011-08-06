@@ -2,10 +2,22 @@
 myself="`readlink -f "$0"`"
 mydir="`dirname "$myself"`"
 
-last_iovs=10
-cycle=60
+last_iovs=250
+cycle=3600
+
+trap "makeitnow=1" SIGHUP
 
 while true; do
-	"$mydir"/lasval_mkplots --last $last_iovs -d /afs/cern.ch/user/e/ecalmon/www/online
-	sleep $cycle
+     /data1/ecalmon/auth
+     t=`date +%s`
+     "$mydir"/lasval_mkplots --last $last_iovs -d /afs/cern.ch/user/e/ecalmon/www/prompt
+     makeitnow=0
+     t1=`date +%s`
+     dt=$((cycle+t-t1))
+     echo "Sleeping $dt s... Send a SIGHUP to wake me up..."
+     while [ $dt -gt 0 -a $makeitnow!=1 ]; do
+         sleep 10
+         t1=`date +%s`
+         dt=$((cycle+t-t1))
+     done
 done

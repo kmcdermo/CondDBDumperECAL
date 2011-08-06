@@ -5,14 +5,14 @@ tmin=0
 tmax=$((2**32-1))
 dorand=0
 
-LAS_DBCONNECT=${LAS_DBCONNET:-frontier://FrontierProd/CMS_COND_311X_ECAL_LASP}
+LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP}
 LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 
 # Note that we use `"$@"' to let each command-line parameter expand to a
 # separate word. The quotes around `$@' are essential!
 # We need TEMP as the `eval set --' would nuke the return value of getopt.
 temp=`getopt -o hHt:T:c:p: --long help,rand,tmin:,tmax:,last: \
-     -n 'last_laser_iov' -- "$@"`
+     -n gen_iov_list -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
 
@@ -57,7 +57,7 @@ while true; do
      case "$1" in
          -H) date_format=human; shift;;
          -h|--help) help; exit 0;;
-	 -c) LAS_DBCONNET=$2; shift 2;;
+	 -c) LAS_DBCONNECT=$2; shift 2;;
          -t) LAS_LTAG=$2; shift 2;;
          -T) LAS_GTAG=$2; shift 2;;
 	 -p) presc=$2; shift 2;;
@@ -103,5 +103,5 @@ cmscond_list_iov \
 -c $LAS_DBCONNECT \
 -P/afs/cern.ch/cms/DB/conddb \
 $TAG_OPT \
-| grep '^56' | tac | tail -n $last | awk "{ print \$1 / 2^32}"  | date_format
+| grep '^56' | tac | head -n $last | awk "{ print \$1 / 2^32}"  | date_format
 fi
