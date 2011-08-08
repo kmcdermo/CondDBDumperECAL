@@ -51,7 +51,7 @@ EOF
 
 } 
 
-unset last
+last=-1
 
 while true; do
      case "$1" in
@@ -86,22 +86,15 @@ date_format(){
     fi
 }
 
-if [ -z "$last" ]; then	
 cmscond_list_iov \
 -c $LAS_DBCONNECT \
 -P/afs/cern.ch/cms/DB/conddb \
 $TAG_OPT \
-| grep '^[[:digit:]]' | awk "BEGIN {inext=$presc} 
-{ a = \$1 / 2^32; 
-    if(a >= $tmin && a <= $tmax && i == inext) { 
-	    print a; i=0; 
-	    if( $dorand !=0) inext = int(2 * rand() * $presc); 
-	} }
-{i=i+1;}"  | date_format
-else
-cmscond_list_iov \
--c $LAS_DBCONNECT \
--P/afs/cern.ch/cms/DB/conddb \
-$TAG_OPT \
-| grep '^56' | tac | head -n $last | awk "{ print \$1 / 2^32}"  | date_format
-fi
+| grep '^[[:digit:]]\+' | tac  | awk "BEGIN {inext=$presc} 
+  { a = int(\$1 / 2^32); 
+      if(($last < 0 || n < $last) && a >= $tmin && a <= $tmax && i == inext) { 
+  	    print a; i=0; 
+  	    if( $dorand !=0) inext = int(2 * rand() * $presc); 
+  	    n = n + 1;
+  	} }
+  {i=i+1;}"  | date_format
