@@ -18,17 +18,20 @@ if not lTag:
     #lTag = 'EcalChannelStatus_CRAFT_offline'
     #lTag = 'EcalLaserAPDPNRatios_online'
     #lTag = 'EcalLaserAPDPNRatios_V3_160400_172308_110802'
-    lTag = 'EcalLaserAPDPNRatios_last'
+    lTag = 'EcalLaserAPDPNRatios_V4_172400_172619_110804'
+    #lTag = 'EcalLaserAPDPNRatios_last'
 
 dbconnect = os.environ.get('LAS_DBCONNECT')
 if not dbconnect:
     dbconnect = 'frontier://FrontierProd/CMS_COND_311X_ECAL_LASP'
 
+dbconnect = 'frontier://FrontierPrep/CMS_COND_ECAL'
+
 plotdir = os.environ.get('LAS_PLOTDIR')
 if not plotdir:
     plotdir = '.'
 
-dumpdir = '/data/ecalmon/'
+dumpdir = './'
 
 #process.load("CalibCalorimetry.EcalTrivialCondModules.EcalTrivialCondRetriever_cfi")
 
@@ -103,11 +106,12 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
     #####connect = cms.string('frontier://cms_conditions_data/CMS_COND_31X_ECAL'),
     #####connect = cms.string('oracle://cms_orcon_prod/CMS_COND_31X_ECAL'),
     ##connect = cms.string('frontier://FrontierProd/CMS_COND_311X_ECAL_LAS'),
-    connect = cms.string(dbconnect),
-    ###connect = cms.string('sqlite:////tmp/ferriff/model_V3_lumiOK_160400_172308_110802.db'),
+    ##connect = cms.string(dbconnect),
+    #####connect = cms.string('sqlite:////tmp/ferriff/model_V3_lumiOK_160400_172308_110802.db'),
+    ##connect = cms.string('sqlite:////tmp/ferriff/model_V3_160400_172308_110802.db'),
     ##connect = cms.string('sqlite:///tmp/ferriff/model_V4_160400_172308_110802.db'),
     ##connect = cms.string('oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP'),
-    #####connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL_LT'),
+    connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL'),
     ###connect = cms.string('oracle://cms_orcoff_prep/CMS_COND_ECAL_LT'),
     # at P5
     ##connect = cms.string('oracle://cms_orcon_prod/CMS_COND_ECAL_LT'),
@@ -118,7 +122,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
 #process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0/src/CondTools/Ecal/python'
 
 #process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(2628) )
-process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(32) )
 
 process.source = cms.Source("EmptySource",
         firstRun = cms.untracked.uint32(96888),
@@ -136,8 +140,8 @@ process.demo = cms.EDAnalyzer('DBDump',
         outPlot = cms.bool(True),
         outDump = cms.bool(True),
         outDumpFile = cms.string(dumpdir + '/out_dump_' + gTag + '_' + lTag + '.log'),
-        outPlotFile = cms.string(plotdir + '/out_plot_' + gTag + '_' + lTag + '.root'),
-        #outPlotFile = cms.string('/tmp/ferriff/out_plot_' + 'EcalLaserAPDPNRatios_V4_160400_172308_110802' + '.root'),
+        #outPlotFile = cms.string(plotdir + '/out_plot_' + gTag + '_' + lTag + '.root'),
+        outPlotFile = cms.string('/tmp/ferriff/out_plot_' + 'EcalLaserAPDPNRatios_V3_160400_172308_110802' + '_bis.root'),
         dumpIC         = cms.bool(False),
         plotIC         = cms.bool(False),
         dumpTC         = cms.bool(False),
@@ -158,6 +162,5 @@ process.demo = cms.EDAnalyzer('DBDump',
 ####process.TFileService = cms.Service("TFileService",
 ####        fileName = cms.string('out_plot.root')
 ####)
-
 
 process.p = cms.Path(process.demo)

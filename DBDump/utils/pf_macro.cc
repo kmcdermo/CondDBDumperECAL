@@ -8,8 +8,8 @@
 //#include "tdrstyle.C"
 #include "TMath.h"
 
-void pf_macro(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root"){
-  all(filename);
+void pf_macro(const char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root", const char * img_suffix = "eps"){
+  all(filename, img_suffix);
 }
 
 void ovfIntoBins(TH1* h){
@@ -44,7 +44,7 @@ void draw(T* h, const char* opt = "")
   h->Draw(opt);
 }
 
-void gplot(TFile * f, char * gname, char * title = 0)
+void gplot(TFile * f, char * gname, char * title = 0, const char * img_suffix = "eps")
 {
     const char * nfrac[] = { "3S", "2S", "1S", "E" };
     const char * nleg[] = { "99.7% of channels", "95.4% of channels", "68.2% of channels", "extrema #times 0.1" };
@@ -93,7 +93,7 @@ void gplot(TFile * f, char * gname, char * title = 0)
     l->SetTextSize(0.0475);
     l->Draw();
     t->Draw();
-    gPad->Print((std::string(gname) + ".eps").c_str());
+    gPad->Print((std::string(gname) + "." + img_suffix).c_str());
     //        gPad->Print("anim.gif+10");
 }
 
@@ -141,7 +141,7 @@ TH1* getErrorHist(const TH1* h){
   return he;
 }
 
-void drawNormP2Hist(){
+void drawNormP2Hist(const char * img_suffix = "eps"){
    TH1* hp2norm = (TH1*) gDirectory->Get("distr_eta_normalised_p2");
     if(hp2norm){
       hp2norm->GetXaxis()->SetTitle("tranps./<transp.>_{#eta}");
@@ -193,14 +193,14 @@ void drawNormP2Hist(){
       t->DrawLatex(0.87, 0.74, "normalized to the");
       t->DrawLatex(0.87, 0.68, "eta-ring average");
 
-      c->Print(TString(hp2norm->GetName()) + ".eps");
+      c->Print(TString(hp2norm->GetName()) + "." + img_suffix);
     }
     //restore our default style:
     setStyle();
 }
 
-void drawNormP2Map(){
-  const char* names[] = { "EEprof2_nZ_transpCorrNorm", "EBprof2_transpCorrNorm", "EEprof2_pZ_transpCorrNorm"};
+void drawNormP2Map(const char * img_suffix){
+  const char* names[] = { "EEprof2_nZ_p2Norm", "EBprof2_p2Norm", "EEprof2_pZ_p2Norm"};
   const char* part[]  = { "EE-", "EB", "EE+" };
   TCanvas* c = new TCanvas("prof", "prof", 800, 400);
   c->SetLogz();
@@ -249,12 +249,12 @@ void drawNormP2Map(){
       t->DrawLatex(0.87, 0.78, "eta-ring average");
       t->DrawLatex(0.87, 0.69, type[j]);
       t2->DrawLatex(0.9, 0.2, part[i]);
-      c->Print(TString(h2[j]->GetName()) + ".eps");
+      c->Print(TString(h2[j]->GetName()) + "." + img_suffix);
     }
   } 
 }
 
-int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root")
+int all(const char * filename, const char * img_suffix)
 {
 
   setStyle();
@@ -262,20 +262,20 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
   printf("opening file %s\n", filename);
   TFile * fin = TFile::Open(filename);
 
-  drawNormP2Hist();
+  drawNormP2Hist(img_suffix);
 
-  drawNormP2Map();
+  drawNormP2Map(img_suffix);
 
   TCanvas * c = new TCanvas("history", "history", 800, 400);
   if (!fin || fin->IsZombie()) {
     return 0;
   }
   
-  gplot(fin, "history_p2_All", "All ECAL");
-  gplot(fin, "history_p2_EE-", "EE-");
-  gplot(fin, "history_p2_EB-", "EB-");
-  gplot(fin, "history_p2_EB+", "EB+");
-  gplot(fin, "history_p2_EE+", "EE+");
+  gplot(fin, "history_p2_All", "All ECAL", img_suffix);
+  gplot(fin, "history_p2_EE-", "EE-", img_suffix);
+  gplot(fin, "history_p2_EB-", "EB-", img_suffix);
+  gplot(fin, "history_p2_EB+", "EB+", img_suffix);
+  gplot(fin, "history_p2_EE+", "EE+", img_suffix);
     
     
     char buf1[256];
@@ -283,7 +283,7 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
     for(int i=1; i <= 92; ++i){
       sprintf(buf1, "LM%02d", i);
       sprintf(buf2, "history_p2_%s", buf1);
-      gplot(fin, buf2, buf1);
+      gplot(fin, buf2, buf1, img_suffix);
     }
     
     const int netabins = 20;
@@ -295,23 +295,23 @@ int all(char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_onl
       etamax = TMath::Nint(etamax  * 100) / 100.;
       sprintf(buf1, "%.2g < eta < %.2g", etamin, etamax);
       sprintf(buf2, "history_p2_eta%02d", i);
-      gplot(fin, buf2, buf1);
+      gplot(fin, buf2, buf1, img_suffix);
     }
 
     //         gPad->Print("anim.gif++");
 
-    TProfile2D * pm = (TProfile2D*)gDirectory->Get("EBprof2_transpCorr_week");
+    TProfile2D * pm = (TProfile2D*)gDirectory->Get("EBprof2_p2_week");
     TIter next(gDirectory->GetListOfKeys());
     int n, t;
     while(1) {
         TObject * o = next();
         if (o == 0) break;
-        if ((n = sscanf(o->GetName(), "EBprof2_transpCorr_week_%d", &t)) == 1) {
+        if ((n = sscanf(o->GetName(), "EBprof2_p2_week_%d", &t)) == 1) {
             printf("%s\n", o->GetName());
             TProfile2D * p = (TProfile2D*)gDirectory->Get(o->GetName());
             autozoom((TH2F*)p);
             p->Draw("colz");
-            gPad->Print((std::string(o->GetName()) + ".png").c_str());
+            gPad->Print((std::string(o->GetName()) + "." + img_suffix).c_str());
         }
     }
 }
