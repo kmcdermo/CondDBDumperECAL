@@ -17,7 +17,7 @@ class EcalLaserPlotter {
 
                 void fill(const EcalLaserAPDPNRatios &, time_t);
                 void printSummary();
-                void save(const char * filename = "ecallaserplotter.root");
+                void save(const char * filename = "ecallaserplotter.root", const char * opt = "RECREATE");
 
         private:
                 time_t il_;
@@ -124,9 +124,9 @@ void EcalLaserPlotter::reset_quantile()
         for (int i = 0; i < nq_; ) q_[i++].reset();
 }
 
-void EcalLaserPlotter::save(const char * filename)
+void EcalLaserPlotter::save(const char * filename, const char * opt)
 {
-        hm_.save(filename);
+        hm_.save(filename, opt);
 }
 
 int EcalLaserPlotter::etabin(float eta)
