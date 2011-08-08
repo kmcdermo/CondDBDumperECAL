@@ -1,3 +1,6 @@
+#ifndef __QUANTILE
+#define __QUANTILE
+
 #include <vector>
 #include <limits>
 #include <algorithm>
@@ -75,4 +78,4 @@ class Quantile{
     }
 };
 
-  
+#endif

@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.12 2011/08/03 18:21:39 ecalmon Exp $
+// $Id: DBDump.cc,v 1.13 2011/08/06 12:18:24 pgras Exp $
 //
 //
 
@@ -66,6 +66,7 @@ Implementation:
 
 #include "HistoManager.h"
 #include "Quantile.h"
+#include "EcalLaserPlotter.h"
 
 #include "TProfile.h"
 #include "TProfile2D.h"
@@ -74,118 +75,123 @@ Implementation:
 #include "TGraph.h"
 #include "TGraphAsymmErrors.h"
 
-
 class DBDump : public edm::EDAnalyzer {
-	public:
-		explicit DBDump(const edm::ParameterSet&);
-		~DBDump();
-		void setDumpFalse();
-		void setPlotFalse();
+   public:
+      explicit DBDump(const edm::ParameterSet&);
+      ~DBDump();
+      void setDumpFalse();
+      void setPlotFalse();
 
-	private:
-		virtual void beginJob() ;
-		virtual void analyze(const edm::Event&, const edm::EventSetup&);
-		//virtual void beginRun(const edm::Event&, const edm::EventSetup&);
-		//virtual void endRun(const edm::Event&, const edm::EventSetup&);
-		virtual void endJob() ;
+   private:
+      virtual void beginJob() ;
+      virtual void analyze(const edm::Event&, const edm::EventSetup&);
+      //virtual void beginRun(const edm::Event&, const edm::EventSetup&);
+      //virtual void endRun(const edm::Event&, const edm::EventSetup&);
+      virtual void endJob() ;
 
-		int getLMNumber(DetId const & xid) const;
-		void printSummary();
+      int getLMNumber(DetId const & xid) const;
+      void printSummary();
 
-		int etabin(float eta){
-			const float etamin  =  -2.964;
-			const float etamax  =  2.964;
-			//		if(!(etamin < eta && eta < etamax)){ printf("---> %f\n", eta); }
-			assert(etamin < eta && eta < etamax);
-			return int((eta - etamin) / (etamax - etamin) * netabins_);
-		}
+	int etabin(float eta){
+		const float etamin  =  -2.964;
+		const float etamax  =  2.964;
+		//		if(!(etamin < eta && eta < etamax)){ printf("---> %f\n", eta); }
+		assert(etamin < eta && eta < etamax);
+		return int((eta - etamin) / (etamax - etamin) * netabins_);
+	}
 
-		// output files
-		bool outPlot_;
-		bool outDump_;
-		std::string outDumpFile_;
-		std::string outPlotFile_;
-		std::ofstream ofile_;
+      // output files
+      bool outPlot_;
+      bool outDump_;
+      std::string outDumpFile_;
+      std::string outPlotFile_;
+      std::ofstream ofile_;
 
-		// inter-calibration constants
-		bool dumpIC_;
-		bool plotIC_;
-		edm::ESHandle<EcalIntercalibConstants> ic_;
-		edm::ESHandle<EcalIntercalibConstantsMC> icMC_;
+      // inter-calibration constants
+      bool dumpIC_;
+      bool plotIC_;
+      edm::ESHandle<EcalIntercalibConstants> ic_;
+      edm::ESHandle<EcalIntercalibConstantsMC> icMC_;
 
-		// time-calibration constants
-		bool dumpTC_;
-		bool plotTC_;
-		edm::ESHandle<EcalTimeCalibConstants> tc_;
+      // time-calibration constants
+      bool dumpTC_;
+      bool plotTC_;
+      edm::ESHandle<EcalTimeCalibConstants> tc_;
 
-		// ADCToGeV constant
-		bool dumpADCToGeV_;
-		edm::ESHandle<EcalADCToGeVConstant> adcToGeV_;
+      // ADCToGeV constant
+      bool dumpADCToGeV_;
+      edm::ESHandle<EcalADCToGeVConstant> adcToGeV_;
 
-		// laser transparency measurements
-		bool dumpTransp_;
-		bool plotTransp_;
-		edm::ESHandle<EcalLaserAPDPNRatios> apdpn_;
+      // laser transparency measurements
+      bool dumpTransp_;
+      bool plotTransp_;
+      edm::ESHandle<EcalLaserAPDPNRatios> apdpn_;
 
-		// laser transparency corrections
-		bool dumpTranspCorr_;
-		bool plotTranspCorr_;
-		edm::ESHandle<EcalLaserDbService> laser_;
+      // laser transparency corrections
+      bool dumpTranspCorr_;
+      bool plotTranspCorr_;
+      edm::ESHandle<EcalLaserDbService> laser_;
 
-		// channel status map
-		bool dumpChStatus_;
-		bool plotChStatus_;
-		edm::ESHandle<EcalChannelStatus> chStatus_;
+      // channel status map
+      bool dumpChStatus_;
+      bool plotChStatus_;
+      edm::ESHandle<EcalChannelStatus> chStatus_;
 
-		// pedestals
-		bool dumpPedestals_;
-		bool plotPedestals_;
-		edm::ESHandle<EcalPedestals> ped_;
+      // pedestals
+      bool dumpPedestals_;
+      bool plotPedestals_;
+      edm::ESHandle<EcalPedestals> ped_;
 
-		// gain ratios
-		bool dumpGainRatios_;
-		bool plotGainRatios_;
-		edm::ESHandle<EcalGainRatios> gr_;
+      // gain ratios
+      bool dumpGainRatios_;
+      bool plotGainRatios_;
+      edm::ESHandle<EcalGainRatios> gr_;
 
-		HistoManager histos;
+      HistoManager histos;
 
-		edm::ESHandle<CaloGeometry> caloGeometry_;
-		const CaloGeometry * geo_;
+      edm::ESHandle<CaloGeometry> caloGeometry_;
+      const CaloGeometry * geo_;
 
-		std::vector<DetId> ecalDetIds_;
+      std::vector<DetId> ecalDetIds_;
 
-		// number of IOVs, first and last
-		int niov_;
-		time_t iov_first_;
-		time_t iov_last_;
+      EcalLaserPlotter lp_;
 
-		// job start and stop time
-		time_t jstart_;
-		time_t jstop_;
+      // number of IOVs, first and last
+      int niov_;
+      time_t iov_first_;
+      time_t iov_last_;
 
-		time_t il_;
-		char weekly_[128];
+      // job start and stop time
+      time_t jstart_;
+      time_t jstop_;
 
-		//number of bins for plots of corrections in an eta ring
-		const static int netabins_ = 20;
+      time_t il_;
+      char weekly_[128];
 
-		// all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
-		const static int nq_ = 97 + netabins_;
-		const static int qetaoffs_ = 97;
-		Quantile<int> q_[nq_];
-		char qname_[nq_][32];
+      //number of bins for plots of corrections in an eta ring
+      const static int netabins_ = 20;
 
+      // all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
+      const static int nq_ = 97 + netabins_;
+      const static int qetaoffs_ = 97;
+      Quantile<int> q_[nq_];
+      char qname_[nq_][32];
+
+      bool first_;
+
+      FILE * fgeom;
 };
 
 
 
 DBDump::DBDump(const edm::ParameterSet& ps) :
-	niov_(0),
-	iov_first_(-1),
-	iov_last_(0),
-	jstart_(time(NULL)),
-	jstop_(0),
-	il_(0)
+        niov_(0),
+        iov_first_(-1),
+        iov_last_(0),
+        jstart_(time(NULL)),
+        jstop_(0),
+        il_(0),
+        first_(false) // do not pass if not needed
 {
 	outPlot_ = ps.getParameter<bool>("outPlot");
 	outDump_ = ps.getParameter<bool>("outDump");
@@ -297,14 +303,15 @@ void DBDump::setPlotFalse()
 
 DBDump::~DBDump()
 {
-	if (outPlot_) {
-		histos.save(outPlotFile_.c_str());
-	}
-	if (ofile_.is_open()) {
-		ofile_.close();
-	}
-	jstop_ = time(NULL);
-	printSummary();
+        if (outPlot_) {
+                histos.save(outPlotFile_.c_str());
+                lp_.save();
+        }
+        if (ofile_.is_open()) {
+                ofile_.close();
+        }
+        jstop_ = time(NULL);
+        printSummary();
 }
 
 void DBDump::printSummary()
@@ -321,255 +328,269 @@ void DBDump::printSummary()
 	void
 DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 {
-	//es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
-	es.get<CaloGeometryRecord>().get(caloGeometry_);                                                
-	geo_ = caloGeometry_.product();                                                                 
+        //es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
+        es.get<CaloGeometryRecord>().get(caloGeometry_);
+        geo_ = caloGeometry_.product();
 
-	iov_last_ = ev.time().unixTime();
-	if (iov_first_ == -1) iov_first_ = iov_last_;
+        iov_last_ = ev.time().unixTime();
+        if (iov_first_ == -1) iov_first_ = iov_last_;
 
-	if (iov_last_ - il_ > 3600 * 24 * 7) {
-		il_ = iov_last_;
-		sprintf(weekly_, "week_%ld", il_);
-	}
+        if (iov_last_ - il_ > 3600 * 24 * 7) {
+                il_ = iov_last_;
+                sprintf(weekly_, "week_%ld", il_);
+        }
 
-	bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
-	bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_ || plotTranspCorr_;
-	if (atLeastOneDump || atLeastOnePlot) {
+        bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
+        bool atLeastOnePlot = plotIC_ || plotChStatus_ || plotPedestals_ || plotTransp_ || plotTranspCorr_;
+        if (atLeastOneDump || atLeastOnePlot) {
 
-		if (dumpIC_ || plotIC_) {
-			es.get<EcalIntercalibConstantsRcd>().get(ic_);
-			es.get<EcalIntercalibConstantsRcd>().get(icMC_);
-		}
-		if (dumpChStatus_   || plotChStatus_)   es.get<EcalChannelStatusRcd>().get(chStatus_);
-		if (dumpPedestals_  || plotPedestals_)  es.get<EcalPedestalsRcd>().get(ped_);
-		if (dumpGainRatios_ || plotGainRatios_) es.get<EcalGainRatiosRcd>().get(gr_);
-		if (dumpTransp_     || plotTransp_)     es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
-		if (dumpTranspCorr_ || plotTranspCorr_) es.get<EcalLaserDbRecord>().get(laser_);
+                if (dumpIC_ || plotIC_) {
+                        es.get<EcalIntercalibConstantsRcd>().get(ic_);
+                        es.get<EcalIntercalibConstantsRcd>().get(icMC_);
+                }
+                if (dumpChStatus_   || plotChStatus_)   es.get<EcalChannelStatusRcd>().get(chStatus_);
+                if (dumpPedestals_  || plotPedestals_)  es.get<EcalPedestalsRcd>().get(ped_);
+                if (dumpGainRatios_ || plotGainRatios_) es.get<EcalGainRatiosRcd>().get(gr_);
+                if (dumpTransp_     || plotTransp_)     es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
+                if (dumpTranspCorr_ || plotTranspCorr_) es.get<EcalLaserDbRecord>().get(laser_);
 
-		// if you need to average and use the average later on...
-		if (dumpTranspCorr_ || plotTranspCorr_) {
-			for (int i = 0; i < nq_; ) q_[i++].reset();
-			for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
-				DetId id(ecalDetIds_[iid]);
-				EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-				EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
-				size_t iLM = 0;
-				itAPDPN = apdpn_->getLaserMap().find(id);
-				iLM = getLMNumber(id);
-				if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-					ts = apdpn_->getTimeMap()[iLM];
-				}
-				//float transpCorr = -1234567890.;
-				float p2  = -1234567890.;
-				float eta = 99999;
-				char name[64];
-				sprintf(name, "p2_%d", ev.time().unixTime());
-				p2 = (*itAPDPN).p2;
-				eta = geo_->getPosition(id).eta();
+                // if you need to average and use the average later on...
+                if (first_) {
+                        fgeom = fopen("detid_geom.dat", "w");
+                }
+                if (dumpTranspCorr_ || plotTranspCorr_) {
+                        lp_.fill((*apdpn_.product()), iov_last_);
+                        for (int i = 0; i < nq_; ) q_[i++].reset();
+                        for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                                DetId id(ecalDetIds_[iid]);
+                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+                                size_t iLM = 0;
+                                itAPDPN = apdpn_->getLaserMap().find(id);
+                                iLM = getLMNumber(id);
+                                if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                        ts = apdpn_->getTimeMap()[iLM];
+                                }
+                                //float transpCorr = -1234567890.;
+                                float p2  = -1234567890.;
+                                float eta = 99999;
+                                char name[64];
+                                sprintf(name, "p2_%d", ev.time().unixTime());
+                                p2 = (*itAPDPN).p2;
+                                eta = geo_->getPosition(id).eta();
+                                
+                                if (first_) {
+                                        fprintf(fgeom, "%d %f %f %f\n", id.rawId(), eta, (float)geo_->getPosition(id).phi(), (float)geo_->getPosition(id).mag());
+                                        fprintf(stdout, "%d %f %f %f\n", id.rawId(), eta, (float)geo_->getPosition(id).phi(), (float)geo_->getPosition(id).mag());
+                                }
 
-				// 				static float ebmax = 0;
-				// 				static float eemax = 0;
-				// 				static float ebmin = 0;
-				// 				static float eemin = 0;
-				// 				if(iid< 61200 && eta > ebmax) ebmax = eta;
-				// 				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
-				// 				if(iid< 61200 && eta  < ebmin) ebmin = eta;
-				// 				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
-				// 				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
+// 				static float ebmax = 0;
+// 				static float eemax = 0;
+// 				static float ebmin = 0;
+// 				static float eemin = 0;
+// 				if(iid< 61200 && eta > ebmax) ebmax = eta;
+// 				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
+// 				if(iid< 61200 && eta  < ebmin) ebmin = eta;
+// 				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
+// 				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
 
-				histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
-				q_[0].fill(p2, iid);
-				if (id.subdetId() == EcalBarrel) {
-					if (EBDetId(id).ieta() < 0) q_[2].fill(p2, iid);
-					else                        q_[3].fill(p2, iid);
-				} else {
-					if (EEDetId(id).zside() < 0) q_[1].fill(p2, iid);
-					else                         q_[4].fill(p2, iid);
-				}
-				q_[5 + iLM - 1].fill(p2, iid);
+                                histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
+                                q_[0].fill(p2, iid);
+                                if (id.subdetId() == EcalBarrel) {
+                                        if (EBDetId(id).ieta() < 0) q_[2].fill(p2, iid);
+                                        else                        q_[3].fill(p2, iid);
+                                } else {
+                                        if (EEDetId(id).zside() < 0) q_[1].fill(p2, iid);
+                                        else                         q_[4].fill(p2, iid);
+                                }
+                                q_[5 + iLM - 1].fill(p2, iid);
 				q_[qetaoffs_ + etabin(eta) ].fill(p2, iid);
-			}
-		}
+                        }
+                }
+                if (first_) {
+                        fclose(fgeom);
+                        first_ = false;
+                }
+       
+                EcalIntercalibConstantMap::const_iterator itIC;
+                EcalIntercalibConstantMap::const_iterator itICMC;
+                EcalChannelStatusMap::const_iterator itChStatus;
+                EcalPedestalsMap::const_iterator itPed;
+                EcalGainRatioMap::const_iterator itGR;
+                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
+                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
 
-		EcalIntercalibConstantMap::const_iterator itIC;
-		EcalIntercalibConstantMap::const_iterator itICMC;
-		EcalChannelStatusMap::const_iterator itChStatus;
-		EcalPedestalsMap::const_iterator itPed;
-		EcalGainRatioMap::const_iterator itGR;
-		EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-		EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
+                char ecalPart[3] = "E*";
+                //char eename[6] = "*Z:d*";
+                char eename[3] = "*Z";
 
-		char ecalPart[3] = "E*";
-		//char eename[6] = "*Z:d*";
-		char eename[3] = "*Z";
+                char str[128];
 
-		char str[128];
+                for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                        DetId id(ecalDetIds_[iid]);
 
-		for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
-			DetId id(ecalDetIds_[iid]);
+                        //  ix = ieta() for EB, ix() for EE
+                        //  iy = iphi() for EB, iy() for EE
+                        int ix = -1, iy = -1, iz = -1, r = -1;
+                        int isEB = 0;
 
-			//  ix = ieta() for EB, ix() for EE
-			//  iy = iphi() for EB, iy() for EE
-			int ix = -1, iy = -1, iz = -1, r = -1;
-			int isEB = 0;
+                        if (id.subdetId() == EcalBarrel) {
+                                ecalPart[1] = 'B';
+                                ix = EBDetId(id).ieta();
+                                iy = EBDetId(id).iphi();
+                                iz = 0;
+                                isEB = 1;
+                        } else if (id.subdetId() == EcalEndcap) {
+                                ecalPart[1] = 'E';
+                                ix = EEDetId(id).ix();
+                                iy = EEDetId(id).iy();
+                                iz = EEDetId(id).zside();
+                                r = sqrt((ix - 50) * (ix - 50) + (iy - 50) * (iy - 50));
+                                if (iz > 0) {
+                                        eename[0] = 'p';
+                                        //eename[4] = ix < 50 ? '1' : '2';
+                                } else {
+                                        eename[0] = 'n';
+                                        //eename[4] = ix < 50 ? '3' : '4';
+                                }
 
-			if (id.subdetId() == EcalBarrel) {
-				ecalPart[1] = 'B';
-				ix = EBDetId(id).ieta();
-				iy = EBDetId(id).iphi();
-				iz = 0;
-				isEB = 1;
-			} else if (id.subdetId() == EcalEndcap) {
-				ecalPart[1] = 'E';
-				ix = EEDetId(id).ix();
-				iy = EEDetId(id).iy();
-				iz = EEDetId(id).zside();
-				r = sqrt((ix - 50) * (ix - 50) + (iy - 50) * (iy - 50));
-				if (iz > 0) {
-					eename[0] = 'p';
-					//eename[4] = ix < 50 ? '1' : '2';
-				} else {
-					eename[0] = 'n';
-					//eename[4] = ix < 50 ? '3' : '4';
-				}
-			}
+                        }
 
-			if (dumpIC_ || plotIC_) {
-				itIC = ic_->find(id);
-				itICMC = icMC_->find(id);
-			}
-			if (dumpChStatus_ || plotChStatus_)     itChStatus = chStatus_->find(id);
-			if (dumpPedestals_ || plotPedestals_)   itPed = ped_->find(id);
-			if (dumpGainRatios_ || plotGainRatios_) itGR = gr_->find(id);
-			if (dumpTransp_ || plotTransp_) {
-				size_t iLM = 0;
-				itAPDPN = apdpn_->getLaserMap().find(id);
-				iLM = getLMNumber(id);
-				if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-					ts = apdpn_->getTimeMap()[iLM];
-				}
-			}
-			float transpCorr = -1234567890.;
-			if (dumpTranspCorr_ || plotTranspCorr_) {
-				transpCorr = laser_->getLaserCorrection(id, ev.time());
-			}
+                        if (dumpIC_ || plotIC_) {
+                                itIC = ic_->find(id);
+                                itICMC = icMC_->find(id);
+                        }
+                        if (dumpChStatus_ || plotChStatus_)     itChStatus = chStatus_->find(id);
+                        if (dumpPedestals_ || plotPedestals_)   itPed = ped_->find(id);
+                        if (dumpGainRatios_ || plotGainRatios_) itGR = gr_->find(id);
+                        if (dumpTransp_ || plotTransp_) {
+                                size_t iLM = 0;
+                                itAPDPN = apdpn_->getLaserMap().find(id);
+                                iLM = getLMNumber(id);
+                                if ( iLM-1 < apdpn_->getTimeMap().size() ) {
+                                        ts = apdpn_->getTimeMap()[iLM];
+                                }
+                        }
+                        float transpCorr = -1234567890.;
+                        if (dumpTranspCorr_ || plotTranspCorr_) {
+                                transpCorr = laser_->getLaserCorrection(id, ev.time());
+                        }
 
-			if (atLeastOneDump) {
-				ofile_ << ecalPart << "  rawId= " << id.rawId()
-					<< "  ieta/ix= " << ix
-					<< "  iphi/iy= " << iy
-					<< "  0/iz= " << iz;
-			}
-			if (dumpIC_) {
-				if(itIC != ic_->end()) ofile_ << "  ic= " << *itIC;
-				else                   ofile_ << "  ic= " << "NA";
-				if(itICMC != icMC_->end()) ofile_ << "  icMC= " << *itIC;
-				else                       ofile_ << "  icMC= " << "NA";
-			}
-			if (dumpChStatus_) {
-				if(itChStatus != chStatus_->end()) ofile_ << "  chSt= " << (*itChStatus).getStatusCode();
-				else                               ofile_ << "  chSt= " << "NA";
-			}
-			if (dumpPedestals_) {
-				if(itPed != ped_->end()) {
-					ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
-					ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
-				} else  ofile_ << "  ped= " << "NA";
-			}
-			if (dumpGainRatios_) {
-				if (itGR != gr_->end()) {
-					ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
-				}
-			}
-			if (dumpTransp_) {
-				if ( itAPDPN != apdpn_->getLaserMap().end() ) {
-					ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
-						<< ev.time().value() 
-						<< "_" << ts.t1.value() << "_" << ts.t2.value() 
-						<< "_" << ts.t3.value() 
-						<< "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
-						<< "_" << (*itAPDPN).p3
-						;
-				}
-			}
-			if (dumpTranspCorr_) {
-				ofile_ << "  transpCorr= " 
-					<< transpCorr;
-			}
-			if (atLeastOneDump) ofile_ << "\n";
+                        if (atLeastOneDump) {
+                                ofile_ << ecalPart << "  rawId= " << id.rawId()
+                                        << "  ieta/ix= " << ix
+                                        << "  iphi/iy= " << iy
+                                        << "  0/iz= " << iz;
+                        }
+                        if (dumpIC_) {
+                                if(itIC != ic_->end()) ofile_ << "  ic= " << *itIC;
+                                else                   ofile_ << "  ic= " << "NA";
+                                if(itICMC != icMC_->end()) ofile_ << "  icMC= " << *itIC;
+                                else                       ofile_ << "  icMC= " << "NA";
+                        }
+                        if (dumpChStatus_) {
+                                if(itChStatus != chStatus_->end()) ofile_ << "  chSt= " << (*itChStatus).getStatusCode();
+                                else                               ofile_ << "  chSt= " << "NA";
+                        }
+                        if (dumpPedestals_) {
+                                if(itPed != ped_->end()) {
+                                        ofile_ << "  ped_g12_g6_g1= " << (*itPed).mean(1) << "_" << (*itPed).mean(2) << "_" << (*itPed).mean(3);
+                                        ofile_ << "  ped_rms_g12_g6_g1= " << (*itPed).rms(1) << "_" << (*itPed).rms(2) << "_" << (*itPed).rms(3);
+                                } else  ofile_ << "  ped= " << "NA";
+                        }
+                        if (dumpGainRatios_) {
+                                if (itGR != gr_->end()) {
+                                        ofile_ << "  gr_12/6_6/1= " << (*itGR).gain12Over6() << "_" << (*itGR).gain6Over1();
+                                }
+                        }
+                        if (dumpTransp_) {
+                                if ( itAPDPN != apdpn_->getLaserMap().end() ) {
+                                        ofile_ << "  evtTS_t1_t2_t3_p1_p2_p3= " 
+                                                << ev.time().value() 
+                                                << "_" << ts.t1.value() << "_" << ts.t2.value() 
+                                                << "_" << ts.t3.value() 
+                                                << "_" << (*itAPDPN).p1 << "_" << (*itAPDPN).p2 
+                                                << "_" << (*itAPDPN).p3
+                                                ;
+                                }
+                        }
+                        if (dumpTranspCorr_) {
+                                ofile_ << "  transpCorr= " 
+                                        << transpCorr;
+                        }
+                        if (atLeastOneDump) ofile_ << "\n";
 
-			// plotting:
-			if (plotIC_) {
-				if (itIC != ic_->end()) {
-					if (isEB) {
-						histos.h<TProfile>("EBprof", "IC")->Fill(ix, *itIC);
-					} else {
-						//assert(eename[5] == '\0');
-						sprintf(str, "%s:IC", eename);
-						histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
-					}
-				}
-				if (itICMC != icMC_->end()) {
-					if (isEB) {
-						histos.h<TProfile>("EBprof", "ICMC")->Fill(ix, *itICMC);
-					} else {
-						//assert(eename[5] == '\0');
-						sprintf(str, "%s:ICMC", eename);
-						histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
-					}
-				}
-			}
-			if (plotChStatus_) {
-				if (itChStatus != chStatus_->end()) {
-					if (isEB) {
-						histos.h<TH2D>("EBh2", "chStatus")->Fill(iy, ix, (*itChStatus).getStatusCode());
-					} else {
-						//assert(eename[5] == '\0');
-						sprintf(str, "%s:chStatus", eename);
-						histos.h<TH2D>("EEh2", str)->Fill(ix, iy, (*itChStatus).getStatusCode());
-					}
-				}
-			}
-			if (plotPedestals_) {
-				if (itPed != ped_->end()) {
-					if (isEB) {
-						histos.h<TH2D>("EBh2", "ped_g12" )->Fill(iy, ix, (*itPed).mean(0));
-						histos.h<TH2D>("EBh2", "ped_g6"  )->Fill(iy, ix, (*itPed).mean(1));
-						histos.h<TH2D>("EBh2", "ped_g1"  )->Fill(iy, ix, (*itPed).mean(2));
-						histos.h<TH2D>("EBh2", "ped_rms_g12" )->Fill(iy, ix, (*itPed).rms(0));
-						histos.h<TH2D>("EBh2", "ped_rms_g6"  )->Fill(iy, ix, (*itPed).rms(1));
-						histos.h<TH2D>("EBh2", "ped_rms_g1"  )->Fill(iy, ix, (*itPed).rms(2));
-					} else {
-						sprintf(str, "%s:ped_g12", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(0) );
-						sprintf(str, "%s:ped_g6", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(1) );
-						sprintf(str, "%s:ped_g1", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(2) );
-						sprintf(str, "%s:ped_rms_g12", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(0) );
-						sprintf(str, "%s:ped_rms_g6", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(1) );
-						sprintf(str, "%s:ped_rms_g1", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(2) );
-					}
-				}
-			}
-			if (plotGainRatios_) {
-				if (itGR != gr_->end()) {
-					if (isEB) {
-						histos.h<TH2D>("EBh2", "gr_g12/6")->Fill(iy, ix, (*itGR).gain12Over6());
-						histos.h<TH2D>("EBh2", "gr_g6/1" )->Fill(iy, ix, (*itGR).gain6Over1());
-					} else {
-						sprintf(str, "%s:gr12/6", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain12Over6() );
-						sprintf(str, "%s:gr6/1", eename);
-						histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain6Over1() );
-					}
-				}
-			}
-			if (plotTranspCorr_) {
+                        // plotting:
+                        if (plotIC_) {
+                                if (itIC != ic_->end()) {
+                                        if (isEB) {
+                                                histos.h<TProfile>("EBprof", "IC")->Fill(ix, *itIC);
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:IC", eename);
+                                                histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
+                                        }
+                                }
+                                if (itICMC != icMC_->end()) {
+                                        if (isEB) {
+                                                histos.h<TProfile>("EBprof", "ICMC")->Fill(ix, *itICMC);
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:ICMC", eename);
+                                                histos.h<TProfile>("EEprof", str)->Fill(r, *itIC);
+                                        }
+                                }
+                        }
+                        if (plotChStatus_) {
+                                if (itChStatus != chStatus_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "chStatus")->Fill(iy, ix, (*itChStatus).getStatusCode());
+                                        } else {
+                                                //assert(eename[5] == '\0');
+                                                sprintf(str, "%s:chStatus", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill(ix, iy, (*itChStatus).getStatusCode());
+                                        }
+                                }
+                        }
+                        if (plotPedestals_) {
+                                if (itPed != ped_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "ped_g12" )->Fill(iy, ix, (*itPed).mean(0));
+                                                histos.h<TH2D>("EBh2", "ped_g6"  )->Fill(iy, ix, (*itPed).mean(1));
+                                                histos.h<TH2D>("EBh2", "ped_g1"  )->Fill(iy, ix, (*itPed).mean(2));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g12" )->Fill(iy, ix, (*itPed).rms(0));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g6"  )->Fill(iy, ix, (*itPed).rms(1));
+                                                histos.h<TH2D>("EBh2", "ped_rms_g1"  )->Fill(iy, ix, (*itPed).rms(2));
+                                        } else {
+                                                sprintf(str, "%s:ped_g12", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(0) );
+                                                sprintf(str, "%s:ped_g6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(1) );
+                                                sprintf(str, "%s:ped_g1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).mean(2) );
+                                                sprintf(str, "%s:ped_rms_g12", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(0) );
+                                                sprintf(str, "%s:ped_rms_g6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(1) );
+                                                sprintf(str, "%s:ped_rms_g1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itPed).rms(2) );
+                                        }
+                                }
+                        }
+                        if (plotGainRatios_) {
+                                if (itGR != gr_->end()) {
+                                        if (isEB) {
+                                                histos.h<TH2D>("EBh2", "gr_g12/6")->Fill(iy, ix, (*itGR).gain12Over6());
+                                                histos.h<TH2D>("EBh2", "gr_g6/1" )->Fill(iy, ix, (*itGR).gain6Over1());
+                                        } else {
+                                                sprintf(str, "%s:gr12/6", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain12Over6() );
+                                                sprintf(str, "%s:gr6/1", eename);
+                                                histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain6Over1() );
+                                        }
+                                }
+                        }
+                        if (plotTranspCorr_) {
 				float eta = geo_->getPosition(id).eta();
 				char name[64];
 				sprintf(name, "p2_%d", ev.time().unixTime());
@@ -591,61 +612,29 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 				sprintf(str, "%stranspCorrNorm_%s", subdet[iz+1], weekly_);
 				histos.h<TProfile2D>(templ[isEB], str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
 				if(iid==2) histos.h<TProfile2D>(templ[isEB], str)->SetErrorOption("s");
-
-
-				// if (isEB) {
-				//     	//histos.h<TH2D>("EBh2", "transpCorr" )->Fill(iy, ix, transpCorr);
-				//     	histos.h<TProfile2D>( "EBprof2", "transpCorr" )->Fill(iy, ix, transpCorr);
-				//     	sprintf(str, "transpCorr_%s", weekly_);
-				//     	histos.h<TProfile2D>("EBprof2", str )->Fill(iy, ix, transpCorr);
-
-				// 	sprintf(str, "transpCorrNorm_%s", ebname);
-				// 	histos.h<TProfile2D>("EBprof2", str)->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				// 	if(iid==2) histos.h<TProfile2D>("EBprof2", str)->SetErrorOption("s");
-
-				// 	sprintf(str, "transpCorrNorm_%s", weekly_);
-				// 	histos.h<TProfile2D>("EBprof2", str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				// 	if(iid==2) histos.h<TProfile2D>("EBprof2", str)->SetErrorOption("s");
-
-				// } else {
-				//         //sprintf(str, "%s_transpCorr", eename);
-				//         //histos.h<TH2D>("EEh2", str)->Fill( ix, iy, transpCorr );
-				//         sprintf(str, "%s_transpCorr", eename);
-				//         histos.h<TProfile2D>( "EEprof2", str)->Fill(iy, ix, transpCorr);
-				//         sprintf(str, "%s_transpCorr_%s", eename, weekly_);
-				//         histos.h<TProfile2D>( "EEprof2", str )->Fill(iy, ix, transpCorr);
-
-				// 	sprintf(str, "transpCorrNorm_%s", eename);
-				// 	histos.h<TProfile2D>("EEprof2", str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				// 	if(iid==2) histos.h<TProfile2D>("EEprof2", str)->SetErrorOption("s");
-				// 	sprintf(str, "transpCorrNorm_%s", weekly_);
-				// 	histos.h<TProfile2D>("EEprof2", str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				// 	if(iid==2) histos.h<TProfile2D>("EEprof2", str)->SetErrorOption("s");
-				// 	}
-				//}
-		}
-	}
-	//// history plots
-	float fracs[] = { 0.5 * (1 - 0.997), 0.5 * (1 - 0.954), 0.5 * (1 - 0.682), 0 };
-	const char * nfrac[] = { "3S", "2S", "1S", "E" };
-	for (int i = 0; i < nq_; ++i) {
-		float xm = q_[i].xlow(0.5);
-		for (size_t j = 0; j < sizeof(fracs)/sizeof(float); ++j) {
-			sprintf(str, "p2_%s_%s", qname_[i], nfrac[j]);
-			TGraphAsymmErrors * g = histos.h<TGraphAsymmErrors>("history", str);
-			g->SetPoint(niov_, ev.time().unixTime(), xm);
-			g->SetPointEYlow(niov_, xm - q_[i].xlow(fracs[j]));
-			g->SetPointEYhigh(niov_, q_[i].xhigh(fracs[j]) - xm);
-			//sprintf(str, "p2_%s_%s_H", qname_[i], nfrac[j]);
-			//histos.h<TGraphAsymmErrors>("history", str)->SetPoint(niov_, ev.time().unixTime(), q_[i].xhigh(fracs[j]));
-		}
-	}
-}
-if ( dumpADCToGeV_ ) {
-	es.get<EcalADCToGeVConstantRcd>().get(adcToGeV_);
-	ofile_ << "ADCToGeV  EB= " << adcToGeV_->getEBValue() << "  EE= " << adcToGeV_->getEEValue() << "\n";
-}
-++niov_;
+                        }
+                }
+                //// history plots
+                float fracs[] = { 0.5 * (1 - 0.997), 0.5 * (1 - 0.954), 0.5 * (1 - 0.682), 0 };
+                const char * nfrac[] = { "3S", "2S", "1S", "E" };
+                for (int i = 0; i < nq_; ++i) {
+                        float xm = q_[i].xlow(0.5);
+                        for (size_t j = 0; j < sizeof(fracs)/sizeof(float); ++j) {
+                                sprintf(str, "p2_%s_%s", qname_[i], nfrac[j]);
+                                TGraphAsymmErrors * g = histos.h<TGraphAsymmErrors>("history", str);
+                                g->SetPoint(niov_, ev.time().unixTime(), xm);
+                                g->SetPointEYlow(niov_, xm - q_[i].xlow(fracs[j]));
+                                g->SetPointEYhigh(niov_, q_[i].xhigh(fracs[j]) - xm);
+                                //sprintf(str, "p2_%s_%s_H", qname_[i], nfrac[j]);
+                                //histos.h<TGraphAsymmErrors>("history", str)->SetPoint(niov_, ev.time().unixTime(), q_[i].xhigh(fracs[j]));
+                        }
+                }
+        }
+        if ( dumpADCToGeV_ ) {
+                es.get<EcalADCToGeVConstantRcd>().get(adcToGeV_);
+                ofile_ << "ADCToGeV  EB= " << adcToGeV_->getEBValue() << "  EE= " << adcToGeV_->getEEValue() << "\n";
+        }
+        ++niov_;
 }
 
 
