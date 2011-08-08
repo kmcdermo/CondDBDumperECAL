@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.14 2011/08/08 11:54:34 ferriff Exp $
+// $Id: DBDump.cc,v 1.15 2011/08/08 12:05:12 ferriff Exp $
 //
 //
 
@@ -92,14 +92,6 @@ class DBDump : public edm::EDAnalyzer {
       int getLMNumber(DetId const & xid) const;
       void printSummary();
 
-	int etabin(float eta){
-		const float etamin  =  -2.964;
-		const float etamax  =  2.964;
-		//		if(!(etamin < eta && eta < etamax)){ printf("---> %f\n", eta); }
-		assert(etamin < eta && eta < etamax);
-		return int((eta - etamin) / (etamax - etamin) * netabins_);
-	}
-
       // output files
       bool outPlot_;
       bool outDump_;
@@ -149,8 +141,8 @@ class DBDump : public edm::EDAnalyzer {
 
       HistoManager histos;
 
-      edm::ESHandle<CaloGeometry> caloGeometry_;
-      const CaloGeometry * geo_;
+      //edm::ESHandle<CaloGeometry> caloGeometry_;
+      //const CaloGeometry * geo_;
 
       std::vector<DetId> ecalDetIds_;
 
@@ -166,16 +158,6 @@ class DBDump : public edm::EDAnalyzer {
       time_t jstop_;
 
       time_t il_;
-      char weekly_[128];
-
-      //number of bins for plots of corrections in an eta ring
-      const static int netabins_ = 20;
-
-      // all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
-      const static int nq_ = 97 + netabins_;
-      const static int qetaoffs_ = 97;
-      Quantile<int> q_[nq_];
-      char qname_[nq_][32];
 
       bool first_;
 
@@ -262,21 +244,6 @@ DBDump::DBDump(const edm::ParameterSet& ps) :
 		}
 	}
 	assert(ecalDetIds_.size() == 75848);
-
-	// initialise quantile names
-	int i =0;
-	sprintf(qname_[i++], "All");
-	sprintf(qname_[i++], "EE-");
-	sprintf(qname_[i++], "EB-");
-	sprintf(qname_[i++], "EB+");
-	sprintf(qname_[i++], "EE+");
-	for (int j = 1; j <= 92; ++j) {
-		sprintf(qname_[i++], "LM%02d", j);
-	}
-	for(int j = 1; j <= netabins_; ++j){
-		sprintf(qname_[i++], "eta%02d", j);
-	}
-	assert(i == sizeof(qname_)/sizeof(qname_[0]));
 }
 
 void DBDump::setDumpFalse()
@@ -329,15 +296,14 @@ void DBDump::printSummary()
 DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 {
         //es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
-        es.get<CaloGeometryRecord>().get(caloGeometry_);
-        geo_ = caloGeometry_.product();
+        //es.get<CaloGeometryRecord>().get(caloGeometry_);
+        //geo_ = caloGeometry_.product();
 
         iov_last_ = ev.time().unixTime();
         if (iov_first_ == -1) iov_first_ = iov_last_;
 
         if (iov_last_ - il_ > 3600 * 24 * 7) {
                 il_ = iov_last_;
-                sprintf(weekly_, "week_%ld", il_);
         }
 
         bool atLeastOneDump = dumpIC_ || dumpChStatus_ || dumpPedestals_ || dumpTransp_ || dumpTranspCorr_;
