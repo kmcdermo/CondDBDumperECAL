@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.13 2011/08/06 12:18:24 pgras Exp $
+// $Id: DBDump.cc,v 1.14 2011/08/08 11:54:34 ferriff Exp $
 //
 //
 
@@ -305,7 +305,7 @@ DBDump::~DBDump()
 {
         if (outPlot_) {
                 histos.save(outPlotFile_.c_str());
-                lp_.save();
+                lp_.save(outPlotFile_.c_str(), "UPDATE");
         }
         if (ofile_.is_open()) {
                 ofile_.close();
@@ -360,52 +360,6 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                 }
                 if (dumpTranspCorr_ || plotTranspCorr_) {
                         lp_.fill((*apdpn_.product()), iov_last_);
-                        for (int i = 0; i < nq_; ) q_[i++].reset();
-                        for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
-                                DetId id(ecalDetIds_[iid]);
-                                EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
-                                EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
-                                size_t iLM = 0;
-                                itAPDPN = apdpn_->getLaserMap().find(id);
-                                iLM = getLMNumber(id);
-                                if ( iLM-1 < apdpn_->getTimeMap().size() ) {
-                                        ts = apdpn_->getTimeMap()[iLM];
-                                }
-                                //float transpCorr = -1234567890.;
-                                float p2  = -1234567890.;
-                                float eta = 99999;
-                                char name[64];
-                                sprintf(name, "p2_%d", ev.time().unixTime());
-                                p2 = (*itAPDPN).p2;
-                                eta = geo_->getPosition(id).eta();
-                                
-                                if (first_) {
-                                        fprintf(fgeom, "%d %f %f %f\n", id.rawId(), eta, (float)geo_->getPosition(id).phi(), (float)geo_->getPosition(id).mag());
-                                        fprintf(stdout, "%d %f %f %f\n", id.rawId(), eta, (float)geo_->getPosition(id).phi(), (float)geo_->getPosition(id).mag());
-                                }
-
-// 				static float ebmax = 0;
-// 				static float eemax = 0;
-// 				static float ebmin = 0;
-// 				static float eemin = 0;
-// 				if(iid< 61200 && eta > ebmax) ebmax = eta;
-// 				if(iid>= 61200 && eta > eemax /*&& eta < -1.48118*/) eemax = eta;
-// 				if(iid< 61200 && eta  < ebmin) ebmin = eta;
-// 				if(iid>= 61200 && eta < eemin /*&& eta > 1.48118*/) eemin = eta;
-// 				printf("%f %d %f %f %f %f\n", eta, (int)iid, ebmin, ebmax, eemin, eemax);
-
-                                histos.h<TProfile>("etaProf", name)->Fill(eta, p2);
-                                q_[0].fill(p2, iid);
-                                if (id.subdetId() == EcalBarrel) {
-                                        if (EBDetId(id).ieta() < 0) q_[2].fill(p2, iid);
-                                        else                        q_[3].fill(p2, iid);
-                                } else {
-                                        if (EEDetId(id).zside() < 0) q_[1].fill(p2, iid);
-                                        else                         q_[4].fill(p2, iid);
-                                }
-                                q_[5 + iLM - 1].fill(p2, iid);
-				q_[qetaoffs_ + etabin(eta) ].fill(p2, iid);
-                        }
                 }
                 if (first_) {
                         fclose(fgeom);
@@ -589,44 +543,6 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                                                 histos.h<TH2D>("EEh2", str)->Fill( ix, iy, (*itGR).gain6Over1() );
                                         }
                                 }
-                        }
-                        if (plotTranspCorr_) {
-				float eta = geo_->getPosition(id).eta();
-				char name[64];
-				sprintf(name, "p2_%d", ev.time().unixTime());
-				TProfile * p = histos.h<TProfile>("etaProf", name);
-				float p2_mean = p->GetBinContent(p->FindBin(eta));
-				histos.h<TH1D>("distr", "eta_normalised_p2")->Fill((*itAPDPN).p2 / p2_mean);
-
-				const char* templ[] = { "EEprof2", "EBprof2"};
-				const char* subdet[] =  { "nZ_", "" , "pZ_" };
-
-				sprintf(str, "%stranspCorr", subdet[iz+1]);
-				histos.h<TProfile2D>( templ[isEB], str)->Fill(iy, ix, transpCorr);
-				sprintf(str, "%stranspCorr_%s", subdet[iz+1], weekly_);
-				histos.h<TProfile2D>( templ[isEB], str )->Fill(iy, ix, transpCorr);
-
-				sprintf(str, "%stranspCorrNorm", subdet[iz+1]);
-				histos.h<TProfile2D>(templ[isEB], str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				if(iid==2) histos.h<TProfile2D>(templ[iz+1], str)->SetErrorOption("s");
-				sprintf(str, "%stranspCorrNorm_%s", subdet[iz+1], weekly_);
-				histos.h<TProfile2D>(templ[isEB], str )->Fill(iy, ix, (*itAPDPN).p2 / p2_mean);
-				if(iid==2) histos.h<TProfile2D>(templ[isEB], str)->SetErrorOption("s");
-                        }
-                }
-                //// history plots
-                float fracs[] = { 0.5 * (1 - 0.997), 0.5 * (1 - 0.954), 0.5 * (1 - 0.682), 0 };
-                const char * nfrac[] = { "3S", "2S", "1S", "E" };
-                for (int i = 0; i < nq_; ++i) {
-                        float xm = q_[i].xlow(0.5);
-                        for (size_t j = 0; j < sizeof(fracs)/sizeof(float); ++j) {
-                                sprintf(str, "p2_%s_%s", qname_[i], nfrac[j]);
-                                TGraphAsymmErrors * g = histos.h<TGraphAsymmErrors>("history", str);
-                                g->SetPoint(niov_, ev.time().unixTime(), xm);
-                                g->SetPointEYlow(niov_, xm - q_[i].xlow(fracs[j]));
-                                g->SetPointEYhigh(niov_, q_[i].xhigh(fracs[j]) - xm);
-                                //sprintf(str, "p2_%s_%s_H", qname_[i], nfrac[j]);
-                                //histos.h<TGraphAsymmErrors>("history", str)->SetPoint(niov_, ev.time().unixTime(), q_[i].xhigh(fracs[j]));
                         }
                 }
         }
