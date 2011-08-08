@@ -11,23 +11,23 @@
 
 class HistoManager {
         public:
-                typedef std::map< std::string, TObject *> Map;
+                typedef std::map<std::string, TObject *> Map;
 
                 HistoManager() {};
                 ~HistoManager() {};
 
-                template < class T > void addTemplate( const char * type, T * templ )
+                template <class T> void addTemplate(const char * type, T * templ)
                 {
-                        assert( m_templates.find( type ) == m_templates.end() );
-                        m_templates[ type ] = templ;
+                        assert(m_templates.find(type) == m_templates.end());
+                        m_templates[type] = templ;
                 }
 
-                template < class T > T * h( const char * type, const char * name )
+                template <class T> T * h(const char * type, const char * name)
                 {
-                        assert( m_templates.find( type ) != m_templates.end() );
+                        assert(m_templates.find(type) != m_templates.end());
                         std::string id(type);
                         id += std::string("_") + name;
-                        if ( m_histos.find( id ) != m_histos.end() ) {
+                        if (m_histos.find( id ) != m_histos.end()) {
                                 return (T*)m_histos[id];
                         } else {
                                 m_histos[id] = (T*)m_templates[type]->Clone(id.c_str());
@@ -35,12 +35,12 @@ class HistoManager {
                         }
                 }
 
-                void save( const char * fileName )
+                void save(const char * fileName, const char * opt = "RECREATE")
                 {
-                        TFile f( fileName, "RECREATE" );
+                        TFile f(fileName, opt);
                         f.cd();
                         Map::const_iterator it;
-                        for ( it = m_histos.begin(); it != m_histos.end(); ++it ) {
+                        for (it = m_histos.begin(); it != m_histos.end(); ++it) {
                                 it->second->Write();
                         }
                         f.Close();
