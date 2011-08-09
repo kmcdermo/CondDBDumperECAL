@@ -258,8 +258,8 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 
                 if (id.subdetId() == EcalBarrel) {
                         ecalPart[1] = 'B';
-                        ix = EBDetId(id).ieta();
-                        iy = EBDetId(id).iphi();
+                        ix = EBDetId(id).iphi();
+                        iy = EBDetId(id).ieta();
                         iz = 0;
                         isEB = 1;
                 } else if (id.subdetId() == EcalEndcap) {
@@ -299,15 +299,15 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 static TProfile2D * p2d_all_norm[3]; // FIXME - hope static arrays are zeroed by default
 
                 sprintf(str, "%sp2", subdet[iz+1]);
-                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all[iz + 1])->Fill(iy, ix, p2);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all[iz + 1])->Fill(ix, iy, p2);
                 sprintf(str, "%sp2%s", subdet[iz+1], weekly_);
-                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly[iz + 1])->Fill(iy, ix, p2);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly[iz + 1])->Fill(ix, iy, p2);
 
                 sprintf(str, "%sp2Norm", subdet[iz+1]);
-                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all_norm[iz + 1])->Fill(iy, ix, p2 / p2_mean);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all_norm[iz + 1])->Fill(ix, iy, p2 / p2_mean);
                 if(iid==2) hm_.h<TProfile2D>(templ[iz+1], str, &p2d_all_norm[iz + 1])->SetErrorOption("s");
                 sprintf(str, "%sp2Norm_%s", subdet[iz+1], weekly_);
-                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm[iz + 1])->Fill(iy, ix, p2 / p2_mean);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm[iz + 1])->Fill(ix, iy, p2 / p2_mean);
                 if(iid==2) hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm[iz + 1])->SetErrorOption("s");
         }
         fill_histories(t);
