@@ -22,17 +22,19 @@ class HistoManager {
                         m_templates[type] = templ;
                 }
 
-                template <class T> T * h(const char * type, const char * name)
+                template <class T> T * h(const char * type, const char * name, T ** p = 0)
                 {
+                        T * pp = 0;
+                        if (p == 0) p = &pp;
+                        if ((*p) != 0) return *p;
                         assert(m_templates.find(type) != m_templates.end());
                         std::string id(type);
                         id += std::string("_") + name;
-                        if (m_histos.find( id ) != m_histos.end()) {
-                                return (T*)m_histos[id];
-                        } else {
+                        if (m_histos.find( id ) == m_histos.end()) {
                                 m_histos[id] = (T*)m_templates[type]->Clone(id.c_str());
-                                return (T*)(m_histos[id]);
                         }
+                        (*p) = (T*)(m_histos[id]);
+                        return *p;
                 }
 
                 void save(const char * fileName, const char * opt = "RECREATE")
