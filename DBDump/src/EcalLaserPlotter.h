@@ -18,7 +18,7 @@
 class EcalLaserPlotter {
         public:
                 EcalLaserPlotter(const char * geom_filename = "detid_geom.dat");
-                ~EcalLaserPlotter() {};
+                ~EcalLaserPlotter() { printSummary(); };
 
                 void fill(const EcalLaserAPDPNRatios &, time_t);
                 void printSummary();
