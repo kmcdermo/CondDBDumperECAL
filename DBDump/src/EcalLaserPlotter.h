@@ -3,12 +3,17 @@
 
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbService.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
+
 #include "HistoManager.h"
 #include "Quantile.h"
 
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TGraphAsymmErrors.h"
+
+#define NSUBDET 3
 
 class EcalLaserPlotter {
         public:
@@ -78,12 +83,12 @@ EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
                 }
         }
         fclose(fg);
-        hm_.addTemplate<TH2D>( "EBh2", new TH2D( "EB", "EB", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
-        hm_.addTemplate<TH2D>( "EEh2", new TH2D( "EE", "EE", 100, 0., 100., 100, 0., 100. ) );
-        hm_.addTemplate<TProfile2D>( "EBprof2", new TProfile2D( "EB", "EB", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
-        hm_.addTemplate<TProfile2D>( "EEprof2", new TProfile2D( "EE", "EE", 100, 0., 100., 100, 0., 100. ) );
-        hm_.addTemplate<TProfile>( "EEprof", new TProfile( "EE", "EE", 55, 0., 55.) );
-        hm_.addTemplate<TProfile>( "EBprof", new TProfile( "EB", "EB", 171, -85.5, 85.5) );
+        hm_.addTemplate<TH2D>( "EBh2", new TH2D( "EBh2", "EBh2", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
+        hm_.addTemplate<TH2D>( "EEh2", new TH2D( "EEh2", "EEh2", 100, 0., 100., 100, 0., 100. ) );
+        hm_.addTemplate<TProfile2D>( "EBprof2", new TProfile2D( "EBp2", "EBp2", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
+        hm_.addTemplate<TProfile2D>( "EEprof2", new TProfile2D( "EEp2", "EEp2", 100, 0., 100., 100, 0., 100. ) );
+        hm_.addTemplate<TProfile>( "EEprof", new TProfile( "EEp", "EEp", 55, 0., 55.) );
+        hm_.addTemplate<TProfile>( "EBprof", new TProfile( "EBp", "EBp", 171, -85.5, 85.5) );
         hm_.addTemplate<TGraphAsymmErrors>("history", new TGraphAsymmErrors());
         hm_.addTemplate<TH1D>("distr", new TH1D("distribution", "distribution", 2000, 0., 2.));
         hm_.addTemplate<TProfile>("etaProf", new TProfile("etaProf", "etaProf", 250, -2.75, 2.75));
@@ -161,13 +166,24 @@ void EcalLaserPlotter::printSummary()
 
 void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t)
 {
+        static TProfile * p;
+        p = 0;
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
                 DetId id(ecalDetIds_[iid]);
                 EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
                 EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
                 size_t iLM = 0;
                 itAPDPN = apdpn.getLaserMap().find(id);
-                iLM = EcalLaserDbService::getLMNumber(id);
+                if (id.subdetId()==EcalBarrel) {
+                        EBDetId ebid( id.rawId() );
+                        iLM = MEEBGeom::lmr(ebid.ieta(), ebid.iphi());
+                } else if (id.subdetId()==EcalEndcap) {
+                        EEDetId eeid( id.rawId() );
+                        // SuperCrystal coordinates
+                        MEEEGeom::SuperCrysCoord iX = (eeid.ix()-1)/5 + 1;
+                        MEEEGeom::SuperCrysCoord iY = (eeid.iy()-1)/5 + 1;    
+                        iLM = MEEEGeom::lmr(iX, iY, eeid.zside());    
+                }
                 if ( iLM-1 < apdpn.getTimeMap().size() ) {
                         ts = apdpn.getTimeMap()[iLM];
                 }
@@ -177,9 +193,12 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                 sprintf(name, "p2_%ld", t);
                 p2 = (*itAPDPN).p2;
 
+                if (isinf(p2) > 0)      p2 =  FLT_MAX;
+                else if (isinf(p2) < 0) p2 = -FLT_MAX;
+
                 eta = geom_eta(id);
 
-                hm_.h<TProfile>("etaProf", name)->Fill(eta, p2);
+                hm_.h<TProfile>("etaProf", name, &p)->Fill(eta, p2);
                 q_[0].fill(p2, iid);
                 if (id.subdetId() == EcalBarrel) {
                         if (EBDetId(id).ieta() < 0) q_[2].fill(p2, iid);
@@ -213,14 +232,24 @@ void EcalLaserPlotter::fill_histories(time_t t)
 
 void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 {
+        reset_quantile();
         iov_last_ = t;
+        static TProfile2D * p2d_weekly_norm[3]; // FIXME - hope static arrays are zeroed by default
+        static TProfile2D * p2d_weekly[3]; // FIXME - hope static arrays are zeroed by default
+        bzero(p2d_weekly, sizeof(p2d_weekly));
+        bzero(p2d_weekly_norm, sizeof(p2d_weekly_norm));
         if (iov_first_ == -1) iov_first_ = iov_last_;
         if (iov_last_ - il_ > 3600 * 24 * 7) {
                 il_ = iov_last_;
                 sprintf(weekly_, "week_%ld", il_);
+                for (int i = 0; i < NSUBDET; ++i) {
+                        p2d_weekly[i] = 0;
+                        p2d_weekly_norm[i] = 0;
+                }
         }
         compute_averages(apdpn, t);
         float p2;
+        TProfile * p_eta_norm = 0;
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
                 DetId id(ecalDetIds_[iid]);
 
@@ -252,27 +281,34 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 itAPDPN = apdpn.getLaserMap().find(id);
                 p2 = (*itAPDPN).p2;
 
+                if (isinf(p2) > 0)      p2 =  FLT_MAX;
+                else if (isinf(p2) < 0) p2 = -FLT_MAX;
+
                 float eta = geom_eta(id);
                 char name[64];
                 sprintf(name, "p2_%ld", t);
-                TProfile * p = hm_.h<TProfile>("etaProf", name);
-                float p2_mean = p->GetBinContent(p->FindBin(eta));
-                hm_.h<TH1D>("distr", "eta_normalised_p2")->Fill(p2 / p2_mean);
+                static TH1D * h_eta_norm = 0;
+                hm_.h<TProfile>("etaProf", name, &p_eta_norm);
+                float p2_mean = p_eta_norm->GetBinContent(p_eta_norm->FindBin(eta));
+                hm_.h<TH1D>("distr", "eta_normalised_p2", &h_eta_norm)->Fill(p2 / p2_mean);
 
                 const char* templ[] = { "EEprof2", "EBprof2"};
-                const char* subdet[] =  { "nZ_", "" , "pZ_" };
+                const char* subdet[NSUBDET] =  { "nZ_", "" , "pZ_" };
+
+                static TProfile2D * p2d_all[3]; // FIXME - hope static arrays are zeroed by default
+                static TProfile2D * p2d_all_norm[3]; // FIXME - hope static arrays are zeroed by default
 
                 sprintf(str, "%sp2", subdet[iz+1]);
-                hm_.h<TProfile2D>( templ[isEB], str)->Fill(iy, ix, p2);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all[iz + 1])->Fill(iy, ix, p2);
                 sprintf(str, "%sp2%s", subdet[iz+1], weekly_);
-                hm_.h<TProfile2D>( templ[isEB], str )->Fill(iy, ix, p2);
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly[iz + 1])->Fill(iy, ix, p2);
 
                 sprintf(str, "%sp2Norm", subdet[iz+1]);
-                hm_.h<TProfile2D>(templ[isEB], str )->Fill(iy, ix, p2 / p2_mean);
-                if(iid==2) hm_.h<TProfile2D>(templ[iz+1], str)->SetErrorOption("s");
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_all_norm[iz + 1])->Fill(iy, ix, p2 / p2_mean);
+                if(iid==2) hm_.h<TProfile2D>(templ[iz+1], str, &p2d_all_norm[iz + 1])->SetErrorOption("s");
                 sprintf(str, "%sp2Norm_%s", subdet[iz+1], weekly_);
-                hm_.h<TProfile2D>(templ[isEB], str )->Fill(iy, ix, p2 / p2_mean);
-                if(iid==2) hm_.h<TProfile2D>(templ[isEB], str)->SetErrorOption("s");
+                hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm[iz + 1])->Fill(iy, ix, p2 / p2_mean);
+                if(iid==2) hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm[iz + 1])->SetErrorOption("s");
         }
         fill_histories(t);
 }
