@@ -1,25 +1,49 @@
-void autozoom(TH2F * h)
+#include <vector>
+
+class Quantile
 {
-    TH1F * htmp = new TH1F("htmp", "htmp", 1000, -1.5, 1.5);
-    float b = 0;
-    for (int ix = 0; ix < h->GetNbinsX(); ++ix)
-    {
-        for (int iy = 0; iy < h->GetNbinsY(); ++iy)
-        {
-            b = h->GetBinContent(ix, iy);
-            if (b != 0) htmp->Fill(b);
+        std::vector<double> data;
+        bool sorted;
+
+        public:
+        Quantile(): sorted(true){}
+        void fill(double val){
+                data.push_back(val);
+                sorted = false;
         }
-    }
-    float tot = htmp->GetEntries();
-    float xlow = 0, xhigh = 0;
-    float inte = 0;
-    for (int ix = 0; ix < htmp->GetNbinsX(); ++ix)
-    {
-        inte += htmp->GetBinContent(ix);
-        if (!xlow  && inte / tot > 0.025) xlow  = htmp->GetBinCenter(ix);
-        if (!xhigh && inte / tot > 0.975) xhigh = htmp->GetBinCenter(ix);
-    }
-    h->SetMaximum(xhigh);
-    h->SetMinimum(xlow);
-    htmp->Delete();
+
+        void reset(){ data.clear(); }
+
+        double xlow(double prop){
+                if(prop < 0 || prop > 1)  return -std::numeric_limits<double>::max();
+                sort();
+                double i = data.size() * prop;
+                if(data.size()==0) return -std::numeric_limits<double>::max();
+                if(i==0) return data[0];
+                if(i>=data.size()) return data[data.size()-1];
+                return 0.5 * (data[i-1] + data[i]);
+        }
+
+        void sort(){
+                if(!sorted) std::sort(data.begin(), data.end());
+                sorted = true;
+        }
+
+        double xhigh(double prop){
+                return xlow(1-prop);
+        }
+};
+
+
+void autozoom(TH2F * h, float prop = 0.003)
+{
+        Quantile q;
+        for (int ix = 0; ix < h->GetNbinsX(); ++ix) {
+                for (int iy = 0; iy < h->GetNbinsY(); ++iy) {
+                        float b = h->GetBinContent(ix, iy);
+                        if (b != 0) q.fill(b); // FIXME - not ideal if 2D map contains physical 0...
+                }
+        }
+        h->SetMaximum(q.xhigh(prop));
+        h->SetMinimum(q.xlow(prop));
 }
