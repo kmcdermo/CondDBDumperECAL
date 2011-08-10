@@ -230,14 +230,14 @@ void drawNormP2Map(const char * img_suffix){
 	cerr << "Palette not found!" << endl;
       }
     
-      h2[j]->GetXaxis()->SetTitle(i==1 ? "iphi" : "iy");
-      h2[j]->GetYaxis()->SetTitle(i==1 ? "ieta" : "ix");
+      h2[j]->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
+      h2[j]->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
 
       if(j==0) autozoom((TH2F*)h2[j]);
 
       c->Paint();
       
-      TLatex  * t = new TLatex(0.87, 0.9, "Transparency");
+      TLatex * t = new TLatex(0.87, 0.9, "Transparency");
       t->SetTextAlign(21);
       t->SetNDC();
       t->SetTextFont(42);
