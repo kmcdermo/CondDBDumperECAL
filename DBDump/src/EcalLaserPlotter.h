@@ -178,7 +178,7 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
                 ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
                 if (!set_ch_status_) {
                         DetId id(ecalDetIds_[i]);
-                        int ix = -1, iy = -1, iz = -1, r = -1;
+                        int ix = -1, iy = -1, iz = -1;
                         if (id.subdetId() == EcalBarrel) {
                                 ix = EBDetId(id).iphi();
                                 iy = EBDetId(id).ieta();
