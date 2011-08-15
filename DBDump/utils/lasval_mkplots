@@ -121,6 +121,8 @@ gzip -c iov_time.txt > $LAS_HISTDIR/iov_time.txt.gz
 
 export MAX_EVENTS=`wc -l iov_time.txt | awk '{print $1}'`
 
+[ ! -f "detid_geom.dat" ] && cp `find $CMSSW_BASE -name detid_geom.dat | head -1` .
+
 cmsRun $CMSSW_CFG
 
 cd "$LAS_HISTDIR"
