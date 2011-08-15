@@ -173,7 +173,7 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
         if (onceForAll && set_ch_status_) return;
         if (!set_ch_status_) ch_status_.resize(ecalDetIds_.size());
         FILE * ftmp;
-        if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
+        //if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
         for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
                 ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
                 if (!set_ch_status_) {
@@ -188,10 +188,10 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
                                 iy = EEDetId(id).iy();
                                 iz = EEDetId(id).zside();
                         }
-                        fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
+                        //fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
                 }
         }
-        if (!set_ch_status_) fclose(ftmp);
+        //if (!set_ch_status_) fclose(ftmp);
         set_ch_status_ = 1;
 }
 
