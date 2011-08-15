@@ -125,7 +125,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(32) )
 
 process.source = cms.Source("EmptySource",
-        firstRun = cms.untracked.uint32(96888),
+        firstRun = cms.untracked.uint32(172409),
         numberEventsInRun = cms.untracked.uint32(1),
         #firstTime = cms.untracked.uint32( 1244042540 ), # run 98723
         #firstTime = cms.untracked.uint32( 1224557391 ), # beginning of run 66951
