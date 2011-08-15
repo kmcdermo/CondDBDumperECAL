@@ -2,6 +2,7 @@
 #define __ECAL_LASER_PLOTTER
 
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
+#include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbService.h"
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
@@ -23,6 +24,8 @@ class EcalLaserPlotter {
                 void fill(const EcalLaserAPDPNRatios &, time_t);
                 void printSummary();
                 void save(const char * filename = "ecallaserplotter.root", const char * opt = "RECREATE");
+                void setEcalChannelStatus(const EcalChannelStatus & chStatus, int onceForAll = 0);
+                void setEcalGeometry(const char * geom_filename = "detid_geom.dat");
 
         private:
                 time_t il_;
@@ -52,37 +55,23 @@ class EcalLaserPlotter {
 
                 std::vector<DetId> ecalDetIds_;
                 std::vector<float> geom_eta_;
+                std::vector<uint16_t> ch_status_;
 
                 char ecalPart[3];
                 char eename[3];
 
                 char str[128];
+
+                int set_geom_;
+                int set_ch_status_;
 };
 
 EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
-        il_(0), niov_(0), iov_first_(-1), iov_last_(0)
+        il_(0), niov_(0), iov_first_(-1), iov_last_(0), set_geom_(0), set_ch_status_(0)
 {
         sprintf(ecalPart, "E*");
         sprintf(eename, "*Z");
-        FILE * fg = fopen(geom_filename, "r");
-        if (fg == NULL) {
-                fprintf(stderr, "Cannot open file `%s'.\n", geom_filename);
-                fprintf(stderr, "Please specify the correct location of the geometry\n");
-                fprintf(stderr, "ascii file (format: DetId eta phi R).\n");
-        } else {
-                int n, id;
-                float eta;
-                size_t offset = EBDetId::MAX_HASH - EBDetId::MIN_HASH + 1;
-                geom_eta_.resize(offset + EEDetId::kSizeForDenseIndexing);
-                while ((n = fscanf(fg, "%d %f %*f %*f", &id, &eta)) == 2) {
-                        if (DetId(id).subdetId() == EcalBarrel) {
-                                geom_eta_[EBDetId(id).hashedIndex()] = eta;
-                        } else {
-                                geom_eta_[offset + EEDetId(id).denseIndex()] = eta;
-                        }
-                }
-        }
-        fclose(fg);
+        setEcalGeometry(geom_filename);
         hm_.addTemplate<TH2D>( "EBh2", new TH2D( "EBh2", "EBh2", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
         hm_.addTemplate<TH2D>( "EEh2", new TH2D( "EEh2", "EEh2", 100, 0., 100., 100, 0., 100. ) );
         hm_.addTemplate<TProfile2D>( "EBprof2", new TProfile2D( "EBp2", "EBp2", 360, 0.5, 360.5, 171, -85.5, 85.5 ) );
@@ -154,6 +143,58 @@ float EcalLaserPlotter::geom_eta(DetId id)
         }
 }
 
+void EcalLaserPlotter::setEcalGeometry(const char * geom_filename)
+{
+        if (set_geom_) return;
+        FILE * fg = fopen(geom_filename, "r");
+        if (fg == NULL) {
+                fprintf(stderr, "Cannot open file `%s'.\n", geom_filename);
+                fprintf(stderr, "Please specify the correct location of the geometry\n");
+                fprintf(stderr, "ascii file (format: DetId eta phi R).\n");
+        } else {
+                int n, id;
+                float eta;
+                size_t offset = EBDetId::MAX_HASH - EBDetId::MIN_HASH + 1;
+                geom_eta_.resize(offset + EEDetId::kSizeForDenseIndexing);
+                while ((n = fscanf(fg, "%d %f %*f %*f", &id, &eta)) == 2) {
+                        if (DetId(id).subdetId() == EcalBarrel) {
+                                geom_eta_[EBDetId(id).hashedIndex()] = eta;
+                        } else {
+                                geom_eta_[offset + EEDetId(id).denseIndex()] = eta;
+                        }
+                }
+        }
+        fclose(fg);
+        set_geom_ = 1;
+}
+
+void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, int onceForAll)
+{
+        if (onceForAll && set_ch_status_) return;
+        if (!set_ch_status_) ch_status_.resize(ecalDetIds_.size());
+        FILE * ftmp;
+        if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
+        for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
+                ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
+                if (!set_ch_status_) {
+                        DetId id(ecalDetIds_[i]);
+                        int ix = -1, iy = -1, iz = -1, r = -1;
+                        if (id.subdetId() == EcalBarrel) {
+                                ix = EBDetId(id).iphi();
+                                iy = EBDetId(id).ieta();
+                                iz = 0;
+                        } else if (id.subdetId() == EcalEndcap) {
+                                ix = EEDetId(id).ix();
+                                iy = EEDetId(id).iy();
+                                iz = EEDetId(id).zside();
+                        }
+                        fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
+                }
+        }
+        if (!set_ch_status_) fclose(ftmp);
+        set_ch_status_ = 1;
+}
+
 void EcalLaserPlotter::printSummary()
 {
         printf("%d IOV(s) analysed.\n", niov_);
@@ -169,6 +210,7 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
         static TProfile * p;
         p = 0;
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                if (set_ch_status_ && ch_status_[iid] != 0) continue;
                 DetId id(ecalDetIds_[iid]);
                 EcalLaserAPDPNRatios::EcalLaserAPDPNRatiosMap::const_iterator itAPDPN;
                 EcalLaserAPDPNRatios::EcalLaserTimeStamp ts;
@@ -251,6 +293,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
         float p2;
         TProfile * p_eta_norm = 0;
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
+                if (set_ch_status_ && ch_status_[iid] != 0) continue;
                 DetId id(ecalDetIds_[iid]);
 
                 int ix = -1, iy = -1, iz = -1, r = -1;

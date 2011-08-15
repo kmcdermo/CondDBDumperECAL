@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.16 2011/08/08 12:11:33 ferriff Exp $
+// $Id: DBDump.cc,v 1.17 2011/08/08 14:40:52 ferriff Exp $
 //
 //
 
@@ -297,7 +297,7 @@ void DBDump::printSummary()
 }
 
 // ------------ method called to for each event  ------------
-	void
+void
 DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
 {
         //es.get<EcalTimeCalibConstantsRcd>().get( tc_ );
@@ -321,7 +321,7 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                         es.get<EcalIntercalibConstantsRcd>().get(ic_);
                         es.get<EcalIntercalibConstantsRcd>().get(icMC_);
                 }
-                if (dumpChStatus_   || plotChStatus_)   es.get<EcalChannelStatusRcd>().get(chStatus_);
+                if (dumpChStatus_   || plotChStatus_ || dumpTransp_ || plotTransp_)   es.get<EcalChannelStatusRcd>().get(chStatus_);
                 if (dumpPedestals_  || plotPedestals_)  es.get<EcalPedestalsRcd>().get(ped_);
                 if (dumpGainRatios_ || plotGainRatios_) es.get<EcalGainRatiosRcd>().get(gr_);
                 if (dumpTransp_     || plotTransp_)     es.get<EcalLaserAPDPNRatiosRcd>().get(apdpn_);
@@ -332,6 +332,7 @@ DBDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
                         fgeom = fopen("detid_geom.dat", "w");
                 }
                 if (dumpTranspCorr_ || plotTranspCorr_) {
+                        lp_.setEcalChannelStatus(*chStatus_.product());
                         lp_.fill((*apdpn_.product()), iov_last_);
                 }
                 if (first_) {
