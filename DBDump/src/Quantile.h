@@ -19,7 +19,6 @@ class Quantile{
     }
   };
   
-
   std::vector<Data> data;
   bool sorted;
 
@@ -71,8 +70,8 @@ class Quantile{
       if(i > data.size()) i = 0;
       std::vector<Data> v(data.size() - i);
   
-      for(int i = 0; i < v.size(); ++i){
-	v[i] = data[data.size()-i];
+      for(int j = 0; j < v.size(); ++j){
+	v[j] = data[data.size()-j];
       }
       return v;
     }
