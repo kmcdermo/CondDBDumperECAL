@@ -1,5 +1,5 @@
 <use   name="CondCore/Utilities"/>
-<bin   file="lava_text.cpp" name="vala_text">
+<bin   file="lava_text.cpp" name="lava_text">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
