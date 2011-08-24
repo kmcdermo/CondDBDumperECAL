@@ -207,8 +207,11 @@ void EcalLaserPlotter::printSummary()
 
 void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t)
 {
-        static TProfile * p;
-        p = 0;
+        static TProfile * p = 0;
+        char name[64];
+        //sprintf(name, "p2_%ld", t);
+        sprintf(name, "p2");
+        hm_.h<TProfile>("etaProf", name, &p)->Clear();
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
                 if (set_ch_status_ && ch_status_[iid] != 0) continue;
                 DetId id(ecalDetIds_[iid]);
@@ -231,8 +234,6 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                 }
                 float p2  = -1234567890.;
                 float eta = 99999;
-                char name[64];
-                sprintf(name, "p2_%ld", t);
                 p2 = (*itAPDPN).p2;
 
                 if (isinf(p2) > 0)      p2 =  FLT_MAX;
@@ -292,6 +293,9 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
         compute_averages(apdpn, t);
         float p2;
         TProfile * p_eta_norm = 0;
+        char name[64];
+        //sprintf(name, "p2_%ld", t);
+        sprintf(name, "p2");
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
                 if (set_ch_status_ && ch_status_[iid] != 0) continue;
                 DetId id(ecalDetIds_[iid]);
@@ -328,8 +332,6 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 else if (isinf(p2) < 0) p2 = -FLT_MAX;
 
                 float eta = geom_eta(id);
-                char name[64];
-                sprintf(name, "p2_%ld", t);
                 static TH1D * h_eta_norm = 0;
                 hm_.h<TProfile>("etaProf", name, &p_eta_norm);
                 float p2_mean = p_eta_norm->GetBinContent(p_eta_norm->FindBin(eta));
