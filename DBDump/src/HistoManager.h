@@ -13,8 +13,8 @@ class HistoManager {
         public:
                 typedef std::map<std::string, TObject *> Map;
 
-                HistoManager() {};
-                ~HistoManager() {};
+                //HistoManager() {};
+                //~HistoManager() {};
 
                 template <class T> void addTemplate(const char * type, T * templ)
                 {
