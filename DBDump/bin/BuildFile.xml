@@ -5,3 +5,5 @@
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
 </bin>
+<bin   file="merge_dump.cpp" name="merge_dump">
+</bin>
