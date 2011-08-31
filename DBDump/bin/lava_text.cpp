@@ -68,7 +68,7 @@ int main( int argc, char** argv )
                 int option_index = 0;
                 c = getopt_long(argc, argv, "vqi:o:g:t:T:n:b", long_options, &option_index);
                 if (c == -1) break;
-                
+
                 switch (c) {
                         case 0:
                                 if (long_options[option_index].flag != 0) break;
@@ -188,7 +188,7 @@ int main( int argc, char** argv )
                         } else {
                                 assert(0);
                         }
-                        ts.t2 = (edm::Timestamp)t[iLM];
+                        ts.t2 = (edm::Timestamp)t[iLM - 1];
                         ts.t3 = (edm::Timestamp)t3;
                         apdpn.setValue(id, p);
                         apdpn.setTime(iLM - 1, ts);
