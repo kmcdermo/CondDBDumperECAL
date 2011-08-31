@@ -14,6 +14,9 @@
 #include "TProfile2D.h"
 #include "TGraphAsymmErrors.h"
 
+#include <vector>
+#include <set>
+
 #define NSUBDET 3
 
 class EcalLaserPlotter {
@@ -36,6 +39,8 @@ class EcalLaserPlotter {
                 float geom_eta(DetId id);
                 void compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t);
                 void fill_histories(time_t t);
+                void max_min(DetId id, float val);
+                void max_min_plots();
 
                 //number of bins for plots of corrections in an eta ring
                 const static int netabins_ = 20;
@@ -54,8 +59,13 @@ class EcalLaserPlotter {
                 time_t iov_last_;
 
                 std::vector<DetId> ecalDetIds_;
+                std::vector<float> max_val_;
+                std::vector<float> min_val_;
                 std::vector<float> geom_eta_;
                 std::vector<uint16_t> ch_status_;
+
+                std::set<int> inf_; // +/- DetId according to inf sign
+                std::set<int> nan_; // DetId
 
                 char ecalPart[3];
                 char eename[3];
@@ -82,20 +92,30 @@ EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
         hm_.addTemplate<TH1D>("distr", new TH1D("distribution", "distribution", 2000, 0., 2.));
         hm_.addTemplate<TProfile>("etaProf", new TProfile("etaProf", "etaProf", 250, -2.75, 2.75));
 
-        // initialise ECAL DetId vector
+        // initialise ECAL DetId, max_val, min_val vectors
+        ecalDetIds_.resize(EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
+        max_val_.resize(EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
+        min_val_.resize(EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
+        int idx = -1;
         for (int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
                 EBDetId ebId = EBDetId::unhashIndex(hi);
                 if (ebId != EBDetId()) {
-                        ecalDetIds_.push_back(ebId);
+                        ecalDetIds_[hi] = ebId;
+                        max_val_[hi] = -FLT_MAX;
+                        min_val_[hi] = FLT_MAX;
                 }
         }
         for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
                 EEDetId eeId = EEDetId::unhashIndex(hi);
                 if (eeId != EEDetId()) {
-                        ecalDetIds_.push_back(eeId);
+                        idx = EBDetId::MAX_HASH + 1 + hi;
+                        ecalDetIds_[idx] = eeId;
+                        max_val_[idx] = -FLT_MAX;
+                        min_val_[idx] = FLT_MAX;
                 }
         }
         assert(ecalDetIds_.size() == 75848);
+        assert(ecalDetIds_.size() == EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
 
         // initialise quantile names
 	int i = 0;
@@ -120,6 +140,7 @@ void EcalLaserPlotter::reset_quantile()
 
 void EcalLaserPlotter::save(const char * filename, const char * opt)
 {
+        max_min_plots();
         hm_.save(filename, opt);
 }
 
@@ -140,6 +161,49 @@ float EcalLaserPlotter::geom_eta(DetId id)
                 return geom_eta_[EBDetId::MAX_HASH + 1 + EEDetId(id).denseIndex()];
         } else {
                 assert(0);
+        }
+}
+
+void EcalLaserPlotter::max_min(DetId id, float val)
+{
+        int idx = -1;
+        if (id.subdetId() == EcalBarrel) {
+                idx = EBDetId(id).hashedIndex();
+        } else if (id.subdetId() == EcalEndcap) {
+                idx = EBDetId::MAX_HASH + 1 + EEDetId(id).denseIndex();
+        } else {
+                assert(0);
+        }
+        if (max_val_[idx] < val)  max_val_[idx] = val;
+        if (min_val_[idx] > val)  min_val_[idx] = val;
+}
+
+void EcalLaserPlotter::max_min_plots()
+{
+        int ix = -1, iy = -1, iz = -1;
+        int isEB = 0;
+        const char * subdet[NSUBDET] =  { "nZ_", "" , "pZ_" };
+        static TH2D * h2d_max[3]; // FIXME - hope static arrays are zeroed by default
+        static TH2D * h2d_min[3]; // FIXME - hope static arrays are zeroed by default
+        const char * temhl[] = { "EEh2", "EBh2"};
+        for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
+                DetId id(ecalDetIds_[i]);
+                if (id.subdetId() == EcalBarrel) {
+                        ix = EBDetId(id).iphi();
+                        iy = EBDetId(id).ieta();
+                        iz = 0;
+                        isEB = 1;
+                } else if (id.subdetId() == EcalEndcap) {
+                        ix = EEDetId(id).ix();
+                        iy = EEDetId(id).iy();
+                        iz = EEDetId(id).zside();
+                        isEB = 0;
+                }
+                printf("%d %d %d   %f\n", ix, iy, iz, max_val_[i]);
+                sprintf(str, "%smax", subdet[iz+1]);
+                hm_.h<TH2D>(temhl[isEB], str, &h2d_max[iz + 1])->Fill(ix, iy, max_val_[i]);
+                sprintf(str, "%smin", subdet[iz+1]);
+                hm_.h<TH2D>(temhl[isEB], str, &h2d_min[iz + 1])->Fill(ix, iy, min_val_[i]);
         }
 }
 
@@ -173,7 +237,7 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
         if (onceForAll && set_ch_status_) return;
         if (!set_ch_status_) ch_status_.resize(ecalDetIds_.size());
         FILE * ftmp;
-        //if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
+        if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
         for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
                 ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
                 if (!set_ch_status_) {
@@ -191,18 +255,30 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
                         //fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
                 }
         }
-        //if (!set_ch_status_) fclose(ftmp);
+        if (!set_ch_status_) fclose(ftmp);
         set_ch_status_ = 1;
 }
 
 void EcalLaserPlotter::printSummary()
 {
         printf("%d IOV(s) analysed.\n", niov_);
-        char buf[128];
+        char buf[256];
         strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&iov_first_));
         printf("First IOV: %ld (%s UTC)\n", iov_first_, buf);
         strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&iov_last_));
         printf(" Last IOV: %ld (%s UTC)\n", iov_last_, buf);
+        printf("\n");
+        printf("List of problematic channels:\n");
+        printf("%d nan:", nan_.size());
+        for (std::set<int>::const_iterator it = nan_.begin(); it != nan_.end(); ++it) {
+                printf(" %d", *it);
+        }
+        printf("\n");
+        printf("%d inf:", inf_.size());
+        for (std::set<int>::const_iterator it = inf_.begin(); it != inf_.end(); ++it) {
+                printf(" %d", *it);
+        }
+        printf("\n");
 }
 
 void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t)
@@ -211,7 +287,7 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
         char name[64];
         //sprintf(name, "p2_%ld", t);
         sprintf(name, "p2");
-        hm_.h<TProfile>("etaProf", name, &p)->Clear();
+        hm_.h<TProfile>("etaProf", name, &p)->Reset();
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
                 if (set_ch_status_ && ch_status_[iid] != 0) continue;
                 DetId id(ecalDetIds_[iid]);
@@ -236,8 +312,14 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                 float eta = 99999;
                 p2 = (*itAPDPN).p2;
 
-                if (isinf(p2) > 0)      p2 =  FLT_MAX;
-                else if (isinf(p2) < 0) p2 = -FLT_MAX;
+                if (isinf(p2) > 0) {
+                        p2 =  FLT_MAX;
+                } else if (isinf(p2) < 0) {
+                        p2 = -FLT_MAX;
+                }
+                if (isnan(p2)) {
+                        p2 =  FLT_MAX;
+                }
 
                 eta = geom_eta(id);
 
@@ -251,7 +333,7 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                         else                         q_[4].fill(p2, iid);
                 }
                 q_[5 + iLM - 1].fill(p2, iid);
-                q_[qetaoffs_ + etabin(eta) ].fill(p2, iid);
+                q_[qetaoffs_ + etabin(eta)].fill(p2, iid);
         }
 }
 
@@ -297,7 +379,11 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
         //sprintf(name, "p2_%ld", t);
         sprintf(name, "p2");
         for (size_t iid = 0; iid < ecalDetIds_.size(); ++iid) {
-                if (set_ch_status_ && ch_status_[iid] != 0) continue;
+                if (set_ch_status_ && ch_status_[iid] != 0) {
+                        max_val_[iid] = 1.;
+                        min_val_[iid] = 1.;
+                        continue;
+                }
                 DetId id(ecalDetIds_[iid]);
 
                 int ix = -1, iy = -1, iz = -1, r = -1;
@@ -328,8 +414,34 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 itAPDPN = apdpn.getLaserMap().find(id);
                 p2 = (*itAPDPN).p2;
 
-                if (isinf(p2) > 0)      p2 =  FLT_MAX;
-                else if (isinf(p2) < 0) p2 = -FLT_MAX;
+                const char * subdet[NSUBDET] =  { "nZ_", "" , "pZ_" };
+
+                static TH2D * h2d_infp[3]; // FIXME - hope static arrays are zeroed by default
+                static TH2D * h2d_infm[3]; // FIXME - hope static arrays are zeroed by default
+                static TH2D * h2d_nan[3]; // FIXME - hope static arrays are zeroed by default
+                const char * temhl[] = { "EEh2", "EBh2"};
+                if (isinf(p2) > 0) {
+                        p2 =  FLT_MAX;
+                        sprintf(str, "%sinfp", subdet[iz+1]);
+                        hm_.h<TH2D>(temhl[isEB], str, &h2d_infp[iz + 1])->Fill(ix, iy);
+                        inf_.insert((int)id);
+                        continue;
+                } else if (isinf(p2) < 0) {
+                        p2 = -FLT_MAX;
+                        sprintf(str, "%sinfm", subdet[iz+1]);
+                        hm_.h<TH2D>(temhl[isEB], str, &h2d_infm[iz + 1])->Fill(ix, iy);
+                        inf_.insert(-(int)id);
+                        continue;
+                }
+                if (isnan(p2)) {
+                        p2 =  FLT_MAX;
+                        sprintf(str, "%snan", subdet[iz+1]);
+                        hm_.h<TH2D>(temhl[isEB], str, &h2d_nan[iz + 1])->Fill(ix, iy);
+                        nan_.insert((int)id);
+                        continue;
+                }
+
+                max_min(id, p2);
 
                 float eta = geom_eta(id);
                 static TH1D * h_eta_norm = 0;
@@ -338,7 +450,6 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 hm_.h<TH1D>("distr", "eta_normalised_p2", &h_eta_norm)->Fill(p2 / p2_mean);
 
                 const char* templ[] = { "EEprof2", "EBprof2"};
-                const char* subdet[NSUBDET] =  { "nZ_", "" , "pZ_" };
 
                 static TProfile2D * p2d_all[3]; // FIXME - hope static arrays are zeroed by default
                 static TProfile2D * p2d_all_norm[3]; // FIXME - hope static arrays are zeroed by default
