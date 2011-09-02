@@ -254,6 +254,78 @@ void drawNormP2Map(const char * img_suffix){
   } 
 }
 
+void drawH2Maps(const char * img_suffix)
+{
+  const char* names[] = {
+          "EEh2_nZ_nan", "EBh2_nan", "EEh2_pZ_nan",
+          "EEh2_nZ_infp", "EBh2_infp", "EEh2_pZ_infp",
+          "EEh2_nZ_infn", "EBh2_infn", "EEh2_pZ_infn",
+          "EEh2_nZ_max", "EBh2_max", "EEh2_pZ_max",
+          "EEh2_nZ_min", "EBh2_min", "EEh2_pZ_min"
+  };
+  const char * title[] = {
+          "Problematic channels",
+          "Transparency"
+  };
+  const char * type[] = {
+          "nan", "positive inf", "negative inf",
+          "maximum", "minimum"
+  };
+  const char * descr[] = {
+          "z: # of occurr.",
+          ""
+  };
+  const char* part[]  = { "EE-", "EB", "EE+" };
+  TCanvas* c = new TCanvas("h2", "h2", 800, 400);
+  c->SetLogz();
+  c->SetLeftMargin(0.07);
+  c->cd();
+  for(int i = 0; i < sizeof(names)/sizeof(names[0]); ++i) {
+          cout << names[i] << endl;
+          TH2D* h = (TH2D*) gDirectory->Get(names[i]);
+          if(!h) continue;
+          h->Draw("colz");
+
+          if (i >= 9) c->SetLogz(0);
+
+          c->Update();
+
+          TPaletteAxis *palette = (TPaletteAxis*)h->GetListOfFunctions()->FindObject("palette");
+
+          if(palette){
+                  palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
+                  palette->SetY2NDC(0.3*palette->GetY1NDC() + 0.7*palette->GetY2NDC());
+                  //	palette->ConvertNDCtoPad();
+                  palette->Paint("NDC");
+          } else{
+                  cerr << "Palette not found!" << endl;
+          }
+
+          h->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
+          h->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
+
+          autozoom((TH2F*)h, 0.02);
+
+          c->Paint();
+
+          TLatex * t = new TLatex(0.87, 0.9, title[i/9]);
+          t->SetTextAlign(21);
+          t->SetNDC();
+          t->SetTextFont(42);
+          t->SetTextSize(0.06);
+          //t->DrawLatex(0.87, 0.84, "normalized to the");
+          //t->DrawLatex(0.87, 0.78, "eta-ring average");
+          //t->DrawLatex(0.87, 0.69, type[i/3]);
+          t->DrawLatex(0.87, 0.84, type[i/3]);
+          t->DrawLatex(0.87, 0.78, descr[i/9]);
+          t->Draw();
+          TLatex* t2 = (TLatex*) t->Clone();
+          t2->SetTextColor(kRed+2);
+          t2->DrawLatex(0.9, 0.2, part[i%3]);
+          c->Print(TString(h->GetName()) + "." + img_suffix);
+  }
+}
+
 int all(const char * filename, const char * img_suffix)
 {
 
@@ -265,6 +337,8 @@ int all(const char * filename, const char * img_suffix)
   drawNormP2Hist(img_suffix);
 
   drawNormP2Map(img_suffix);
+
+  drawH2Maps(img_suffix);
 
   TCanvas * c = new TCanvas("history", "history", 800, 400);
   if (!fin || fin->IsZombie()) {
