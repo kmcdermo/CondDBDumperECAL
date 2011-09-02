@@ -269,12 +269,12 @@ void EcalLaserPlotter::printSummary()
         printf(" Last IOV: %ld (%s UTC)\n", iov_last_, buf);
         printf("\n");
         printf("List of problematic channels:\n");
-        printf("%d nan:", nan_.size());
+        printf("%d nan:", (int)nan_.size());
         for (std::set<int>::const_iterator it = nan_.begin(); it != nan_.end(); ++it) {
                 printf(" %d", *it);
         }
         printf("\n");
-        printf("%d inf:", inf_.size());
+        printf("%d inf:", (int)inf_.size());
         for (std::set<int>::const_iterator it = inf_.begin(); it != inf_.end(); ++it) {
                 printf(" %d", *it);
         }
