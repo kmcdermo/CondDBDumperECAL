@@ -30,6 +30,9 @@ void usage(const char * prg)
         printf("                          [default: -1, all the IOV]\n");
         printf("-o, --output <filename>,  specify the output file name\n");
         printf("                          [default: ecallaserplotter.root]\n");
+        printf("-s, --status <filename>,  specify the EcalChannelStatus file name\n");
+        printf("                          [default: none]\n");
+        printf("                          in the format \"detid status\"\n");
         printf("-t, --tmin <tmin>,        specify the time to start the validation from\n");
         printf("                          in second since the Epoch (1970-01-01), UTC\n");
         printf("                          [default: -1, i.e. no minimum]\n");
@@ -38,15 +41,18 @@ void usage(const char * prg)
         printf("                          [default: -1, i.e. no maximum]\n");
         exit(1);
 }
+
+
 int main( int argc, char** argv )
 {
         if (argc == 1) usage(argv[0]);
         int c;
         int verbose_flag, quiet_flag;
-        char input[MAX_FILENAME], output[MAX_FILENAME], geom[MAX_FILENAME];
+        char input[MAX_FILENAME], output[MAX_FILENAME], geom[MAX_FILENAME], status[MAX_FILENAME];
         sprintf(input, "input.dat");
         sprintf(output, "output.root");
         sprintf(geom, "detid_geom.dat");
+        sprintf(status, " ");
 
         int tmin = -1, tmax = -1, niov = -1, br = 1;
 
@@ -59,6 +65,7 @@ int main( int argc, char** argv )
                         {"input",    required_argument, 0, 'i'},
                         {"output",   required_argument, 0, 'o'},
                         {"geom",     required_argument, 0, 'g'},
+                        {"status",   required_argument, 0, 's'},
                         {"tmin",     required_argument, 0, 't'},
                         {"tmax",     required_argument, 0, 'T'},
                         {"niov",     required_argument, 0, 'n'},
@@ -66,7 +73,7 @@ int main( int argc, char** argv )
                 };
 
                 int option_index = 0;
-                c = getopt_long(argc, argv, "vqi:o:g:t:T:n:b", long_options, &option_index);
+                c = getopt_long(argc, argv, "vqi:o:g:s:t:T:n:b", long_options, &option_index);
                 if (c == -1) break;
 
                 switch (c) {
@@ -95,6 +102,10 @@ int main( int argc, char** argv )
                                 sprintf(output, "%s", optarg);
                                 printf("output file: %s\n", output);
                                 break;
+                        case 's':
+                                sprintf(status, "%s", optarg);
+                                printf("status file: %s\n", status);
+                                break;
                         case 't':
                                 tmin = atoi(optarg);
                                 printf("tmin: %d\n", tmin);
@@ -122,11 +133,32 @@ int main( int argc, char** argv )
                 fclose(ftmp);
         }
 
+        EcalChannelStatus ch_status_;
+        if (strcmp(status, " ") != 0) {
+                FILE * fstatus = fopen(status, "r");
+                if (fstatus == NULL) {
+                        fprintf(stderr, "error opening file `%s': %s.\n", status, strerror(errno));
+                        exit(4);
+                } else {
+                        uint32_t id;
+                        uint16_t st;
+                        int cnt = 0;
+                        while (fscanf(fstatus, "%u %hu", &id, &st) != EOF) {
+                                EcalChannelStatusCode code(st);
+                                ch_status_[id] = code;
+                                ++cnt;
+                        }
+                        assert(cnt == 75848);
+                        fclose(fstatus);
+                }
+        }
+
         char * line = NULL;
         size_t len = 0;
         ssize_t read;
         int first = 1;
         EcalLaserPlotter lp(geom);
+        if (strcmp(status, " ") != 0) lp.setEcalChannelStatus(ch_status_, 1);
         EcalLaserAPDPNRatios apdpn;
         time_t t[92], t1, t3, ot3 = 0;
         int cnt = 0, cnt_iov = 0, skip = 0;
@@ -162,7 +194,7 @@ int main( int argc, char** argv )
                         for (int i = 0; i < 92; ++i) assert(t1 <= t[i] && t[i] <= t3);
                         //printf("%d %d %d\n", cnt, EBDetId::MAX_HASH, EEDetId::kSizeForDenseIndexing);
                         if (!first) {
-                                assert(ot3 == t1);
+                                //assert(ot3 == t1); // not always true if sequences are taken from DB
                                 assert(cnt == EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
                         }
                         ot3 = t3;
