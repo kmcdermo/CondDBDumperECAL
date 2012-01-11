@@ -199,7 +199,6 @@ void EcalLaserPlotter::max_min_plots()
                         iz = EEDetId(id).zside();
                         isEB = 0;
                 }
-                printf("%d %d %d   %f\n", ix, iy, iz, max_val_[i]);
                 sprintf(str, "%smax", subdet[iz+1]);
                 hm_.h<TH2D>(temhl[isEB], str, &h2d_max[iz + 1])->Fill(ix, iy, max_val_[i]);
                 sprintf(str, "%smin", subdet[iz+1]);
