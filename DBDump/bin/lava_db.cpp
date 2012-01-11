@@ -64,7 +64,7 @@ cond::LaserValidation::LaserValidation():Utilities("cmscond_list_iov")
         addOption<std::string>("tag","t","list info of the specified tag");
         addOption<std::string>("geom","g","geometry file (default: detid_geom.dat)");
         addOption<std::string>("output","o","output file (default: ecallaserplotter.root)");
-        addOption<std::string>("niov","n","number of IOV");
+        addOption<int>("niov","n","number of IOV");
 }
 
 cond::LaserValidation::~LaserValidation(){
@@ -146,7 +146,7 @@ int cond::LaserValidation::execute()
                         <<"since \t till \t payloadToken"<<std::endl;
 
                 int niov = -1;
-                //if (hasOptionValue("niov")) niov = getOptionValue<int>("niov");
+                if (hasOptionValue("niov")) niov = getOptionValue<int>("niov");
 
                 static const unsigned int nIOVS = std::distance(iov.begin(), iov.end());
 
