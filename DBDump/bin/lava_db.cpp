@@ -156,12 +156,12 @@ int cond::LaserValidation::execute()
                 typedef unsigned int RunNumber_t;
 
                 int cnt = 0;
-                A res;
                 EcalLaserPlotter lp(geom.c_str());
                 for (cond::IOVProxy::const_iterator ita = iov.begin(); ita != iov.end() - 2; ++ita, ++cnt) {
                         if (cnt == 0) continue;
                         std::cout << cnt << " " << ita->since() << " -> " << ita->till() << "\n";
-                        lp.fill(res, (time_t)ita->since()>>32);
+                        boost::shared_ptr<A> pa = session.getTypedObject<A>(ita->token());
+                        lp.fill(*pa, (time_t)ita->since()>>32);
                         if (niov > 0 && cnt >= niov) break;
                 }
                 lp.save(output.c_str());
