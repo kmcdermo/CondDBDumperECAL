@@ -7,7 +7,7 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 
 gTag = os.environ.get('LAS_GTAG')
 if not gTag:
-    gTag = 'GR_R_42_V19::All'
+    gTag = 'GR_P_V32::All'
     #gTag = 'GR09_31X_V1::All'
     #gTag = 'DESIGN_31X_V1::All'
     #gTag = 'STARTUP31X_V1::All'
@@ -67,10 +67,10 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
         ###    record = cms.string('EcalGainRatiosRcd'),
         ###    tag = cms.string('EcalGainRatios_mc')
         ###), 
-        ###cms.PSet(
-        ###    record = cms.string('EcalIntercalibConstantsRcd'),
-        ###    tag = cms.string('EcalIntercalibConstants_EBg50_EEwithB_new')
-        ###), 
+        cms.PSet(
+            record = cms.string('EcalIntercalibConstantsRcd'),
+            tag = cms.string('EcalIntercalibConstants_V1_express')
+        ), 
         ###cms.PSet(
         ###    record = cms.string('EcalWeightXtalGroupsRcd'),
         ###    tag = cms.string('EcalWeightXtalGroups_mc')
@@ -83,16 +83,16 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
         ###    record = cms.string('EcalLaserAlphasRcd'),
         ###    tag = cms.string('EcalLaserAlphas_mc')
         ###), 
-        cms.PSet(
-            record = cms.string('EcalLaserAPDPNRatiosRcd'),
-            ###record = cms.string('EcalLaserAPDPNRatiosRcd'),
-            ###tag = cms.string('EcalLaserAPDPNRatios_mc')
-            #tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
-            ###tag = cms.string('EcalLaserAPDPNRatios_v2_online')
-            ###tag = cms.string('EcalLaserAPDPNRatios_last')
-            ##tag = cms.string('EcalLaserAPDPNRatios_V3_160400_172308_110802')
-            tag = cms.string(lTag)
-        ), 
+        ###cms.PSet(
+        ###    record = cms.string('EcalLaserAPDPNRatiosRcd'),
+        ###    ###record = cms.string('EcalLaserAPDPNRatiosRcd'),
+        ###    ###tag = cms.string('EcalLaserAPDPNRatios_mc')
+        ###    #tag = cms.string('EcalLaserAPDPNRatios_online_hlt')
+        ###    ###tag = cms.string('EcalLaserAPDPNRatios_v2_online')
+        ###    ###tag = cms.string('EcalLaserAPDPNRatios_last')
+        ###    ##tag = cms.string('EcalLaserAPDPNRatios_V3_160400_172308_110802')
+        ###    tag = cms.string(lTag)
+        ###), 
         ###cms.PSet(
         ###    record = cms.string('EcalLaserAPDPNRatiosRefRcd'),
         ###    tag = cms.string('EcalLaserAPDPNRatiosRef_mc')
@@ -111,7 +111,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
     ##connect = cms.string('sqlite:////tmp/ferriff/model_V3_160400_172308_110802.db'),
     ##connect = cms.string('sqlite:///tmp/ferriff/model_V4_160400_172308_110802.db'),
     ##connect = cms.string('oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP'),
-    connect = cms.string('frontier://FrontierPrep/CMS_COND_ECAL'),
+    connect = cms.string('frontier://PromptProd/CMS_COND_31X_ECAL'),
     ###connect = cms.string('oracle://cms_orcoff_prep/CMS_COND_ECAL_LT'),
     # at P5
     ##connect = cms.string('oracle://cms_orcon_prod/CMS_COND_ECAL_LT'),
@@ -122,7 +122,7 @@ process.ecalConditions = cms.ESSource("PoolDBESSource",
 #process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0/src/CondTools/Ecal/python'
 
 #process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(2628) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(32) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
 
 process.source = cms.Source("EmptySource",
         firstRun = cms.untracked.uint32(172409),
@@ -142,15 +142,15 @@ process.demo = cms.EDAnalyzer('DBDump',
         outDumpFile = cms.string(dumpdir + '/out_dump_' + gTag + '_' + lTag + '.log'),
         #outPlotFile = cms.string(plotdir + '/out_plot_' + gTag + '_' + lTag + '.root'),
         outPlotFile = cms.string('/tmp/ferriff/out_plot_' + 'EcalLaserAPDPNRatios_V3_160400_172308_110802' + '_bis.root'),
-        dumpIC         = cms.bool(False),
+        dumpIC         = cms.bool(True),
         plotIC         = cms.bool(False),
         dumpTC         = cms.bool(False),
         plotTC         = cms.bool(False),
         dumpADCToGeV   = cms.bool(False),
         dumpTransp     = cms.bool(False),
-        plotTransp     = cms.bool(True),
+        plotTransp     = cms.bool(False),
         dumpTranspCorr = cms.bool(False),
-        plotTranspCorr = cms.bool(True),
+        plotTranspCorr = cms.bool(False),
         dumpChStatus   = cms.bool(False),
         plotChStatus   = cms.bool(False),
         dumpPedestals  = cms.bool(False),
