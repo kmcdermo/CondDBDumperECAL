@@ -2,15 +2,18 @@
 myself="`readlink -f "$0"`"
 mydir="`dirname "$myself"`"
 
-last_iovs=150
+#last_iovs=150
+last_iovs=100
 cycle=3600
 #min_time=0
 min_time=`date -d "2011-08-04 3:00 GMT" +%s`
 
 
+export TNS_ADMIN=/afs/cern.ch/cms/DB/conddb/ADG
 export LAS_LTAG=EcalLaserAPDPNRatios_last
 #export LAS_DBCONNECT=oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP
-export LAS_DBCONNECT=oracle://cms_orcoff_prod/CMS_COND_42X_ECAL_LASP
+#export LAS_DBCONNECT=oracle://cms_orcoff_prod/CMS_COND_42X_ECAL_LASP
+export LAS_DBCONNECT=oracle://cms_orcon_adg/CMS_COND_42X_ECAL_LASP
 
 
 

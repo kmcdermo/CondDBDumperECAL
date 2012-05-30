@@ -5,12 +5,16 @@ mydir="`dirname "$myself"`"
 
 CODEDIR=$mydir
 CMSSW_CFG=$mydir/dbdump_cfg.py
-export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LAS}
-export LAS_GTAG=GR_R_42_V19
-export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_prompt}
+#export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LAS}
+export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcon_adg/CMS_COND_42X_ECAL_LASP}
+export LAS_GTAG=GR_R_44_V15
+export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
 export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
 presc=1
+
+#for local install of gnuplot
+PATH=/usr/local/bin:$PATH
 
 DATE=`date +%F-%H:%M`
 
@@ -94,11 +98,6 @@ mkdir -p "$LAS_HISTDIR"
 mkdir -p "$LAS_DUMPDIR"
 export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
 
-d="`pwd`"
-cd "$CODEDIR"
-eval `scramv1 runtime -sh`
-cd "$d"
-
 tmpdir="`mktemp -d`"
 cd "$tmpdir"
 
@@ -115,7 +114,22 @@ GEN_IOV_OPT=
 [ -n "$LAS_LTAG" ] && GEN_IOV_OPT="$GEN_IOV_OPT -t $LAS_LTAG"
 
 
+# parenthesis needed to isolate the CMSSW environment, which
+# does not have lxml installed (which is needed by rr.py)
+(
+d="`pwd`"
+cd "$CODEDIR"
+eval `scramv1 runtime -sh`
+export TNS_ADMIN=/afs/cern.ch/cms/DB/conddb/ADG
+cd "$d"
+
 $mydir/gen_iov_list -p $presc $GEN_IOV_OPT > iov_time.txt
+
+end=`head -n 1 iov_time.txt`
+begin=`tail -n 1 iov_time.txt`
+
+$mydir/plotlumi -b "@$begin" -e "@$end" "$LAS_HISTDIR/lumi"
+gzip -f -9 $LAS_HISTDIR/lumi.dat
 
 gzip -c iov_time.txt > $LAS_HISTDIR/iov_time.txt.gz
 
@@ -126,15 +140,22 @@ export MAX_EVENTS=`wc -l iov_time.txt | awk '{print $1}'`
 cmsRun $CMSSW_CFG
 
 cd "$LAS_HISTDIR"
-
-root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
-
-(cd $LAS_HISTDIR
- echo "Converting eps files to png..."
- for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
- echo "Making animated GIF image..."
- convert -delay 20 -loop 0 distr_eta_normalised_p2.png distr_eta_normalised_p2.png distr_eta_normalised_p2.png  history*.png anim.gif
+ln -fs $LAS_HISTFILE ./prompt.root
 )
+
+$mydir/all.sh
+
+#if true; then
+#
+#root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
+#
+#(cd $LAS_HISTDIR
+# echo "Converting eps files to png..."
+# for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
+# echo "Making animated GIF image..."
+# #convert -delay 20 -loop 0 distr_eta_normalised_p2.png distr_eta_normalised_p2.png distr_eta_normalised_p2.png  history*.png anim.gif
+# convert -delay 20 -loop 0 history*.png anim.gif
+#)
 
 sed "s/%GTAG%/$LAS_GTAG/
 s/%LTAG%/$LAS_LTAG/
@@ -143,6 +164,8 @@ s/%PRESC%/$presc/
 " < $mydir/webtemplate.html > "$LAS_HISTDIR/index.html"
 
 cp "$mydir/style.css" "$LAS_HISTDIR"
+
+#fi
 
 echo "Histograms written in: $LAS_HISTDIR"
 

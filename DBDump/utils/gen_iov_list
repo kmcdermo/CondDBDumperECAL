@@ -5,7 +5,12 @@ tmin=0
 tmax=$((2**32-1))
 dorand=0
 
-LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LASP}
+myself="`readlink -f "$0"`"
+mydir="`dirname "$myself"`"
+
+CODEDIR=$mydir
+
+LAS_DBCONNECT=${LAS_DBCONNECT:-frontier://FrontierProd/CMS_COND_311X_ECAL_LASP}
 LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 
 # Note that we use `"$@"' to let each command-line parameter expand to a
@@ -51,7 +56,7 @@ EOF
 
 } 
 
-last=-1
+unset last
 
 while true; do
      case "$1" in
@@ -86,15 +91,38 @@ date_format(){
     fi
 }
 
+
+# parenthesis needed to isolate the CMSSW environment, which
+# does not have lxml installed (which is needed by rr.py)
+(
+d="`pwd`"
+cd "$CODEDIR"
+eval `scramv1 runtime -sh`
+export TNS_ADMIN=/afs/cern.ch/cms/DB/conddb/ADG
+cd "$d"
+
+#-P/afs/cern.ch/cms/DB/conddb \ # since 30.04.2012 (DB changed one week ago...)
+if [ -z "$last" ]; then	
 cmscond_list_iov \
 -c $LAS_DBCONNECT \
--P/afs/cern.ch/cms/DB/conddb \
+-P /afs/cern.ch/cms/DB/conddb/ADG \
 $TAG_OPT \
-| grep '^[[:digit:]]\+' | tac  | awk "BEGIN {inext=$presc} 
-  { a = int(\$1 / 2^32); 
-      if(($last < 0 || n < $last) && a >= $tmin && a <= $tmax && i == inext) { 
-  	    print a; i=0; 
-  	    if( $dorand !=0) inext = int(2 * rand() * $presc); 
-  	    n = n + 1;
-  	} }
-  {i=i+1;}"  | date_format
+    | grep '^[[:space:]]*[[:digit:]]' | awk "BEGIN {i=1; inext=$presc}
+    { 
+	a = \$1 / 2^32; 
+	if((a >= $tmin) && (a <= $tmax)){
+		if(i == inext){ 
+			print a; i=0; 
+			if( $dorand !=0) inext = int(2 * rand() * $presc); 
+		}
+	        i=i+1;
+        }}"  | date_format
+else
+    cmscond_list_iov \
+-c $LAS_DBCONNECT \
+-P /afs/cern.ch/cms/DB/conddb/ADG \
+$TAG_OPT \
+| grep '^[[:space:]]*[[:digit:]]' | tac | head -n $last | awk "{ print \$1 / 2^32}"  | date_format
+fi
+#-P/afs/cern.ch/cms/DB/conddb \ # since 30.04.2012 (DB changed one week ago...)
+)
