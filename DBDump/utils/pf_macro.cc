@@ -7,6 +7,7 @@
 #include "drawGraphEnv.C"
 //#include "tdrstyle.C"
 #include "TMath.h"
+#include "xtime.C"
 
 void pf_macro(const char * filename = "out_plot_GR_R_42_V19::All_EcalLaserAPDPNRatios_v3_online.root", const char * img_suffix = "eps"){
   all(filename, img_suffix);
@@ -44,7 +45,7 @@ void draw(T* h, const char* opt = "")
   h->Draw(opt);
 }
 
-void gplot(TFile * f, char * gname, char * title = 0, const char * img_suffix = "eps")
+void gplot(TDirectory * f, char * gname, char * title = 0, const char * img_suffix = "eps")
 {
     const char * nfrac[] = { "3S", "2S", "1S", "E" };
     const char * nleg[] = { "99.7% of channels", "95.4% of channels", "68.2% of channels", "extrema #times 0.1" };
@@ -71,19 +72,26 @@ void gplot(TFile * f, char * gname, char * title = 0, const char * img_suffix = 
         g->SetMarkerSize(.5);
         g->SetFillColor(ncol[i]);
         //draw(g, i == 0 ? "ae3" : "e3");
-        if (i != 3) draw(g, i == 0 ? "ae3" : "e3");
+	if(i == 0){
+	  TH1* haxis = xtime(g);
+	  haxis->GetXaxis()->SetLabelOffset(0.04);
+	  haxis->GetXaxis()->SetLabelSize(0.045);
+	  haxis->Draw();
+	}
+        if (i != 3) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
         else {
             drawGraphEnv(g, 0.1, false, 7, 2, 1, false, &gg);
         }
         if (i == 3) draw(g, "xl");
-        g->GetXaxis()->SetTimeDisplay(1);
-	g->GetXaxis()->SetNdivisions(505);
+	//g->GetXaxis()->SetTimeDisplay(1);
+	//g->GetXaxis()->SetTimeFormat("#splitline{%d/%m}{%H:%M}");
+	//g->GetXaxis()->SetNdivisions(505);
         g->GetXaxis()->SetTitle("time");
         g->GetYaxis()->SetTitle("transparency change");
         //g->GetYaxis()->SetRangeUser(0.5, 1.15);
         gPad->SetTicks();
         //if (title) g->SetTitle(title);
-        if (i == 0) draw(g, i == 0 ? "ae3" : "e3");
+        if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
         if (i == 0) l->AddEntry(g, "median", "l");
         l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
     }
@@ -93,8 +101,12 @@ void gplot(TFile * f, char * gname, char * title = 0, const char * img_suffix = 
     l->SetTextSize(0.0475);
     l->Draw();
     t->Draw();
+    t->SetTextFont(haxis->GetXaxis()->GetLabelFont());
+    t->SetTextSize(haxis->GetXaxis()->GetLabelSize());
+    t->DrawLatex(0.804, 0.0538, "(UTC)");
     gPad->Print((std::string(gname) + "." + img_suffix).c_str());
-    //        gPad->Print("anim.gif+10");
+    gPad->SaveAs((std::string(gname) + ".root").c_str());
+    //gPad->Print("anim.gif+10");
 }
 
 void setStyle(){
@@ -331,9 +343,18 @@ int all(const char * filename, const char * img_suffix)
 
   setStyle();
 
-  printf("opening file %s\n", filename);
-  TFile * fin = TFile::Open(filename);
-
+  TDirectory * fin = 0;
+  if(filename){
+    printf("opening file %s\n", filename);
+    TFile* fin_ = TFile::Open(filename);
+    if (!fin_ || fin_->IsZombie()) {
+      return 0;
+    }
+    fin = fin_;
+  } else{
+    fin = gDirectory;
+  }
+  
   drawNormP2Hist(img_suffix);
 
   drawNormP2Map(img_suffix);
@@ -341,9 +362,6 @@ int all(const char * filename, const char * img_suffix)
   drawH2Maps(img_suffix);
 
   TCanvas * c = new TCanvas("history", "history", 800, 400);
-  if (!fin || fin->IsZombie()) {
-    return 0;
-  }
   
   gplot(fin, "history_p2_All", "All ECAL", img_suffix);
   gplot(fin, "history_p2_EE-", "EE-", img_suffix);
