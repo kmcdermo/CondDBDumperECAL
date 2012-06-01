@@ -1,0 +1,101 @@
+#!/bin/bash
+ 
+# Note that we use `"$@"' to let each command-line parameter expand to a
+# separate word. The quotes around `$@' are essential!
+# We need TEMP as the `eval set --' would nuke the return value of getopt.
+temp=`getopt -o hb:e: --long help,begin,end \
+      -n 'plotlumi' -- "$@"`
+
+# Note the quotes around `$TEMP': they are essential!
+eval set -- "$temp"
+
+help(){
+fmt <<EOF
+Usage: plotlumi -b BEGIN_DATE -e END_DATE OUTPUT_BASENAME
+
+Description: plot LHC instantaneous luminosity. A file with the data values and a file
+with the plot are produced. lumiCalc2.py is used to obtain the luminosity data. CMSSW environment
+needs be set (see cmsenv or scram runtime) in order to use this command.
+
+BEGIN_DATE        Timestamp of begin point in any format supported by the date command.
+
+END_DATE          Timestamp of end point in any format supported by the date command.
+
+OUTPUT_BASENAME   Name to be used for the output files. Prefix .dat is added to the data file
+                  and prefix .png to the the image file containing the plot.
+EOF
+}
+
+die(){
+    echo "$@" 1>&2
+    exit 1
+}
+
+#default time period: last 24 hours
+now=`date +%s`
+begin_s="`date +%s -d @$((now-24*3600))`"
+end_s="`date +%s -d @$now`"
+
+while true ; do
+     case "$1" in
+         -h) help; shift; exit 0;;
+	 -b|--begin) begin_s="`date +%s -d "$2"`"; [ $? = 0 ] || die "Invalid start timestamp"; shift 2;;
+	 -e|--end)   end_s="`date +%s -d "$2"`"; [ $? = 0 ] || die "Invalid start timestamp"; shift 2;;
+         --) shift ; break ;; #end of options. It remains only the args.
+         *) echo "Internal error!" ; exit 1 ;;
+     esac
+done
+
+if [ $# -lt 1 ]; then
+    help
+    exit 1
+fi
+
+#timestamps in the format expected by lumiCalc:
+begin="`date -u +"%m/%d/%y %H:%M:%S" -d @$begin_s`"
+end="`date -u +"%m/%d/%y %H:%M:%S" -d @$end_s`"
+
+output="$1"
+
+#check write permissions
+touch "${output}.dat"
+[ $? = 0 ] || "Cannot write to ${output}.dat."
+
+#check availability of lumiCalc2.py
+LUMICALC=lumiCalc2.py
+which $LUMICALC 1>/dev/null 2>&1 
+
+if [ $? != 0 ]; then
+    LUMICALC=lumiCalc.py
+    which $LUMICALC 1>/dev/null 2>&1 || die "lumiCalc2.py not found. Please make sure CMSSW environment is set"
+    echo "The command lumiCalc2.py was not found, using instead lumiCalc.py"
+fi
+
+"$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+
+[ $? = 0 ] || die "Execution of lumiCalc2.py failed."
+
+#remove not-a-number from data file:
+sed -i 's@^.*n/a.*$@@' ${output}.dat
+
+now="`date +"%F %H:%M %Z"`"
+
+cat <<EOF | gnuplot
+set term pngcairo enhanced font "cmr10" size 540,265
+set output "${output}.png" 
+set xdata time
+set datafile separator ","
+#time format in input data file:
+set timefmt "%m/%d/%y %H:%M:%S"
+#time format for plot x-axis
+set format x "%d/%m\n%H:%M"
+set title "LHC lumi"
+set xlabel "Time (UTC)"
+set ylabel "{/cmsy10 L} (10^{33} cm^{-1} s^{-1})"
+set label "{/=8 2012-05-05 02:00 CEST}" at screen .99, screen 0.575 rotate by 90
+plot "${output}.dat" every ::1 using 3:(\$6/23000.) notitle
+EOF
+
