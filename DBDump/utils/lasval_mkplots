@@ -21,7 +21,7 @@ DATE=`date +%F-%H:%M`
 # Note that we use `"$@"' to let each command-line parameter expand to a
 # separate word. The quotes around `$@' are essential!
 # We need TEMP as the `eval set --' would nuke the return value of getopt.
-temp=`getopt -o hHt:T:c:p:d:D: --long help,rand,tmin:,tmax:,last: \
+temp=`getopt -o hHt:T:c:p:d:D: --long help,rand,tmin:,tmax:,last:,root \
      -n 'last_laser_iov' -- "$@"`
 
 if [ $? != 0 ] ; then echo "Terminating..." >&2 ; exit 1 ; fi
@@ -59,6 +59,8 @@ help(){
 
  --rand       when used with prescale, select random IOVs (uniform distribution)
 
+ --root       uses ROOT instead of gnuplot to draw the plots
+
  -H           display IOV start time in a human readable format
 
  Authors: F. Ferri and Ph. Gras. CEA/Salcay
@@ -68,6 +70,7 @@ EOF
 }
 
 unset last
+drawer=gnuplot #default is gnuplot
 
 while true; do
      case "$1" in
@@ -83,6 +86,7 @@ while true; do
          --tmax) tmax=$2; shift 2;;
 	 --last) last=$2; shift 2;;
          --rand) dorand=1; shift;;
+	 --root) drawer=root; shift;;
          --) shift; break;;
          *) echo "Internal error!"; exit 1;;
      esac	
@@ -93,6 +97,10 @@ if [ -n "$LAS_LTAG" ]; then
 else
    TAG_OPT="-T $LAS_GTAG"
 fi
+
+#uses absolute paths:
+LAS_HISTDIR="`readlink -f "$LAS_HISTDIR"`"
+LAS_DUMPDIR="`readlink -f "$LAS_DUMPDIR"`"
 
 mkdir -p "$LAS_HISTDIR"
 mkdir -p "$LAS_DUMPDIR"
@@ -143,29 +151,27 @@ cd "$LAS_HISTDIR"
 ln -fs $LAS_HISTFILE ./prompt.root
 )
 
-$mydir/all.sh
-
-#if true; then
-#
-#root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
-#
-#(cd $LAS_HISTDIR
-# echo "Converting eps files to png..."
-# for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
-# echo "Making animated GIF image..."
-# #convert -delay 20 -loop 0 distr_eta_normalised_p2.png distr_eta_normalised_p2.png distr_eta_normalised_p2.png  history*.png anim.gif
-# convert -delay 20 -loop 0 history*.png anim.gif
-#)
-
-sed "s/%GTAG%/$LAS_GTAG/
+if [ "X$drawer" = Xroot ] ; then
+    (cd $LAS_HISTDIR
+	root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
+	echo "Converting eps files to png..."
+	for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
+	echo "Making animated GIF image..."
+ #convert -delay 20 -loop 0 distr_eta_normalised_p2.png distr_eta_normalised_p2.png distr_eta_normalised_p2.png  history*.png anim.gif
+	convert -delay 20 -loop 0 history*.png anim.gif
+    )
+else
+    $mydir/all.sh
+fi
+    
+    sed "s/%GTAG%/$LAS_GTAG/
 s/%LTAG%/$LAS_LTAG/
 s/%DATE%/$DATE/
 s/%PRESC%/$presc/
 " < $mydir/webtemplate.html > "$LAS_HISTDIR/index.html"
-
-cp "$mydir/style.css" "$LAS_HISTDIR"
-
-#fi
+    
+    cp "$mydir/style.css" "$LAS_HISTDIR"
+    
 
 echo "Histograms written in: $LAS_HISTDIR"
 
