@@ -121,15 +121,19 @@ GEN_IOV_OPT=
 [ -n "$LAS_GTAG" ] && GEN_IOV_OPT="$GEN_IOV_OPT -T $LAS_GTAG"
 [ -n "$LAS_LTAG" ] && GEN_IOV_OPT="$GEN_IOV_OPT -t $LAS_LTAG"
 
+setcmsswenv(){
+    d="`pwd`"
+    cd "$CODEDIR"
+    eval `scramv1 runtime -sh`
+    export TNS_ADMIN=/afs/cern.ch/cms/DB/conddb/ADG
+    cd "$d"
+}
 
 # parenthesis needed to isolate the CMSSW environment, which
 # does not have lxml installed (which is needed by rr.py)
 (
-d="`pwd`"
-cd "$CODEDIR"
-eval `scramv1 runtime -sh`
-export TNS_ADMIN=/afs/cern.ch/cms/DB/conddb/ADG
-cd "$d"
+
+setcmsswenv
 
 $mydir/gen_iov_list -p $presc $GEN_IOV_OPT > iov_time.txt
 
@@ -153,6 +157,7 @@ ln -fs $LAS_HISTFILE ./prompt.root
 
 if [ "X$drawer" = Xroot ] ; then
     (cd $LAS_HISTDIR
+	setcmsswenv
 	root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
 	echo "Converting eps files to png..."
 	for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
