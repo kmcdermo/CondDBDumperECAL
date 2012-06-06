@@ -9,7 +9,7 @@ CMSSW_CFG=$mydir/dbdump_cfg.py
 export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcon_adg/CMS_COND_42X_ECAL_LASP}
 export LAS_GTAG=GR_R_44_V15
 export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
-LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
+export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
 export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
 presc=1
 
@@ -170,6 +170,7 @@ else
 fi
     
     sed "s/%GTAG%/$LAS_GTAG/
+
 s/%LTAG%/$LAS_LTAG/
 s/%DATE%/$DATE/
 s/%PRESC%/$presc/

@@ -5,7 +5,7 @@ mydir="`dirname "$myself"`"
 
 runlist="$mydir/nur.list"
 file_prompt="/afs/cern.ch/user/e/ecalmon/www/prompt/prompt.root"
-dir_www="/afs/cern.ch/user/e/ecalmon/www/prompt"
+dir_www="${LAS_HISTDIR:-/afs/cern.ch/user/e/ecalmon/www/prompt}"
 
 [[ -n $1 ]] && {
     file_prompt="$1"
@@ -19,8 +19,14 @@ last_run=`tail -1 $runlist | awk '{ print $1}'`
 echo "last run found: $last_run"
 ((last_run += 1))
 
+(
+unset PYTHONPATH
+PATH="/usr/bin:$PATH"
+#Force to use machine default python installation, as CMSSW one
+#is missing some packages required to access to the run reigi
 $mydir/rr.py -r $last_run | tac | grep -v "#" >> $runlist
 $mydir/boundaries.py $runlist
+)
 
 (
 export SCRAM_ARCH="slc5_amd64_gcc462"
