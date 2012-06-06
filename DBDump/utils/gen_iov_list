@@ -116,7 +116,7 @@ $TAG_OPT \
 			if( $dorand !=0) inext = int(2 * rand() * $presc); 
 		}
 	        i=i+1;
-        }}"  | date_format
+        }}"  | tac | date_format
 else
     cmscond_list_iov \
 -c $LAS_DBCONNECT \
