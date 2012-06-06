@@ -9,7 +9,8 @@
 import string
 import time
 import xmlrpclib
-from lxml import etree
+#from lxml import etree
+from xml.dom.minidom import *
 from optparse import OptionParser
 
 # get handler to RR XML-RPC server
@@ -22,23 +23,59 @@ dets = [ 'CASTOR', 'CSC', 'DT', 'ECAL', 'ES', 'HCAL', 'L1T', 'PIX', 'RPC', 'STRI
 #dets = [ 'CASTOR', 'CSC', 'DT', 'ECAL', 'EGAM', 'ES', 'HCAL', 'HLT', 'JMET', 'L1T', 'MUON', 'PIX', 'RPC', 'STRIP', 'TRACK' ]
 
 
+### def print_data(root):
+###     print '# RUN_NUMBER  T_START  T_STOP  N_EVTS  RATE  BFIELD  SUBS_STATUS_CASTOR_CSC_DT_ECAL_ES_HCAL_L1T_PIX_RPC_STRIP  DATASET'
+###     for it in root.iter('RUN'):
+###         runnum = it.find('NUMBER').text
+###         runstart = string.replace(it.find('START_TIME').text, '-', '.')
+###         runstart = string.replace(runstart, 'T', ' ')
+###         runstart = string.replace(runstart[::-1], '0.', '', 1)[::-1]
+###         runstop  = string.replace(str(it.find('END_TIME').text), '-', '.')
+###         runstop  = string.replace(runstop, 'T', ' ')
+###         runstop  = string.replace(runstop[::-1], '0.', '', 1)[::-1]
+###         events   = int(it.find('EVENTS').text)
+###         #rate     = float(it.find('RATE').text)
+###         rate     = float(-1)
+###         bfield   = float(it.find('BFIELD').text)
+###         #for jt in it.iter('DATASETS'):
+###         name     = it.find('GROUP_NAME').text
+###         dataset  = it.find('DATASETS').find('DATASET').find('NAME').text
+###         comment  = ''
+###         #for jt in it.find('DATASETS').find('DATASET').find('CMPS').iter('CMP'):
+###         #    for det in dets:
+###         #        if (jt.find('NAME').text == det):
+###         #            comment += jt.find('VALUE').text[0]
+### 
+###         print runnum, ' ', runstart, ' ', runstop, '%11d' % events, '%9.2f ' % rate, '%.2f' % bfield, comment, name, dataset
+
+def getprop(request, prop_name):
+    nodes = request.getElementsByTagName(prop_name)[0].childNodes
+    if nodes.length > 0:
+        return nodes[0].nodeValue
+    else:
+        return "None"
+
 def print_data(root):
     print '# RUN_NUMBER  T_START  T_STOP  N_EVTS  RATE  BFIELD  SUBS_STATUS_CASTOR_CSC_DT_ECAL_ES_HCAL_L1T_PIX_RPC_STRIP  DATASET'
-    for it in root.iter('RUN'):
-        runnum = it.find('NUMBER').text
-        runstart = string.replace(it.find('START_TIME').text, '-', '.')
+
+    for it in root.getElementsByTagName('RUN'):
+        runnum = getprop(it, 'NUMBER')
+        runstart = getprop(it, 'START_TIME').replace('-', '.')
         runstart = string.replace(runstart, 'T', ' ')
         runstart = string.replace(runstart[::-1], '0.', '', 1)[::-1]
-        runstop  = string.replace(str(it.find('END_TIME').text), '-', '.')
+        runstop  = getprop(it, 'END_TIME').replace('-', '.')
         runstop  = string.replace(runstop, 'T', ' ')
         runstop  = string.replace(runstop[::-1], '0.', '', 1)[::-1]
-        events   = int(it.find('EVENTS').text)
-        #rate     = float(it.find('RATE').text)
+        events   = int(getprop(it, 'EVENTS'))
+        #rate     = float(getprop(it, 'RATE')
         rate     = float(-1)
-        bfield   = float(it.find('BFIELD').text)
+        bfield   = float(getprop(it, 'BFIELD'))
         #for jt in it.iter('DATASETS'):
-        name     = it.find('GROUP_NAME').text
-        dataset  = it.find('DATASETS').find('DATASET').find('NAME').text
+        name     = getprop(it, 'GROUP_NAME')
+        try:
+            dataset  = it.getElementsByTagName('DATASETS')[0].getElementsByTagName('DATASET')[0].getElementsByTagName('NAME')[0].childNodes[0].nodeValue
+        except IndexError:
+            dataset = ''
         comment  = ''
         #for jt in it.find('DATASETS').find('DATASET').find('CMPS').iter('CMP'):
         #    for det in dets:
@@ -46,6 +83,9 @@ def print_data(root):
         #            comment += jt.find('VALUE').text[0]
 
         print runnum, ' ', runstart, ' ', runstop, '%11d' % events, '%9.2f ' % rate, '%.2f' % bfield, comment, name, dataset
+
+
+
 parser = OptionParser()
 parser.add_option('-r', '--runmin', dest='runmin', default='0', help='minimum run')
 parser.add_option('-R', '--runmax', dest='runmax', default='99999999', help='maximum run')
@@ -96,7 +136,8 @@ data = server.RunDatasetTable.export('GLOBAL', 'xml_all', s)
 #import sys
 #sys.exit(1)
 #
-root = etree.fromstring(data)
+#root = etree.fromstring(data)
 #root = etree.parse('example.xml')
+root = parseString(data.encode('utf-8')) #'us-ascii', 'ignore'))
 
 print_data(root)

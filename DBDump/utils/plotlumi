@@ -51,6 +51,9 @@ if [ $# -lt 1 ]; then
     exit 1
 fi
 
+#~ecalmon/public/bin contains a gnuplot version more recent than lxplus one:
+PATH="/afs/cern.ch/user/e/ecalmon/public/bin:$PATH"
+
 #timestamps in the format expected by lumiCalc:
 begin="`date -u +"%m/%d/%y %H:%M:%S" -d @$begin_s`"
 end="`date -u +"%m/%d/%y %H:%M:%S" -d @$end_s`"
@@ -72,9 +75,9 @@ if [ $? != 0 ]; then
 fi
 
 "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
-[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
-[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
-[ $? = 0 ] && "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] || "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] || "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
+[ $? = 0 ] || "$LUMICALC" --begin "$begin" --end "$end" -o "${output}.dat" lumibyls
 
 [ $? = 0 ] || die "Execution of lumiCalc2.py failed."
 
@@ -83,7 +86,7 @@ sed -i 's@^.*n/a.*$@@' ${output}.dat
 
 now="`date +"%F %H:%M %Z"`"
 
-n_lumi_sec=$((`wc -l "${output}.dat"` - 1))
+n_lumi_sec=$((`cat "${output}.dat" | wc -l` - 1))
 
 if [ "$n_lumi_sec" -gt 0 ]; then
     cat <<EOF | gnuplot

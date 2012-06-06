@@ -11,6 +11,9 @@ gp_histories="$gp_dir/plot_dump_history_sigma.gp"
 
 now=`date +"%F %H:%M:%S %Z"`
 
+#~ecalmon/public/bin contains a gnuplot version more recent than lxplus one:
+PATH="/afs/cern.ch/user/e/ecalmon/public/bin:$PATH"
+
 [[ "X"$1 == "X" ]] && {
     echo "Usage: $0 <directory>"
     exit 1
