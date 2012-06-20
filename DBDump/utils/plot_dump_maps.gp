@@ -35,16 +35,20 @@ infile_eb_max = dir . '/EBh2_max.dat'
 infile_eb_min = dir . '/EBh2_min.dat'
 infile_eb_min_max = dir . '/EBh2_min_max.dat'
 infile_eb_average = dir . '/EBprof2_p2Norm.dat'
+infile_eb_badchannel = dir . '/EBprof2_badchannel.dat'
 
 infile_eem_max = dir . '/EEh2_nZ_max.dat'
 infile_eem_min = dir . '/EEh2_nZ_min.dat'
 infile_eem_min_max = dir . '/EEh2_nZ_min_max.dat'
 infile_eem_average = dir . '/EEprof2_nZ_p2Norm.dat'
+infile_eem_badchannel = dir . '/EEprof2_nZ_badchannel.dat'
 
 infile_eep_max = dir . '/EEh2_pZ_max.dat'
 infile_eep_min = dir . '/EEh2_pZ_min.dat'
 infile_eep_min_max = dir . '/EEh2_pZ_min_max.dat'
 infile_eep_average = dir . '/EEprof2_pZ_p2Norm.dat'
+infile_eep_badchannel = dir . '/EEprof2_pZ badchannel.dat'
+
 
 set xlabel "i{/Symbol f}"
 set ylabel "i{/Symbol h}"
@@ -81,6 +85,11 @@ p infile_eb_average  u 1:2:($3 != 0 ? $3 : 1/0) not w p palette pt 5 ps .7
 set title "{/=16 EB rms}"
 p infile_eb_average  u 1:2:($7 != 0 ? $7 : 1/0) not w p palette pt 5 ps .7
 #pause -1 "Hit return to continue"
+
+#added by Michael Planer
+#%PNG set out dir . "/EBprof2_badchannel.png"
+settitle "{/=16 EB Bad Channel}"
+p infile_eb_badchannel u 1:2:($5 !=0 ? $5 :1/0) not w p palette pt 5 ps .7 
 
 set xlabel "ix"
 set ylabel "iy"
@@ -119,6 +128,10 @@ set title "{/=16 EE- rms}"
 p infile_eem_average  u 1:2:($7 != 0 ? $7 : 1/0) not w p palette pt 5 ps .7
 #pause -1 "Hit return to continue"
 
+#added by Michael Planer
+#%PNG set out dir . "/EEprof2_nZ_badchannel.png"
+settitle "{/=16 EE- Bad Channel}"
+p infile_eem_badchannel u 1:2:($5 !=0 ? $5 :1/0) not w p palette pt 5 ps .7 
 
 #%PNG% set out dir . "/EEh2_pZ_max.png"
 #set title "EE+ max\n". infile_eep_min_max
@@ -151,3 +164,8 @@ p infile_eep_average  u 1:2:($3 != 0 != 0 ? $3 : 1/0) not w p palette pt 5 ps .7
 set title "{/=16 EE+ rms}"
 p infile_eep_average  u 1:2:($7 != 0 ? $7 : 1/0) not w p palette pt 5 ps .7
 #pause -1 "Hit return to continue"
+
+#added by Michael Planer
+#%PNG set out dir . "/EEprof2_pZ_badchannel.png"
+settitle "{/=16 EE+ Bad Channel}"
+p infile_eep_badchannel u 1:2:($5 !=0 ? $5 :1/0) not w p palette pt 5 ps .7 

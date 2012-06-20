@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Thu Jun 25 15:39:48 CEST 2009
-// $Id: DBDump.cc,v 1.17 2011/08/08 14:40:52 ferriff Exp $
+// $Id: DBDump.cc,v 1.18 2011/08/15 06:54:32 ferriff Exp $
 //
 //
 
@@ -73,6 +73,8 @@ Implementation:
 #include "HistoManager.h"
 #include "Quantile.h"
 #include "EcalLaserPlotter.h"
+#include <iostream>
+#include <fstream>
 
 #include "TProfile.h"
 #include "TProfile2D.h"
@@ -546,6 +548,7 @@ DBDump::beginJob()
 // ------------ method called once each job just after ending the event loop  ------------
 void 
 DBDump::endJob() {
+	lp_.printText();	
 }
 
 //define this as a plug-in

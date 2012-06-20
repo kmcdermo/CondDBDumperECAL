@@ -145,6 +145,10 @@ process.source = cms.Source("EmptySource",
         timeBetweenEvents = cms.untracked.uint64(10)
 )
 
+#process.out = cms.OutputModule("PoolOutPutModule"
+#                               filename = cms.untracked.string("bad_channels.txt")
+#                               )
+
 process.demo = cms.EDAnalyzer('DBDump',
         outPlot = cms.bool(True),
         outDump = cms.bool(True),
@@ -174,3 +178,4 @@ process.demo = cms.EDAnalyzer('DBDump',
 
 
 process.p = cms.Path(process.demo)
+#process.outpath = cms.EndPath(process.out)
