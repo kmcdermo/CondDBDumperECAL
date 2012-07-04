@@ -7,10 +7,15 @@ mydir="`dirname "$myself"`"
 
 CODEDIR=$mydir
 CMSSW_CFG=$mydir/dbdump_cfg.py
+
 #export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcoff_prod/CMS_COND_311X_ECAL_LAS}
 export LAS_DBCONNECT=${LAS_DBCONNECT:-oracle://cms_orcon_adg/CMS_COND_42X_ECAL_LASP}
+
 export LAS_GTAG=GR_R_44_V15
+
 export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
+#export LAS_LTAG=${LAS_TAG:-EcalLaserAPDPNRatios_data_20120516_190380_193761_P_p1_tbc}
+
 export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
 export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
 presc=1
@@ -45,7 +50,7 @@ help(){
 
  -t TAG       specify condition local tag
 
- -T TAG       specify conditionglobal tag
+ -T TAG       specify condition global tag
 
  -p N         specify an IOV prescale value (default: 1, no prescale)
 
@@ -119,7 +124,7 @@ GEN_IOV_OPT=
 [ -n "$last" ] && GEN_IOV_OPT="--last $last"
 [ -n "$tmin" ] && GEN_IOV_OPT="$GEN_IOV_OPT --tmin $tmin"
 [ -n "$tmax" ] && GEN_IOV_OPT="$GEN_IOV_OPT --tmax $tmax"
-[ -n "$DBCONNECT" ] && GEN_IOV_OPT="$GEN_IOV_OPT -c $DBCONNECT"
+[ -n "$LAS_DBCONNECT" ] && GEN_IOV_OPT="$GEN_IOV_OPT -c $LAS_DBCONNECT"
 [ -n "$LAS_GTAG" ] && GEN_IOV_OPT="$GEN_IOV_OPT -T $LAS_GTAG"
 [ -n "$LAS_LTAG" ] && GEN_IOV_OPT="$GEN_IOV_OPT -t $LAS_LTAG"
 
@@ -151,7 +156,7 @@ export MAX_EVENTS=`wc -l iov_time.txt | awk '{print $1}'`
 
 [ ! -f "detid_geom.dat" ] && cp `find $CMSSW_BASE -name detid_geom.dat | head -1` .
 
-cmsRun $CMSSW_CFG # > ~/output.txt 
+cmsRun $CMSSW_CFG  | grep "ix" > ~/output.txt 
 
 cd "$LAS_HISTDIR"
 ln -fs $LAS_HISTFILE ./prompt.root
@@ -163,6 +168,7 @@ if [ "X$drawer" = Xroot ] ; then
 	root -q -b $mydir/pf_macro.cc\(\""$LAS_HISTFILE"\"\)
 	echo "Converting eps files to png..."
 	for f in *.eps; do convert -size 800x400 $f ${f%.eps}.png && rm $f; done
+	rm histor*.root
 	echo "Making animated GIF image..."
  #convert -delay 20 -loop 0 distr_eta_normalised_p2.png distr_eta_normalised_p2.png distr_eta_normalised_p2.png  history*.png anim.gif
 	convert -delay 20 -loop 0 history*.png anim.gif
