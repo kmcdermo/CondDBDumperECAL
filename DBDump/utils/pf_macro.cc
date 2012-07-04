@@ -63,37 +63,38 @@ void gplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
     TLegend * l = new TLegend(0.775, 0.13, 0.95, 0.13 + 0.35);
 
     for (int i = 0; i < sizeof(nfrac)/sizeof(char*); ++i) {
-        sprintf(str, "%s_%s", gname, nfrac[i]);
-	//        printf("--> %s\n", str);
-        //g = (TGraphAsymmErrors*)gDirectory->Get(str);
-        g = (TGraphAsymmErrors*)f->Get(str);
-	//        printf("--> %p\n", g);
-        g->SetMarkerStyle(20);
-        g->SetMarkerSize(.5);
-        g->SetFillColor(ncol[i]);
-        //draw(g, i == 0 ? "ae3" : "e3");
-	if(i == 0){
-	  TH1* haxis = xtime(g);
-	  haxis->GetXaxis()->SetLabelOffset(0.04);
-	  haxis->GetXaxis()->SetLabelSize(0.045);
-	  haxis->Draw();
+      sprintf(str, "%s_%s", gname, nfrac[i]);
+      //        printf("--> %s\n", str);
+      //g = (TGraphAsymmErrors*)gDirectory->Get(str);
+      
+      g = (TGraphAsymmErrors*)f->Get(str);
+      //        printf("--> %p\n", g);
+      g->SetMarkerStyle(20);
+      g->SetMarkerSize(.5);
+      g->SetFillColor(ncol[i]);
+      //draw(g, i == 0 ? "ae3" : "e3");
+      if(i == 0){
+	TH1* haxis = xtime(g);
+	haxis->GetXaxis()->SetLabelOffset(0.04);
+	haxis->GetXaxis()->SetLabelSize(0.045);
+	haxis->Draw();
 	}
-        if (i != 3) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
-        else {
-            drawGraphEnv(g, 0.1, false, 7, 2, 1, false, &gg);
-        }
-        if (i == 3) draw(g, "xl");
-	//g->GetXaxis()->SetTimeDisplay(1);
-	//g->GetXaxis()->SetTimeFormat("#splitline{%d/%m}{%H:%M}");
-	//g->GetXaxis()->SetNdivisions(505);
-        g->GetXaxis()->SetTitle("time");
-        g->GetYaxis()->SetTitle("transparency change");
-        //g->GetYaxis()->SetRangeUser(0.5, 1.15);
-        gPad->SetTicks();
-        //if (title) g->SetTitle(title);
-        if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
-        if (i == 0) l->AddEntry(g, "median", "l");
-        l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
+      if (i != 3) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
+      else {
+	drawGraphEnv(g, 0.1, false, 7, 2, 1, false, &gg);
+      }
+      if (i == 3) draw(g, "xl");
+      //g->GetXaxis()->SetTimeDisplay(1);
+      //g->GetXaxis()->SetTimeFormat("#splitline{%d/%m}{%H:%M}");
+      //g->GetXaxis()->SetNdivisions(505);
+      g->GetXaxis()->SetTitle("time");
+      g->GetYaxis()->SetTitle("transparency change");
+      //g->GetYaxis()->SetRangeUser(0.5, 1.15);
+      gPad->SetTicks();
+      //if (title) g->SetTitle(title);
+      if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
+      if (i == 0) l->AddEntry(g, "median", "l");
+      l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
     }
     l->SetFillStyle(0);
     l->SetBorderSize(0);
@@ -111,7 +112,7 @@ void gplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
 
 void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suffix = "eps")
 {
-    const char * nfrac[] = { "3S", "2S", "1S", "E" };
+     const char * nfrac[] = { "3S", "2S", "1S", "E" };
     const char * nleg[] = { "99.7% of channels", "95.4% of channels", "68.2% of channels", "extrema #times 0.1" };
     //const int ncol[] = { kOrange + 1, TColor::GetColor("#ffff00"), TColor::GetColor("#33ee33"), 0 };
     const int ncol[] = { kOrange + 1, TColor::GetColor("#ffff00"), 8, 0 };
@@ -126,27 +127,41 @@ void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
     t->SetTextSize(0.06);
     TLegend * l = new TLegend(0.775, 0.13, 0.95, 0.13 + 0.35);
 
-    //for (int i = 0; i < sizeof(nfrac)/sizeof(char*); ++i) {
-        int i=2;
-	sprintf(str, "%s_%s", gname, nfrac[i]);
-	std::cout << "plot name " << str << std::endl;
-	g = (TGraphAsymmErrors*)f->Get(str);
+    for (int i = 0; i < sizeof(nfrac)/sizeof(char*); ++i) {
+      sprintf(str, "%s_%s", gname, nfrac[i]);
+      //        printf("--> %s\n", str);
+      //g = (TGraphAsymmErrors*)gDirectory->Get(str);
+      
+      g = (TGraphAsymmErrors*)f->Get(str);
+      //        printf("--> %p\n", g);
+      g->SetMarkerStyle(20);
+      g->SetMarkerSize(.5);
+      g->SetFillColor(ncol[i]);
+      //draw(g, i == 0 ? "ae3" : "e3");
+      if(i == 0){
 	TH1* haxis = xtime(g);
 	haxis->GetXaxis()->SetLabelOffset(0.04);
 	haxis->GetXaxis()->SetLabelSize(0.045);
 	haxis->Draw();
-	
-	g->SetMarkerStyle(20);
-        g->SetMarkerSize(.5);
-        g->SetFillColor(ncol[i]);
-	draw(g, "e3"); 
-	g->GetXaxis()->SetTitle("time");
-        g->GetYaxis()->SetTitle("transparency change");
-	gPad->SetTicks();
-	//if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
-    l->AddEntry(g, "median", "l");
-        //l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
-	//}
+	}
+      if (i != 3) draw(g, "e3*"); //draw(g, i == 0 ? "ae3" : "e3");
+      else {
+	drawGraphEnv(g, 0.1, false, 7, 2, 1, false, &gg);
+      }
+      if (i == 3) draw(g, "xl");
+     
+      //g->GetXaxis()->SetTimeDisplay(1);
+      //g->GetXaxis()->SetTimeFormat("#splitline{%d/%m}{%H:%M}");
+      //g->GetXaxis()->SetNdivisions(505);
+      g->GetXaxis()->SetTitle("time");
+      g->GetYaxis()->SetTitle("transparency change");
+      //g->GetYaxis()->SetRangeUser(0.5, 1.15);
+      gPad->SetTicks();
+      //if (title) g->SetTitle(title);
+      if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
+      if (i == 0) l->AddEntry(g, "median", "l");
+      l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
+    }
     l->SetFillStyle(0);
     l->SetBorderSize(0);
     l->SetTextFont(42);
@@ -160,7 +175,6 @@ void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
     gPad->SaveAs((std::string(gname) + ".root").c_str());
     //gPad->Print("anim.gif+10");
 }
-
 
 void setStyle(){
   gROOT->SetStyle("Plain");
@@ -210,10 +224,9 @@ void drawNormP2Hist(const char * img_suffix = "eps"){
   const char* names[] = { "EEprof2_nZ_BadChannel", "EBprof2_BadChannel"};
   const char* ave[] = {"mean", "median"};
   for(int j=0;j<2;++j)
-  for(int i=0;i<2;++i)
     {
       char str[64];
-      sprintf(str,"distr_eta_normalised_%s_%s_p2",ave[j],names[i]);
+      sprintf(str,"distr_eta_normalised_%s_p2",ave[j]);
       TH1* hp2norm = (TH1*) gDirectory->Get(str);
       
       if(hp2norm){
@@ -265,7 +278,6 @@ void drawNormP2Hist(const char * img_suffix = "eps"){
 	t->Draw();
 	t->DrawLatex(0.87, 0.74, "normalized to");
 	t->DrawLatex(0.87, 0.68, "the eta-ring");
-	t->DrawLatex(0.87, 0.62, names[i]);
 	
 	c->Print(TString(hp2norm->GetName()) + "." + img_suffix);
       }
@@ -273,6 +285,85 @@ void drawNormP2Hist(const char * img_suffix = "eps"){
       setStyle();
     }
 }
+
+
+void drawIOVmaps(const char * img_suffix)
+{
+  int max_IOV;
+  TCanvas* c = new TCanvas("IOV", "IOV", 800, 400);
+  c->SetLogz();
+  c->SetLeftMargin(0.07);
+  c->cd();
+  for(int i =0;i<2;++i)
+    {
+      if(i==0)
+	TH2D* h = (TH2D*) gDirectory->Get("channel_eta_bad_channel_map");
+      if(i==1)  
+	TH2D* h = (TH2D*) gDirectory->Get("channel_LM_bad_channel_map_LM");
+      for(int j=0; j<2000; ++j) //finds maximum y bin to scale the plot appropriately
+	{
+	  if(i==0)
+	    if(h->Integral(0,250,2000-j,2000-j))
+	      {
+		max_IOV = 2000-j;
+		break;
+	      }
+	  if(i==1)
+	    if(h->Integral(0,95,2000-j,2000-j))
+	      {
+		max_IOV = 2000-j;
+		break;
+	      }
+	}
+      if(!h) continue;
+          h->Draw("colz");
+
+	  c->Update();
+
+          TPaletteAxis *palette = (TPaletteAxis*)h->GetListOfFunctions()->FindObject("palette");
+
+          if(palette){
+                  palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
+                  palette->SetY2NDC(0.3*palette->GetY1NDC() + 0.7*palette->GetY2NDC());
+                  //	palette->ConvertNDCtoPad();
+                  palette->Paint("NDC");
+          } else{
+                  cerr << "Palette not found!" << endl;
+          }
+	  if(i==0)
+	    h->GetXaxis()->SetTitle("eta");
+          if(i==1)
+	    h->GetXaxis()->SetTitle("LM Region");
+	  h->GetYaxis()->SetTitle("IOV #");
+
+          autozoom((TH2F*)h, 0.02);
+	  h->GetYaxis()->SetRangeUser(0,max_IOV);
+	  
+          c->Paint();
+	  if(i==0)
+	    TLatex * t = new TLatex(0.87, 0.9, "Ratio of bad channels");
+	  if(i==1)
+	    TLatex * t = new TLatex(0.87, 0.9, "Number of bad channels");
+          t->SetTextAlign(21);
+          t->SetNDC();
+          t->SetTextFont(42);
+          t->SetTextSize(0.06);
+	  if(i==0)
+	    {
+	  t->DrawLatex(0.87, 0.84, "to total");
+          t->DrawLatex(0.87, 0.78, "in eta range");
+	    }       
+	  if(i==1)
+	    {
+	      t->DrawLatex(0.87, 0.84, "in Light");
+	      t->DrawLatex(0.87, 0.78, "Monitoring Region");
+	    }
+	  t->Draw();
+	  c->Print(TString(h->GetName()) + "." + img_suffix);
+  }
+}
+
+
 
 void drawMichaelPlots(const char * img_suffix)
 {
@@ -291,7 +382,6 @@ void drawMichaelPlots(const char * img_suffix)
   for (int l=0;l<3;l++) 
     mPalette[l] = FI+l;  
   
-  /********copied frrom histories*********/
   char pstr[64];
   char str[64];
   char name[64];
@@ -394,18 +484,21 @@ void drawNormP2Map(const char * img_suffix){
   for(int i = 0; i < sizeof(names)/sizeof(names[0]); ++i){
     cout << names[i] << endl;
     TProfile2D* h = (TProfile2D*) gDirectory->Get(names[i]);
+    cout << "got : " << h->GetName() << endl;
     if(!h) continue;
     TH2* h2[2];
     h2[0] = (TH2*) h;
+    
     h2[1]= h->ProjectionXY(TString(h->GetName()) + "_RMS", "C=E");
     char* type[] = {"Mean", "RMS"};
+    
     for(int j = 0; j < 2; ++j){
       c->SetLogz(j);
       h2[j]->Draw("colz");
 
       c->Update();
-      
-      TPaletteAxis *palette = (TPaletteAxis*)h2[j]->GetListOfFunctions()->FindObject("palette");
+      /*      
+  TPaletteAxis *palette = (TPaletteAxis*)h2[j]->GetListOfFunctions()->FindObject("palette");
 
       if(palette){
 	palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
@@ -418,11 +511,11 @@ void drawNormP2Map(const char * img_suffix){
     
       h2[j]->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
       h2[j]->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
-
-      if(j==0) autozoom((TH2F*)h2[j]);
+      */
+      //      if(j==0) autozoom((TH2F*)h2[j]);
 
       c->Paint();
-      
+      /*      
       TLatex * t = new TLatex(0.87, 0.9, "Transparency");
       t->SetTextAlign(21);
       t->SetNDC();
@@ -435,6 +528,7 @@ void drawNormP2Map(const char * img_suffix){
       t->DrawLatex(0.87, 0.78, "eta-ring average");
       t->DrawLatex(0.87, 0.69, type[j]);
       t2->DrawLatex(0.9, 0.2, part[i]);
+      */
       c->Print(TString(h2[j]->GetName()) + "." + img_suffix);
     }
   } 
@@ -537,6 +631,8 @@ void drawH2Maps(const char * img_suffix)
 
   drawMichaelPlots(img_suffix);
 
+  drawIOVmaps(img_suffix);
+  
   TCanvas * c = new TCanvas("history", "history", 800, 400);
   
   gplot(fin, "history_p2_All", "All ECAL", img_suffix);
@@ -585,7 +681,7 @@ void drawH2Maps(const char * img_suffix)
 
     
     /*******************copied from above for slope histories**************************/
-    /*  
+  
     mplot(fin, "history_p2_p1_All", "All ECAL", img_suffix);
     mplot(fin, "history_p2_p1_EE-", "EE-", img_suffix);
     mplot(fin, "history_p2_p1_EB-", "EB-", img_suffix);
@@ -610,7 +706,7 @@ void drawH2Maps(const char * img_suffix)
       etamax = TMath::Nint(etamax  * 100) / 100.;
       sprintf(buf1, "%.2g < eta < %.2g", etamin, etamax);
       sprintf(buf2, "history_p2_p1_eta%02d", i);
-      mplot(fin, buf2, buf1, img_suffix);
+      gplot(fin, buf2, buf1, img_suffix);
     }
 
     mplot(fin, "history_p3_p2_All", "All ECAL", img_suffix);
@@ -639,7 +735,6 @@ void drawH2Maps(const char * img_suffix)
       sprintf(buf2, "history_p3_p2_eta%02d", i);
       mplot(fin, buf2, buf1, img_suffix);
     }
-    */
     /************************end copy for slope histories***************/
     //         gPad->Print("anim.gif++");
 
