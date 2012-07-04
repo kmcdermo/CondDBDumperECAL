@@ -394,9 +394,10 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
 		    ++countneg;
 		  }
 
-		/*
+		
 		hm_.h<TProfile>("etaProf", name, &p)->Fill(eta, p2);
-		hm_.h<TH2D>("map"
+		/*
+		  hm_.h<TH2D>("map"
 		*/
 		float slope3, slope1;
 		if(!isinf((p2-p1)/(t2-t1))&&!isnan((p2-p1)/(t2-t1)))
@@ -795,8 +796,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		  }
 		else
 		  {
-		    //change back to filling with 1.0 instead of p2!!!!
-		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, p2);
+		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, 1.0);
 		  }
 		  // if(p2==1.0)
 		  // std::cout <<"ix " << ix << "  iy  " << iy  << "  niov  " << niov_ << std::endl; 
