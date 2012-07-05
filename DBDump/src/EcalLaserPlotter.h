@@ -774,7 +774,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		static TH2D * bad_channel_map_eta;
 		static TH2D * total_channel_map_eta;
 		static TH2D* bad_channel_map_LM;
-		  static TProfile2D * bad_channel_summary_map[3];
+		  static TH2D * bad_channel_summary_map[3];
 		if(niov_>=1000)
 		  sprintf(str, "%sBadChannel_%i", subdet[iz+1], niov_);  //(if else)s to make sure the plots are displayed in the correct order 
 		else if(niov_>=100)
@@ -789,14 +789,14 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		hm_.h<TH2D>("channel_eta","temp", &total_channel_map_eta)->Fill(eta,niov_,1);
 		if(p2==1.0) //bad channel
 		  {
-		    hm_.h<TProfile2D>(templ[isEB],sumName, &bad_channel_summary_map[iz+1])->Fill(ix,iy,-p2);
+		    hm_.h<TH2D>(temhl[isEB],sumName, &bad_channel_summary_map[iz+1])->Fill(ix,iy,1);
 		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, -p2);
 		    hm_.h<TH2D>("channel_eta","bad_channel_map", &bad_channel_map_eta)->Fill(eta,niov_,p2);
 		    hm_.h<TH2D>("channel_LM","bad_channel_map_LM",&bad_channel_map_LM)->Fill(iLM ,niov_,p2);
 		  }
 		else
 		  {
-		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, 1.0);
+ 		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, 1.0);
 		  }
 		  // if(p2==1.0)
 		  // std::cout <<"ix " << ix << "  iy  " << iy  << "  niov  " << niov_ << std::endl; 
