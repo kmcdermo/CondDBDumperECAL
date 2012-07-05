@@ -542,19 +542,22 @@ void drawH2Maps(const char * img_suffix)
       "EEh2_nZ_infp", "EBh2_infp", "EEh2_pZ_infp",
       "EEh2_nZ_infn", "EBh2_infn", "EEh2_pZ_infn",
       "EEh2_nZ_max", "EBh2_max", "EEh2_pZ_max",
-      "EEh2_nZ_min", "EBh2_min", "EEh2_pZ_min"
+      "EEh2_nZ_min", "EBh2_min", "EEh2_pZ_min",
+      "EEh2_nZ_BadChannel_Summary","EBh2_BadChannel_Summary","EEh2_pZ_BadChannel_Summary"
     };
   const char * title[] = 
     {
       "Problematic channels",
-      "Transparency"
+      "Transparency",
+      "Bad Channel"
     };
   const char * type[] = 
     {
       "nan", "positive inf", "negative inf",
-      "maximum", "minimum"
+      "maximum", "minimum",
+      "Summary"
     };
-  const char * descr[] = {"z: # of occurr.", ""};
+  const char * descr[] = {"z: # of occurr.", "",""};
   const char* part[]  = { "EE-", "EB", "EE+" };
   TCanvas* c = new TCanvas("h2", "h2", 800, 400);
   c->SetLogz();
@@ -588,8 +591,15 @@ void drawH2Maps(const char * img_suffix)
 
           c->Paint();
 
-          TLatex * t = new TLatex(0.87, 0.9, title[i/9]);
-          t->SetTextAlign(21);
+	  if(i<9)
+          TLatex * t = new TLatex(0.87, 0.9, title[0]);
+          else 
+	    if(i<15)
+	      TLatex * t = new TLatex(0.87, 0.9, title[1]);
+	    else
+	      TLatex * t = new TLatex(0.87, 0.9, title[2]);
+	  
+	  t->SetTextAlign(21);
           t->SetNDC();
           t->SetTextFont(42);
           t->SetTextSize(0.06);
