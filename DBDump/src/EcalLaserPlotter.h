@@ -111,7 +111,7 @@ EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
 	// hm_.addTemplate<TProfile>("etaProfMedian", new TProfile("etaProfMedian", "etaProfMedian", 250, -2.75, 2.75));
 	hm_.addTemplate<TH2D>("channel_LM", new TH2D("channel_LM","channel_LM",92 ,0 ,92 ,2000,0,2000));
 	hm_.addTemplate<TH2D>("channel_eta", new TH2D("channel_eta","channel_eta", 250., -2.75, 2.75, 2000., 0., 2000.));
-
+	hm_.addTemplate<TH2D>("slope_eta", new TH2D("slope_eta","slope_eta", 250,-2.75,2.75, 2000, 0,.00001));
 	for(int i=0;i<nq_;i++) //initialize counters for TGRaph of slopes.
           {
             nSlope1_[i]=0;
@@ -405,7 +405,7 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                 else
                   slope1=-100.;
                 if(!isinf((p3-p2)/(t3-t2))&&!isnan((p3-p2)/(t3-t2)))
-                  slope3 =(p2-p1)/(t2-t1);
+                  slope3 =(p3-p2)/(t3-t2);
                 else
                   slope3=-100.;
 
@@ -632,13 +632,13 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		p2 = (*itAPDPN).p2;
 		p3 = (*itAPDPN).p3;
 		
-		float slope3, slope1;
+		double slope3, slope1;
 		if(!isinf((p2-p1)/(t2-t1))&&!isnan((p2-p1)/(t2-t1)))
                   slope1 = (p2-p1)/(t2-t1);
                 else
                   slope1=-100.;
                 if(!isinf((p3-p2)/(t3-t2))&&!isnan((p3-p2)/(t3-t2)))
-                  slope3 =(p2-p1)/(t2-t1);
+                  slope3 =(p3-p2)/(t3-t2);
                 else
                   slope3=-100.;
 		
@@ -748,28 +748,52 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm_mean[iz + 1])->Fill(ix, iy, p2 / p2_mean);
                 if(iid==2) hm_.h<TProfile2D>(templ[isEB], str, &p2d_weekly_norm_mean[iz + 1])->SetErrorOption("s");
 		
-		/************Added By Michael Planer**************/
-		static TH2D * h2d_slope_p3[3];
-		static TH2D * h2d_slope_n3[3];
-		static TH2D * h2d_slope_p1[3];
-		static TH2D * h2d_slope_n1[3];
-		static TProfile * slope_n1;
-		static TProfile * slope_n3;
-		static TProfile * slope_p1;
-		static TProfile * slope_p3;
-		/*
-		if(slope1<0)
+		
+		static TProfile2D * h2d_slope_p3[3];
+		static TProfile2D * h2d_slope_p1[3];
+		//static TProfile * slope_p1;
+		//static TProfile * slope_p3;
+		static TProfile2D * h2d_slope_n3[3];
+		static TProfile2D * h2d_slope_n1[3];
+		//static TProfile * slope_n1;
+		//static TProfile * slope_n3;
+		static TH2D* p2_p1_pcut;
+		static TH2D* p2_p1_ncut;
+		static TH2D* p3_p2_pcut;
+		static TH2D* p3_p2_ncut;
+
+		
+		
+		if(slope1>0.0)
 		  {
-		    hm_.h<TH2D>("",&h2d_slope_n1[])->Fill(eta,slope1);
-		    hm_.h<TProfile>("eteprof",&slope_n1)->Fill(eta,slope1);
+		    sprintf(str,"%sp2_p1_pslope",subdet[iz+1]);
+		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_p1[iz+1])->Fill(ix,iy,slope1);
+		    //hm_.h<TProfile>("etaProf","p2_p1_pslope",&slope_p1)->Fill(eta,slope1);
+		    hm_.h<TH2D>("slope_eta","p2_p1_pcut",&p2_p1_pcut)->Fill(eta,slope1);
 		  }
-		else
+		if(slope1<0.0&&slope1!=-100)
 		  {
-		    hm_.h<TProfile>("eteprof",&slope_p1)->Fill(eta,slope1);
-		    hm_.h<TH2D>("",&h2d_slope_n1[])->Fill(eta,slope1);
+		    sprintf(str,"%sp2_p1_nslope",subdet[iz+1]);
+		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_n1[iz+1])->Fill(ix,iy,-slope1);
+		    //hm_.h<TProfile>("etaProf","p2_p1_nslope",&slope_n1)->Fill(eta,slope1);
+		    hm_.h<TH2D>("slope_eta","p2_p1_ncut",&p2_p1_ncut)->Fill(eta,-slope1);
+		  }
+		if(slope3>0.0)
+		  {
+		    sprintf(str,"%sp3_p2_pslope",subdet[iz+1]);
+		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_p3[iz+1])->Fill(ix,iy,slope3);
+		    //hm_.h<TProfile>("etaProf","p3_p2_pslope",&slope_p3)->Fill(eta,slope3);
+		    hm_.h<TH2D>("slope_eta","p3_p2_pcut",&p3_p2_pcut)->Fill(eta,slope3);
+		  }
+		if(slope3<0.0&&slope3!=-100)
+		  {
+		    sprintf(str,"%sp3_p2_nslope",subdet[iz+1]);
+		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_n3[iz+1])->Fill(ix,iy,-slope3);
+		    //hm_.h<TProfile>("etaProf","p3_p2_nslope",&slope_n3)->Fill(eta,slope3);
+		    hm_.h<TH2D>("slope_eta","p3_p2_ncut",&p3_p2_ncut)->Fill(eta,-slope3);
 		  }
 		
-		*/
+		
 		static TProfile2D * bad_channel_map[3][2000];
 		static TH2D * bad_channel_map_eta;
 		static TH2D * total_channel_map_eta;
