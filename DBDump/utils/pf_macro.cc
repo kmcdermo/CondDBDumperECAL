@@ -127,7 +127,7 @@ void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
     t->SetTextSize(0.06);
     TLegend * l = new TLegend(0.775, 0.13, 0.95, 0.13 + 0.35);
 
-    for (int i = 0; i < sizeof(nfrac)/sizeof(char*); ++i) {
+    for (int i = 2; i < sizeof(nfrac)/sizeof(char*); ++i) {
       sprintf(str, "%s_%s", gname, nfrac[i]);
       //        printf("--> %s\n", str);
       //g = (TGraphAsymmErrors*)gDirectory->Get(str);
@@ -138,7 +138,7 @@ void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
       g->SetMarkerSize(.5);
       g->SetFillColor(ncol[i]);
       //draw(g, i == 0 ? "ae3" : "e3");
-      if(i == 0){
+      if(i == 2){
 	TH1* haxis = xtime(g);
 	haxis->GetXaxis()->SetLabelOffset(0.04);
 	haxis->GetXaxis()->SetLabelSize(0.045);
@@ -158,8 +158,8 @@ void mplot(TDirectory * f, char * gname, char * title = 0, const char * img_suff
       //g->GetYaxis()->SetRangeUser(0.5, 1.15);
       gPad->SetTicks();
       //if (title) g->SetTitle(title);
-      if (i == 0) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
-      if (i == 0) l->AddEntry(g, "median", "l");
+      if (i == 2) draw(g, "e3"); //draw(g, i == 0 ? "ae3" : "e3");
+      if (i == 2) l->AddEntry(g, "median", "l");
       l->AddEntry(i == 3 ? gg : g, nleg[i], i == 3 ? "l" : "f");
     }
     l->SetFillStyle(0);
@@ -289,7 +289,7 @@ void drawNormP2Hist(const char * img_suffix = "eps"){
 
 void drawIOVmaps(const char * img_suffix)
 {
-  int max_IOV;
+  int max_IOV=0;
   TCanvas* c = new TCanvas("IOV", "IOV", 800, 400);
   c->SetLogz();
   c->SetLeftMargin(0.07);
@@ -303,27 +303,38 @@ void drawIOVmaps(const char * img_suffix)
       for(int j=0; j<2000; ++j) //finds maximum y bin to scale the plot appropriately
 	{
 	  if(i==0)
-	    if(h->Integral(0,250,2000-j,2000-j))
-	      {
-		max_IOV = 2000-j;
-		break;
-	      }
+	    {
+	      if(h->Integral(0,250,2000-j,2000-j))
+		{
+		  max_IOV = 2000-j;
+		  break;
+		}
+	    }
 	  if(i==1)
-	    if(h->Integral(0,95,2000-j,2000-j))
-	      {
-		max_IOV = 2000-j;
-		break;
-	      }
+	    {
+	      if(h->Integral(0,95,2000-j,2000-j))
+		{
+		  max_IOV = 2000-j;
+		  break;
+		}
+	    }
 	}
-      if(!h) continue;
-          h->Draw("colz");
+      if(max_IOV==0)
+	return();
+      if(!h||max_IOV==0) 
+	{
+	  
+	  continue;
+	  std::cout << "can't find histo" << std::endl;
+	}
+	  h->Draw("colz");
 
 	  c->Update();
 
           TPaletteAxis *palette = (TPaletteAxis*)h->GetListOfFunctions()->FindObject("palette");
 
           if(palette){
-                  palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
+	    palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
                   palette->SetY2NDC(0.3*palette->GetY1NDC() + 0.7*palette->GetY2NDC());
                   //	palette->ConvertNDCtoPad();
                   palette->Paint("NDC");
@@ -336,7 +347,7 @@ void drawIOVmaps(const char * img_suffix)
 	    h->GetXaxis()->SetTitle("LM Region");
 	  h->GetYaxis()->SetTitle("IOV #");
 
-          autozoom((TH2F*)h, 0.02);
+          autozoom((TH2F*)h);
 	  h->GetYaxis()->SetRangeUser(0,max_IOV);
 	  
           c->Paint();
@@ -473,9 +484,144 @@ void drawMichaelPlots(const char * img_suffix)
       } 
 }
 
+
+
+void drawEtaSlopes(const char * img_suffix)
+{
+  const char* names[] = { "slope_eta_p2_p1_pcut", "slope_eta_p2_p1_ncut",
+			  "slope_eta_p3_p2_pcut", "slope_eta_p3_p2_ncut"}; 
+  const char* profnames[] = { "etaProf_p2_p1_pslope", "etaProf_p2_p1_nslope",
+			  "etaProf_p3_p2_pslope", "etaProf_p3_p2_nslope"}; 
+
+  const char* subdt[] = {"EE-","EB-","EB+","EE+"}
+  int etavals[] = {30, 100, 150, 220};
+  const char* pn[]  = { "Positive", 
+			"Negative"};
+  const char* slopes[] = {"(p2-p1)/(t2-t1)",
+			  "(p3-p2)/(t3-t2)"};
+  char name[64];
+  TCanvas* c = new TCanvas("etaprof", "etaprof", 800, 400);
+  
+  c->SetLeftMargin(0.07);
+  for(int i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
+    {
+      cout << names[i] << endl;
+      TH2D* h = (TH2D*) gDirectory->Get(names[i]);
+      TH1D* proj[4]; 
+      TProfile* prof = h->ProfileX();
+      if(!h) continue;
+      
+      prof = h->ProfileX();
+     
+      for(int j=0; j<4;j++)
+	{
+	  int max_bin;
+	  sprintf(name,"%s_%s",subdt[j],names[i]);
+	  proj[j] = h->ProjectionY(name,(1+j)*60-20,(1+j)*60-19);
+	  for(int l=0;l<250;l++)
+	    if(proj[j]->GetBinContent(250-l))
+	      {
+		max_bin=250-l;
+		break;
+	      }
+	  proj[j]->GetXaxis()->SetLabelSize(.05);
+	  proj[j]->GetXaxis()->SetRange(0,max_bin);
+	  proj[j]->GetXaxis()->SetTitle("(p3-p2)/(t3-t2) [per second]");
+	  proj[j]->GetYaxis()->SetTitle("counts");
+					
+	  proj[j]->Draw();
+	  c->Paint();
+	  c->Print(TString(proj[j]->GetName()) + "." + img_suffix);
+	}
+      prof->GetXaxis()->SetTitle("Eta");
+      prof->GetYaxis()->SetTitle("Slope (change in ratio per second)");
+      prof->GetXaxis()->SetLabelSize(.06);
+      
+      prof->Draw();
+      //   c->Update();
+      
+      c->Paint();
+            
+	      TLatex * t = new TLatex(0.87, 0.9, "Rate of Change");
+	      t->SetTextAlign(21);
+	      t->SetNDC();
+	      t->SetTextFont(42);
+	      t->SetTextSize(0.06);
+	      t->Draw();
+	      TLatex* t2 = (TLatex*) t->Clone();
+	      t2->SetTextColor(kRed+2);
+	      t->DrawLatex(0.87, 0.84, "of Transparency");
+	      t->DrawLatex(0.87, 0.78, "vs eta");
+	      t->DrawLatex(0.87, 0.69, pn[i%2]);
+	      t2->DrawLatex(0.9, 0.2, slopes[i/2]);
+      
+      c->Print(TString(prof->GetName()) + "." + img_suffix);
+      h->Draw();
+      c->Paint();
+      c->Print(TString(h->GetName()) + "." + img_suffix);
+
+
+    } 
+
+
+}
+
+/* //replaced by draweta() 
+void drawEtaProfs(const char * img_suffix)
+{
+  const char* names[] = { "etaProf_p2_p1_pslope", "etaProf_p2_p1_nslope",
+			  "etaProf_p3_p2_pslope", "etaProf_p3_p2_nslope"}; 
+  
+  const char* pn[]  = { "Positive", 
+			"Negative"};
+  const char* slopes[] = {"(p2-p1)/(t2-t1)",
+			  "(p3-p2)/(t3-t2)"};
+  
+  TCanvas* c = new TCanvas("etaprof", "etaprof", 800, 400);
+  
+  c->SetLeftMargin(0.07);
+  for(int i = 0; i < sizeof(names)/sizeof(names[0]); ++i)
+    {
+      cout << names[i] << endl;
+      TProfile* h = (TProfile*) gDirectory->Get(names[i]);
+      if(!h) continue;
+
+
+      h->GetXaxis()->SetTitle("Eta");
+      h->GetYaxis()->SetTitle("Slope (change in ratio per second)");
+      
+      
+      h->Draw();
+            
+      
+      c->Paint();
+            
+	      TLatex * t = new TLatex(0.87, 0.9, "Rate of Change");
+	      t->SetTextAlign(21);
+	      t->SetNDC();
+	      t->SetTextFont(42);
+	      t->SetTextSize(0.06);
+	      t->Draw();
+	      TLatex* t2 = (TLatex*) t->Clone();
+	      t2->SetTextColor(kRed+2);
+	      t->DrawLatex(0.87, 0.84, "of Transparency");
+	      t->DrawLatex(0.87, 0.78, "vs eta");
+	      t->DrawLatex(0.87, 0.69, pn[i%2]);
+	      t2->DrawLatex(0.9, 0.2, slopes[i/2]);
+      
+      c->Print(TString(h->GetName()) + "." + img_suffix);
+      
+    } 
+}
+*/
 void drawNormP2Map(const char * img_suffix){
-  const char* names[] = { "EEprof2_nZ_p2Norm_Mean", "EBprof2_p2Norm_Mean", "EEprof2_pZ_p2Norm_Mean","EEprof2_nZ_p2Norm_Median", "EBprof2_p2Norm_Median", "EEprof2_pZ_p2Norm_Median"};
- 
+  const char* names[] = { "EEprof2_nZ_p2Norm_Mean", "EBprof2_p2Norm_Mean", "EEprof2_pZ_p2Norm_Mean",
+			  "EEprof2_nZ_p2Norm_Median", "EBprof2_p2Norm_Median", "EEprof2_pZ_p2Norm_Median",
+			  "EEprof2_nZ_p2_p1_pslope", "EBprof2_p2_p1_pslope", "EEprof2_pZ_p2_p1_pslope",	  
+			  "EEprof2_nZ_p2_p1_nslope", "EBprof2_p2_p1_nslope", "EEprof2_pZ_p2_p1_nslope",	  
+			  "EEprof2_nZ_p3_p2_pslope", "EBprof2_p3_p2_pslope", "EEprof2_pZ_p3_p2_pslope",	  
+			  "EEprof2_nZ_p3_p2_nslope", "EBprof2_p3_p2_nslope", "EEprof2_pZ_p3_p2_nslope"}; 
+  
   
   const char* part[]  = { "EE-", "EB", "EE+" };
   TCanvas* c = new TCanvas("prof", "prof", 800, 400);
@@ -484,39 +630,47 @@ void drawNormP2Map(const char * img_suffix){
   for(int i = 0; i < sizeof(names)/sizeof(names[0]); ++i){
     cout << names[i] << endl;
     TProfile2D* h = (TProfile2D*) gDirectory->Get(names[i]);
-    cout << "got : " << h->GetName() << endl;
     if(!h) continue;
     TH2* h2[2];
     h2[0] = (TH2*) h;
     
     h2[1]= h->ProjectionXY(TString(h->GetName()) + "_RMS", "C=E");
     char* type[] = {"Mean", "RMS"};
-    
+
     for(int j = 0; j < 2; ++j){
       c->SetLogz(j);
+      h2->GetXaxis()->SetFontSize(.05);
       h2[j]->Draw("colz");
-
+      
       c->Update();
-      /*      
-  TPaletteAxis *palette = (TPaletteAxis*)h2[j]->GetListOfFunctions()->FindObject("palette");
-
-      if(palette){
-	palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
-	palette->SetY2NDC(0.3*palette->GetY1NDC() + 0.7*palette->GetY2NDC());
-	//	palette->ConvertNDCtoPad();
-	palette->Paint("NDC");
-      } else{
-	cerr << "Palette not found!" << endl;
-      }
-    
-      h2[j]->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
-      h2[j]->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
-      */
-      //      if(j==0) autozoom((TH2F*)h2[j]);
-
-      c->Paint();
-      /*      
-      TLatex * t = new TLatex(0.87, 0.9, "Transparency");
+            
+      TPaletteAxis *palette = (TPaletteAxis*)h2[j]->GetListOfFunctions()->FindObject("palette");
+	      
+	      if(palette){
+	      palette->SetX2NDC(0.5*palette->GetX1NDC() + 0.5*palette->GetX2NDC());
+	      palette->SetY2NDC(0.3*palette->GetY1NDC() + 0.7*palette->GetY2NDC());
+	      //	palette->ConvertNDCtoPad();
+	      palette->Paint("NDC");
+	      } else{
+	      cerr << "Palette not found!" << endl;
+	      }
+	      
+	      h2[j]->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
+	      h2[j]->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
+      
+	      //if(j==0) 
+	      if(i>5&&j==0)
+		autozoom((TH2F*)h2[j],.02);
+	      else
+		autozoom((TH2F*)h2[j]);
+	      
+	      c->Paint();
+      
+      const char* lin1[] = {"Transparency", "Tranparency","Positive","Negative","Positive","Negative"};
+      const char* lin2[] = {"normalized to", "normalized to", "slope of","slope of","slope of","slope of"};
+      const char* lin3[] = {"eta average", "eta median", "(p2-p1)/(t2-t1)","(p2-p1)/(t2-t1)","(p3-p2)/(t3-t2)","(p3-p2)/(t3-t2)"};
+      
+      TLatex * t = new TLatex(0.87, 0.9, lin1[i/3]);
       t->SetTextAlign(21);
       t->SetNDC();
       t->SetTextFont(42);
@@ -524,11 +678,13 @@ void drawNormP2Map(const char * img_suffix){
       t->Draw();
       TLatex* t2 = (TLatex*) t->Clone();
       t2->SetTextColor(kRed+2);
-      t->DrawLatex(0.87, 0.84, "normalized to the");
-      t->DrawLatex(0.87, 0.78, "eta-ring average");
-      t->DrawLatex(0.87, 0.69, type[j]);
-      t2->DrawLatex(0.9, 0.2, part[i]);
-      */
+      t->DrawLatex(0.87, 0.84, lin2[i/3]);
+      t->DrawLatex(0.87, 0.78, lin3[i/3]);
+      if(j==1)
+	t->DrawLatex(0.87, 0.69, "RMS");
+      //t->DrawLatex(0.87, 0.69, type[j]);
+      t2->DrawLatex(0.9, 0.2, part[i%3]);
+     
       c->Print(TString(h2[j]->GetName()) + "." + img_suffix);
     }
   } 
@@ -586,9 +742,10 @@ void drawH2Maps(const char * img_suffix)
 
           h->GetXaxis()->SetTitle(i==1 ? "iphi" : "ix");
           h->GetYaxis()->SetTitle(i==1 ? "ieta" : "iy");
-
-          autozoom((TH2F*)h, 0.02);
-
+	  
+	  if(i<15)
+	    autozoom((TH2F*)h, 0.02);
+	  
           c->Paint();
 
 	  if(i<9)
@@ -633,11 +790,15 @@ void drawH2Maps(const char * img_suffix)
     fin = gDirectory;
   }
   
+  drawEtaSlopes(img_suffix);
+  
   drawNormP2Hist(img_suffix);
 
   drawNormP2Map(img_suffix);
 
   drawH2Maps(img_suffix);
+
+  //drawEtaProfs(img_suffix);
 
   drawMichaelPlots(img_suffix);
 
@@ -690,7 +851,7 @@ void drawH2Maps(const char * img_suffix)
       }
 
     
-    /*******************copied from above for slope histories**************************/
+  
   
     mplot(fin, "history_p2_p1_All", "All ECAL", img_suffix);
     mplot(fin, "history_p2_p1_EE-", "EE-", img_suffix);
@@ -744,7 +905,8 @@ void drawH2Maps(const char * img_suffix)
       sprintf(buf1, "%.2g < eta < %.2g", etamin, etamax);
       sprintf(buf2, "history_p3_p2_eta%02d", i);
       mplot(fin, buf2, buf1, img_suffix);
-    }
+      }
+  
     /************************end copy for slope histories***************/
     //         gPad->Print("anim.gif++");
 
