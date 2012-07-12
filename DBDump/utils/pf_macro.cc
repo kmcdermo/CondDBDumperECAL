@@ -639,7 +639,7 @@ void drawNormP2Map(const char * img_suffix){
 
     for(int j = 0; j < 2; ++j){
       c->SetLogz(j);
-      h2->GetXaxis()->SetFontSize(.05);
+      h2[j]->GetXaxis()->SetLabelSize(0.05);
       h2[j]->Draw("colz");
       
       c->Update();
