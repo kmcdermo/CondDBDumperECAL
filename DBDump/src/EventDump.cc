@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id:  $
+// $Id: EventDump.cc,v 1.1 2012/07/12 14:43:53 ferriff Exp $
 //
 //
 
@@ -106,7 +106,7 @@ class EventDump : public edm::EDAnalyzer {
               int iy_;
               int iz_;
       } Coord;
-      void coord(DetId id, struct Coord * c);
+      void coord(DetId id, Coord * c);
 
       void printSummary();
 
@@ -308,20 +308,20 @@ void EventDump::printSummary()
 }
 
 
-void EventDump::coord(DetId id, struct Coord * c)
+void EventDump::coord(DetId id, Coord * c)
 {
-        if (id.subdetid() == EcalBarrel) {
+        if (id.subdetId() == EcalBarrel) {
                 EBDetId eid(id);
                 c->ix_ = eid.ieta();
                 c->iy_ = eid.iphi();
                 c->iz_ = 0;
-        } else if (id.subdetid() == EcalEndcap) {
+        } else if (id.subdetId() == EcalEndcap) {
                 EEDetId eid(id);
                 c->ix_ = eid.ix();
                 c->iy_ = eid.iy();
                 c->iz_ = eid.zside();
         } else {
-                fprinft(stderr, "[EventDump::coord] ERROR: invalid DetId %d", id.rawId());
+                fprintf(stderr, "[EventDump::coord] ERROR: invalid DetId %d", id.rawId());
                 assert(0);
         }
 }
@@ -350,7 +350,7 @@ void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, con
                         assert(0);
                 }
                 fprintf(fd_dump_, "\t%f %f", *it_ic_, lc);
-                fprintf(fd_dump_, "\t%f  %d %f  %d %f  %d %f", );
+                //fprintf(fd_dump_, "\t%f  %d %f  %d %f  %d %f", );
                 fprintf(fd_dump_, "\n");
         }
 }
