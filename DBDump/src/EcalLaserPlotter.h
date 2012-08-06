@@ -20,6 +20,12 @@
 #include <set>
 
 #define NSUBDET 3
+#define ON 1
+#define OFF 0
+#define OUTPUTBADFILE OFF  
+#define OUTPUTCHANGEFILE OFF
+#define OUTPUTBADTIMESFILE OFF
+#define MAKEHISTORIES ON
 
 class EcalLaserPlotter {
         public:
@@ -105,13 +111,14 @@ EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
         hm_.addTemplate<TProfile>( "EBprof", new TProfile( "EBp", "EBp", 171, -85.5, 85.5) );
         hm_.addTemplate<TGraphAsymmErrors>("history", new TGraphAsymmErrors());
         hm_.addTemplate<TH1D>("distr", new TH1D("distribution", "distribution", 2000, 0., 2.));
+	hm_.addTemplate<TH2D>( "Slope2", new TH2D( "Slope","Slope",800,.4,1.2,1000,-.05,.05));
 	//keep distribution as a function of IOV
-	hm_.addTemplate<TH2D>("IOVdistr", new TH2D("IOVdistribution","IOVdistribution", 2000,0.,2., 2000,0,2000));
+	hm_.addTemplate<TH2D>("IOVdistr", new TH2D("IOVdistribution","IOVdistribution", 2000,0.,2., 4000,0,4000));
         hm_.addTemplate<TProfile>("etaProf", new TProfile("etaProf", "etaProf", 250, -2.75, 2.75));
 	// hm_.addTemplate<TProfile>("etaProfMedian", new TProfile("etaProfMedian", "etaProfMedian", 250, -2.75, 2.75));
-	hm_.addTemplate<TH2D>("channel_LM", new TH2D("channel_LM","channel_LM",92 ,0 ,92 ,2000,0,2000));
-	hm_.addTemplate<TH2D>("channel_eta", new TH2D("channel_eta","channel_eta", 250., -2.75, 2.75, 2000., 0., 2000.));
-	hm_.addTemplate<TH2D>("slope_eta", new TH2D("slope_eta","slope_eta", 250,-2.75,2.75, 2000, 0,.00001));
+	hm_.addTemplate<TH2D>("channel_LM", new TH2D("channel_LM","channel_LM",92 ,0 ,92 ,4000,0,4000));
+	hm_.addTemplate<TH2D>("channel_eta", new TH2D("channel_eta","channel_eta", 250., -2.75, 2.75, 4000., 0., 4000.));
+	hm_.addTemplate<TH2D>("slope_eta", new TH2D("slope_eta","slope_eta", 250,-2.75,2.75, 2000, 0,.1));
 	for(int i=0;i<nq_;i++) //initialize counters for TGRaph of slopes.
           {
             nSlope1_[i]=0;
@@ -223,7 +230,8 @@ void EcalLaserPlotter::max_min_plots()
         
 	const char * temhl[] = { "EEh2", "EBh2"};
 	for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
-                DetId id(ecalDetIds_[i]);
+	        if (set_ch_status_ && ch_status_[i] != 0) continue;
+		DetId id(ecalDetIds_[i]);
 		if (id.subdetId() == EcalBarrel) {
                         ix = EBDetId(id).iphi();
                         iy = EBDetId(id).ieta();
@@ -272,32 +280,34 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
         if (onceForAll && set_ch_status_) return;
         if (!set_ch_status_) ch_status_.resize(ecalDetIds_.size());
         FILE * ftmp;
-        if (!set_ch_status_) ftmp = fopen("channelStatus.dump", "w");
-        for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
-                ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
-                if (!set_ch_status_) {
-                        DetId id(ecalDetIds_[i]);
-                        int ix = -1, iy = -1, iz = -1;
-                        if (id.subdetId() == EcalBarrel) {
-                                ix = EBDetId(id).iphi();
-                                iy = EBDetId(id).ieta();
-                                iz = 0;
-                        } else if (id.subdetId() == EcalEndcap) {
-                                ix = EEDetId(id).ix();
-                                iy = EEDetId(id).iy();
-                                iz = EEDetId(id).zside();
-                        }
-                        fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
-                }
-        }
-        if (!set_ch_status_) fclose(ftmp);
+        if (!set_ch_status_) 
+	  {
+	    ftmp = fopen("channelStatus.dump", "w");
+	    for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
+	      ch_status_[i] = chStatus.find(ecalDetIds_[i])->getStatusCode();
+	      if (!set_ch_status_) {
+		DetId id(ecalDetIds_[i]);
+		int ix = -1, iy = -1, iz = -1;
+		if (id.subdetId() == EcalBarrel) {
+		  ix = EBDetId(id).iphi();
+		  iy = EBDetId(id).ieta();
+		  iz = 0;
+		} else if (id.subdetId() == EcalEndcap) {
+		  ix = EEDetId(id).ix();
+		  iy = EEDetId(id).iy();
+		  iz = EEDetId(id).zside();
+		}
+		fprintf(ftmp, "%d %d %d  %d\n", ix, iy, iz, ch_status_[i]);
+	      }
+	    }
+        fclose(ftmp);
         set_ch_status_ = 1;
+	  }
 }
 
 void EcalLaserPlotter::printSummary()
 {
-
-        printf("%d IOV(s) analysed.\n", niov_);
+  
         char buf[256];
         strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&iov_first_));
         printf("First IOV: %ld (%s UTC)\n", iov_first_, buf);
@@ -401,19 +411,19 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
 		*/
 		float slope3, slope1;
 		if(!isinf((p2-p1)/(t2-t1))&&!isnan((p2-p1)/(t2-t1)))
-                  slope1 = (p2-p1)/(t2-t1);
+                  slope1 = 3600*(p2-p1)/(t2-t1);
                 else
                   slope1=-100.;
                 if(!isinf((p3-p2)/(t3-t2))&&!isnan((p3-p2)/(t3-t2)))
-                  slope3 =(p3-p2)/(t3-t2);
+                  slope3 = 3600*(p3-p2)/(t3-t2);
                 else
                   slope3=-100.;
 
 		q_[0].fill(p2, iid);
 		
-		if(slope1!=-100.)
+		if(slope1!=-100.||slope1!=0)
                   qslope1_[0].fill(slope1, iid);
-                if(slope3!=-100.)
+                if(slope3!=-100.||slope3!=0)
                   qslope3_[0].fill(slope3, iid);
 		
 		
@@ -422,17 +432,17 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
 		    if (EBDetId(id).ieta() < 0) 
 		      {
 			q_[2].fill(p2, iid);
-			if(slope1!=-100.)
+			if(slope1!=-100.||slope1!=0)
 			  qslope1_[2].fill(slope1, iid);
-			if(slope3!=-100.)
+			if(slope3!=-100.||slope3!=0)
 			  qslope3_[2].fill(slope3, iid);
 		      }
 		    else                       
 		      {
 			q_[3].fill(p2, iid);
-			if(slope1!=-100.)
+			if(slope1!=-100.||slope1!=0)
 			  qslope1_[3].fill(slope1, iid);
-			if(slope3!=-100.)
+			if(slope3!=-100.||slope3!=0)
 			  qslope3_[3].fill(slope3, iid);
 
 		      }
@@ -442,36 +452,36 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
 		    if (EEDetId(id).zside() < 0) 
 		      {
 			q_[1].fill(p2, iid);
-			if(slope1!=-100.)
+			if(slope1!=-100.||slope1!=0)
 			  qslope1_[1].fill(slope1, iid);
-			if(slope3!=-100.)
+			if(slope3!=-100.||slope3!=0)
 			  qslope3_[1].fill(slope3, iid);
 		      }
 		    else
 		      {
 			q_[4].fill(p2, iid);
-			if(slope1!=-100.)
+			if(slope1!=-100.||slope1!=0)
 			  qslope1_[4].fill(slope1, iid);
-			if(slope3!=-100.)
+			if(slope3!=-100.||slope3!=0)
 			  qslope3_[4].fill(slope3, iid);
 		      } 
 		  }
 		q_[5 + iLM - 1].fill(p2, iid);
 		q_[qetaoffs_ + etabin(eta)].fill(p2, iid);
-		if(slope1!=-100.)
+		if(slope1!=-100.||slope1!=0)
                   qslope1_[5 + iLM - 1].fill(slope1, iid);
-                if(slope1!=-100.)
+                if(slope1!=-100.||slope1!=0)
                   qslope1_[qetaoffs_ + etabin(eta)].fill(slope1, iid);
-                if(slope3!=-100.)
+                if(slope3!=-100.||slope3!=0)
                   qslope3_[5 + iLM - 1].fill(slope3, iid);
-                if(slope3!=-100.)
+                if(slope3!=-100.||slope3!=0)
                   qslope3_[qetaoffs_ + etabin(eta)].fill(slope3, iid);
 		//hm_.h<TProfile>("etaMedian",name, &m)->Fill(eta, p2);
 	}
 	char buf[256];
 	strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&t));
-	printf(" Last IOV: %ld (%s UTC)", t, buf);
-	std::cout << " # p2==1 " << count1 << " # p2==0 " << count0 << " # p2<0 " << countneg << std::endl;
+	printf(" Last IOV: %ld (%s UTC) \n", t, buf);
+	//std::cout << " # p2==1 " << count1 << " # p2==0 " << count0 << " # p2<0 " << countneg << std::endl;
 }
 
 void EcalLaserPlotter::fill_histories(time_t t)
@@ -501,18 +511,14 @@ void EcalLaserPlotter::fill_slope_histories(time_t t)
     {
       float xm1 = qslope1_[i].xlow(0.5);//median of slope1
       float xm3 = qslope3_[i].xlow(0.5);//median of slope3
+      if(xm3==-std::numeric_limits<double>::max())
+	xm3=0;
+      if(xm1==-std::numeric_limits<double>::max())
+	xm1=0;
       for(size_t j = 0; j < sizeof(fracs)/sizeof(float); ++j)
 	{
-	  //  if(!isnan(xm3)&&!isinf(xm3))
-	  // ifa(!isnan(xm1)&&!isinf(xm1))
-	  //   std::cout << "slope 3 " << xm3 << "   slope 1 " << xm1 << std::endl;
 	  if(!isnan(xm3)&&!isinf(xm3))
-	    // slope3 propagates with infs for [0]
-	    // plots other than [0] have only 1 time value for each point because t set to 0 for some points
-	    // need individual iterators for each plot to prevent above problem.
-	    // If point is not set, default sets to zero
 	    {
-
 	      sprintf(str, "p3_p2_%s_%s", qname_[i],nfrac[j]);
 	      TGraphAsymmErrors * g3 = hm_.h<TGraphAsymmErrors>("history", str);
 	      g3->SetPoint(nSlope3_[i], t, xm3);
@@ -523,7 +529,7 @@ void EcalLaserPlotter::fill_slope_histories(time_t t)
 		  ++nSlope3_[i];
 		}
 	    }
-	  if(!isnan(xm1)&&!isinf(xm1))
+	  if(!isnan(xm1)&&!isinf(xm1)&&xm3!=0)
 	    {
 	      sprintf(str, "p2_p1_%s_%s", qname_[i],nfrac[j]);
 	      TGraphAsymmErrors * g1 = hm_.h<TGraphAsymmErrors>("history", str);
@@ -535,6 +541,11 @@ void EcalLaserPlotter::fill_slope_histories(time_t t)
 	    }
 	}
     }
+  
+  
+  
+	printf("%d IOV(s) analysed.\n", niov_);
+  
 }
 
 
@@ -634,11 +645,11 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		
 		double slope3, slope1;
 		if(!isinf((p2-p1)/(t2-t1))&&!isnan((p2-p1)/(t2-t1)))
-                  slope1 = (p2-p1)/(t2-t1);
+                  slope1 = 3600*(p2-p1)/(t2-t1);
                 else
                   slope1=-100.;
                 if(!isinf((p3-p2)/(t3-t2))&&!isnan((p3-p2)/(t3-t2)))
-                  slope3 =(p3-p2)/(t3-t2);
+                  slope3 =3600*(p3-p2)/(t3-t2);
                 else
                   slope3=-100.;
 		
@@ -694,20 +705,31 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                 float eta = geom_eta(id);
                 static TH1D * h_eta_norm_mean = 0;
 		static TH1D * h_eta_norm_median = 0;
-		static TH2D * Ntemp=0;
-		static TH2D * temp=0;
-		static TH2D * Mtemp=0;
+		static TH1D * h_eta_mean = 0;
+		static TH1D * h_p2 = 0;
+		//static TH2D * Ntemp=0;
+		//static TH2D * temp=0;
+		//static TH2D * Mtemp=0;
                 hm_.h<TProfile>("etaProf", "p2", &p_eta_norm_mean);
 		float p2_mean = p_eta_norm_mean->GetBinContent(p_eta_norm_mean->FindBin(eta));
                 float p2_median = q_[qetaoffs_+etabin(eta)].xlow(.5); //needs smaller bins
 		
 		
-		
-		if(p2==1.0||p2==0)
-		  std::cout << "t1 " << t1 << " ix " << ix << " iy " << iy << " iz " << iz << " p2 " << p2 << std::endl;
-		if(p2 <.4||p2>1.4)
-		  std::cout << "t1 " << t1 << " ix " << ix << " iy " << iy << " iz " << iz << " p2 " << p2 << std::endl;
-		
+
+
+		if(OUTPUTBADTIMESFILE==ON)
+{
+  if(t1<1330000000 || t2<1330000000 || t3<1330000000) 
+     std::cerr << "t1 " << t1 << " t2 " << t2 << " t3 " << t3 << " ix " << ix << " iy " << iy << " iz " << iz << " p2 " << p2 << std::endl;
+ }
+		if(OUTPUTBADFILE==ON)
+  {
+    if(p2==1.0||p2==0)
+      std::cerr << "t1 " << t1 << " t3 " << t3 << " ix " << ix << " iy " << iy << " iz " << iz << " p2 " << p2 << std::endl;
+    // if(p2 <.4||p2>1.4)
+    // std::cerr << "t1 " << t1 << " t3 " << t3 << " ix " << ix << " iy " << iy << " iz " << iz << " p2 " << p2 << std::endl;
+  }	
+				
 		/*
 		  if(p2/p2_mean==1.0||p2==0)
 		  std::cout << "ix : " << ix << " iy : " << iy << " p2 " << p2 << std::endl;
@@ -716,12 +738,13 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		*/
 		//std::cout <<"mean " << p2_mean << " median " << p2_median << std::endl;
 		hm_.h<TH1D>("distr", "eta_normalised_median_p2", &h_eta_norm_median)->Fill((double)(p2 / p2_median));
-		hm_.h<TH1D>("distr", "eta_normalised_mean_p2", &h_eta_norm_mean)->Fill((double)(p2 / p2_mean));
-		hm_.h<TH2D>("IOVdistr", "eta_normalized_Mean_distribution",&Ntemp)->Fill((double)(p2/p2_mean),niov_);
-		hm_.h<TH2D>("IOVdistr", "eta_distribution",&temp)->Fill((double)(p2),niov_);
-		hm_.h<TH2D>("IOVdistr", "eta_normalized_Median_distribution",&Mtemp)->Fill((double)(p2/p2_median),niov_);
-
-
+		hm_.h<TH1D>("distr", "eta_normalised_mean_p2", &h_eta_norm_mean)->Fill((double)(.984*p2 / p2_mean));
+		//hm_.h<TH2D>("IOVdistr", "eta_normalized_Mean_distribution",&Ntemp)->Fill((double)(.984*p2/p2_mean),niov_);
+		//hm_.h<TH2D>("IOVdistr", "eta_distribution",&temp)->Fill((double)(p2),niov_);
+		//hm_.h<TH2D>("IOVdistr", "eta_normalized_Median_distribution",&Mtemp)->Fill((double)(p2/p2_median),niov_);
+		hm_.h<TH1D>("distr", "eta_mean_p2", &h_eta_mean)->Fill((double)p2_mean);
+		hm_.h<TH1D>("distr", "p2", &h_p2)->Fill(p2);
+		
                 const char* templ[] = { "EEprof2", "EBprof2"};
 		
                 static TProfile2D * p2d_all[3]; // FIXME - hope static arrays are zeroed by default
@@ -761,8 +784,36 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		static TH2D* p2_p1_ncut;
 		static TH2D* p3_p2_pcut;
 		static TH2D* p3_p2_ncut;
-
+		static TProfile* p2_p1_cut_x;
+		static TProfile* p3_p2_cut_x;
+		static TProfile* p2_p1_pcut_x;
+		static TProfile* p2_p1_ncut_x;
+		static TProfile* p3_p2_pcut_x;
+		static TProfile* p3_p2_ncut_x;
+		static TH2D* p2d_slope_p3[3];
+		static TH2D* p2d_slope_p1[3];
+		static TH2D* p2d_slope_p3_corr[3];
+		static TH2D* p2d_slope_p1_corr[3];
 		
+		
+		sprintf(str,"%s_p2_p1_slope",temhl[isEB]);
+		if(slope1!=-100&&slope1!=0)
+		  hm_.h<TH2D>("Slope2",str,&p2d_slope_p1[iz+1])->Fill(p2,slope1);
+		sprintf(str,"%s_p3_p2_slope",temhl[isEB]);
+		if(slope3!=-100&&slope3!=0)
+		  hm_.h<TH2D>("Slope2",str,&p2d_slope_p3[iz+1])->Fill(p2,slope3);
+
+		/*
+		sprintf(str,"%s_p2_p1_slope_corrected",temhl[isEB]);
+		if(slope1!=-100&&slope1!=0)
+		  hm_.h<TH2D>("Slope2",str,&p2d_slope_p1_corr[iz+1])->Fill(p2/p2_mean,slope1);
+		sprintf(str,"%s_p3_p2_slope_corrected",temhl[isEB]);
+		if(slope3!=-100&&slope3!=0)
+		  hm_.h<TH2D>("Slope2",str,&p2d_slope_p3_corr[iz+1])->Fill(p2/p2_mean,slope3);
+		*/
+		
+		hm_.h<TProfile>("etaProf","p2_p1_cut_x",&p2_p1_cut_x)->Fill(eta,slope1);
+		hm_.h<TProfile>("etaProf","p3_p2_cut_x",&p3_p2_cut_x)->Fill(eta,slope3);
 		
 		if(slope1>0.0)
 		  {
@@ -770,6 +821,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_p1[iz+1])->Fill(ix,iy,slope1);
 		    //hm_.h<TProfile>("etaProf","p2_p1_pslope",&slope_p1)->Fill(eta,slope1);
 		    hm_.h<TH2D>("slope_eta","p2_p1_pcut",&p2_p1_pcut)->Fill(eta,slope1);
+		    hm_.h<TProfile>("etaProf","p2_p1_pcut_x",&p2_p1_pcut_x)->Fill(eta,slope1);
 		  }
 		if(slope1<0.0&&slope1!=-100)
 		  {
@@ -777,6 +829,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_n1[iz+1])->Fill(ix,iy,-slope1);
 		    //hm_.h<TProfile>("etaProf","p2_p1_nslope",&slope_n1)->Fill(eta,slope1);
 		    hm_.h<TH2D>("slope_eta","p2_p1_ncut",&p2_p1_ncut)->Fill(eta,-slope1);
+		    hm_.h<TProfile>("etaProf","p2_p1_ncut_x",&p2_p1_ncut_x)->Fill(eta,-slope1);
 		  }
 		if(slope3>0.0)
 		  {
@@ -784,6 +837,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_p3[iz+1])->Fill(ix,iy,slope3);
 		    //hm_.h<TProfile>("etaProf","p3_p2_pslope",&slope_p3)->Fill(eta,slope3);
 		    hm_.h<TH2D>("slope_eta","p3_p2_pcut",&p3_p2_pcut)->Fill(eta,slope3);
+		    hm_.h<TProfile>("etaProf","p3_p2_pcut_x",&p3_p2_pcut_x)->Fill(eta,slope3);
 		  }
 		if(slope3<0.0&&slope3!=-100)
 		  {
@@ -791,14 +845,20 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		    hm_.h<TProfile2D>(templ[isEB],str,&h2d_slope_n3[iz+1])->Fill(ix,iy,-slope3);
 		    //hm_.h<TProfile>("etaProf","p3_p2_nslope",&slope_n3)->Fill(eta,slope3);
 		    hm_.h<TH2D>("slope_eta","p3_p2_ncut",&p3_p2_ncut)->Fill(eta,-slope3);
+		    hm_.h<TProfile>("etaProf","p3_p2_ncut_x",&p3_p2_ncut_x)->Fill(eta,-slope3);
 		  }
 		
-		
-		static TProfile2D * bad_channel_map[3][2000];
+		char str2[64];
+		char str1[64];
+		static TProfile2D * bad_channel_map[3][8000];
 		static TH2D * bad_channel_map_eta;
 		static TH2D * total_channel_map_eta;
 		static TH2D* bad_channel_map_LM;
-		  static TH2D * bad_channel_summary_map[3];
+		static TH2D * bad_channel_summary_map[3];
+		static TH2D * bad_timing_summary_map[3][3];
+		static TH2D* p2_map[3][8000];
+		static TH2D* propagation_map[3][2];
+
 		if(niov_>=1000)
 		  sprintf(str, "%sBadChannel_%i", subdet[iz+1], niov_);  //(if else)s to make sure the plots are displayed in the correct order 
 		else if(niov_>=100)
@@ -807,41 +867,94 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
                   sprintf(str, "%sBadChannel_00%i", subdet[iz+1], niov_);
 		else
 		  sprintf(str, "%sBadChannel_000%i", subdet[iz+1], niov_);
-
+		
+		sprintf(str1, "%sSingleIOVp2_%i", subdet[iz+1], niov_);
+		
+	
+		sprintf(str2, "%spropagation_map", subdet[iz+1]);
+		if(niov_!=0)
+		  {
+		    if(hm_.h<TH2D>(temhl[isEB],"p2_map_last_IOV",&propagation_map[iz+1][1])->GetBinContent(ix,iy)==p2)
+		      hm_.h<TH2D>(temhl[isEB], str2,&propagation_map[iz+1][0])->Fill(ix,iy);
+		  }
+		hm_.h<TH2D>(temhl[isEB],"p2_map_last_IOV",&propagation_map[iz+1][1])->SetBinContent(ix,iy,1);
+		
 		char sumName[128]; 
+		if(t1<1330000000)
+		  {
+		    sprintf(sumName,"%s%s_Bad_Time_Summary",subdet[iz+1],"t1");
+		    hm_.h<TH2D>(temhl[isEB],sumName, &bad_timing_summary_map[iz+1][0])->Fill(ix,iy,1);
+		  }
+		if(t2<1330000000)
+		  {
+		    sprintf(sumName,"%s%s_Bad_Time_Summary",subdet[iz+1],"t2");
+		    hm_.h<TH2D>(temhl[isEB],sumName, &bad_timing_summary_map[iz+1][1])->Fill(ix,iy,1);
+		  }
+		if(t3<1330000000) 
+		  {
+		    sprintf(sumName,"%s%s_Bad_Time_Summary",subdet[iz+1],"t3");
+		    hm_.h<TH2D>(temhl[isEB],sumName, &bad_timing_summary_map[iz+1][2])->Fill(ix,iy,1);
+		  }
 		sprintf(sumName,"%sBadChannel_Summary",subdet[iz+1]);
+		//hm_.h<TH2D>(temhl[isEB],str1,&p2_map[iz+1][niov_])->Fill(ix,iy,p2);
+		
 		hm_.h<TH2D>("channel_eta","temp", &total_channel_map_eta)->Fill(eta,niov_,1);
 		if(p2==1.0) //bad channel
 		  {
 		    hm_.h<TH2D>(temhl[isEB],sumName, &bad_channel_summary_map[iz+1])->Fill(ix,iy,1);
-		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, -p2);
+		    //hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, -p2);
 		    hm_.h<TH2D>("channel_eta","bad_channel_map", &bad_channel_map_eta)->Fill(eta,niov_,p2);
-		    hm_.h<TH2D>("channel_LM","bad_channel_map_LM",&bad_channel_map_LM)->Fill(iLM ,niov_,p2);
+		    hm_.h<TH2D>("channel_LM","bad_channel_map_LM",&bad_channel_map_LM)->Fill(iLM,niov_,p2);
 		  }
 		else
 		  {
- 		    hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, 1.0);
+ 		    //hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_])->Fill(ix, iy, 1.0);
 		  }
-		  // if(p2==1.0)
-		  // std::cout <<"ix " << ix << "  iy  " << iy  << "  niov  " << niov_ << std::endl; 
-		  // if(ix==20&&iy==30)
-		  //  std::cout << "value : " << p2 << std::endl;
+//for changed file output
+if(OUTPUTCHANGEFILE==ON)
+  if(niov_>0)
+  {
+    int tiy,tix;
+    if(isEB==1)
+      {
+	tix=ix-1;
+	tiy=85+iy;
+      }
+    else
+      {
+	tix=ix; 
+	tiy=iy;
+      }
+    if(p2==1.0) //if bad
+      {
+	if((hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_-1])->GetBinContent(tix+1, tiy+1))!=-1.0) //but was good last IOV
+	    //std::cout << "t1 " << t1 << " ix " << ix << " iy " << iy << " iz " << iz << " status_change_to " << -1 << std::endl; //print
+	  std::cout << "t1 " << t1 << " t3 " << t3 << " ix " << ix << " iy " << iy << " iz " << iz << " status_change_from " << hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_-1])->GetBinContent(tix+1, tiy+1) << " to " << -1 << std::endl; //print
+      }
+    else //if good 
+      if((hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_-1])->GetBinContent(tix+1, tiy+1))==-1.0) //but was bad last IOV
+	//std::cout << "t1 " << t1 << " ix " << ix << " iy " << iy << " iz " << iz << " status_change_to " << 1 << std::endl; //print
+	  std::cout << "t1 " << t1 << " t3 " << t3 << " ix " << ix << " iy " << iy << " iz " << iz << " status_change_from "<< hm_.h<TProfile2D>(templ[isEB], str, &bad_channel_map[iz + 1][niov_-1])->GetBinContent(tix+1, tiy+1) << " to "  << 1 << std::endl; //print
+  }
+                 
 		  /********************************/
 		
 
         }
-		fill_histories(t);
-		fill_slope_histories(t);
+	        if(MAKEHISTORIES)
+		  {
+		    fill_histories(t);
+		    fill_slope_histories(t);
+		  }
 		++niov_;
 }
-
 
 
 void EcalLaserPlotter::printText()
 {
   
   for(int i=0;i<((int) bad_channels_.size());++i) 
-    std::cout << bad_channels_[i][0] << " " << bad_channels_[i][1] << " " << bad_channels_[i][2] << " " << bad_channels_[i][3] << std::endl;
+    std::cerr << bad_channels_[i][0] << " " << bad_channels_[i][1] << " " << bad_channels_[i][2] << " " << bad_channels_[i][3] << std::endl;
 }
 
 
