@@ -1,6 +1,5 @@
 #/bin/bash
 
-
 myself="`readlink -f "$0"`"
 mydir="`dirname "$myself"`"
 
@@ -15,9 +14,14 @@ export LAS_GTAG=GR_R_44_V15
 
 export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 #export LAS_LTAG=${LAS_TAG:-EcalLaserAPDPNRatios_data_20120516_190380_193761_P_p1_tbc}
+                         
+#export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
+#export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
+export LAS_HISTDIR="/afs/cern.ch/user/m/mplaner/www/out_plot/`date +%F-%H:%M:%S`"
+export LAS_DUMPDIR="/tmp/mplaner/lcor_dump/`date +%F-%H:%M:%S`"
+#mkdir /tmp/mplaner/out_plot/
+mkdir /tmp/mplaner/lcor_dump/
 
-export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
-export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
 presc=1
 
 #for local install of gnuplot
@@ -113,6 +117,7 @@ mkdir -p "$LAS_HISTDIR"
 mkdir -p "$LAS_DUMPDIR"
 export LAS_HISTFILE="$LAS_HISTDIR/out_plot_${LAS_GTAG}_${LAS_LTAG}.root"
 
+
 tmpdir="`mktemp -d`"
 cd "$tmpdir"
 
@@ -156,11 +161,18 @@ export MAX_EVENTS=`wc -l iov_time.txt | awk '{print $1}'`
 
 [ ! -f "detid_geom.dat" ] && cp `find $CMSSW_BASE -name detid_geom.dat | head -1` .
 
-cmsRun $CMSSW_CFG  | grep "ix" > ~/output.txt 
+#uncomment the 1st,3rd,4th lines and comment out the second to produce bad channel text files
+#((cmsRun $CMSSW_CFG  | tee /tmp/mplaner/changetemp.txt | grep -v "ix") 3>&1 1>&2 2>&3 | tee  /tmp/mplaner/badtemp.txt ) | grep -v "ix"
+cmsRun $CMSSW_CFG #| tee  ~/cout.txt 
+ #grep "ix" /tmp/mplaner/changetemp.txt > $LAS_HISTDIR/changefile.txt
+ #grep "ix" /tmp/mplaner/badtemp.txt > $LAS_HISTDIR/badfile.txt
 
+	
 cd "$LAS_HISTDIR"
 ln -fs $LAS_HISTFILE ./prompt.root
 )
+
+ln -fs $LAS_HISTFILE ~/www/prompt/prompt.root
 
 if [ "X$drawer" = Xroot ] ; then
     (cd $LAS_HISTDIR
