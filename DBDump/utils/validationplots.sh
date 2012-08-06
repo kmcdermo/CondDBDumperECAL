@@ -9,6 +9,9 @@ gp_map="$gp_dir/plot_dump_maps.gp"
 gp_lm="$gp_dir/plot_LM.gp"
 gp_histories="$gp_dir/plot_dump_history_sigma.gp"
 
+gp_slope_histories="$gp_dir/plot_dump_slope_history_sigma.gp"
+gp_slope_lm="$gp_dir/plot_slope_LM.gp"
+
 now=`date +"%F %H:%M:%S %Z"`
 
 #~ecalmon/public/bin contains a gnuplot version more recent than lxplus one:
@@ -62,9 +65,16 @@ echo -n "."
 sed -e "s@%DIR%@$dir@g" $gp_lm | sed -e "s@#%PNG%@@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
 gnuplot tmp_.gp
 
+echo -n "."
+sed -e "s@%DIR%@$dir@g" $gp_slope_lm | sed -e "s@#%PNG%@@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
+gnuplot tmp_.gp
+
 for i in "All" "EB-" "EB+" "EE-" "EE+";
 do
     sed -e "s@%DIR%@$dir@g" $gp_histories | sed -e "s@%REGION%@$i@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@{/=16 $i}@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
+    gnuplot -p tmp_.gp
+    echo -n "."
+    sed -e "s@%DIR%@$dir@g" $gp_slope_histories | sed -e "s@%REGION%@$i@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@{/=16 $i}@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
     gnuplot -p tmp_.gp
     echo -n "."
 done
@@ -74,11 +84,17 @@ do
     sed -e "s@%DIR%@$dir@g" $gp_histories | sed -e "s@%REGION%@LM`printf %02d $i`@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@{/=16 LM`printf %02d $i`}@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
     gnuplot -p tmp_.gp
     echo -n "."
+    sed -e "s@%DIR%@$dir@g" $gp_slope_histories | sed -e "s@%REGION%@LM`printf %02d $i`@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@{/=16 LM`printf %02d $i`}@g" | sed -e "s@%NOW%@$now@g" > tmp_.gp
+    gnuplot -p tmp_.gp
+    echo -n "."
 done
 
 for i in `seq 1 20`;
 do
     sed -e "s@%DIR%@$dir@g" $gp_histories | sed -e "s@%REGION%@eta`printf %02d $i`@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@`title $i`@" | sed -e "s@%NOW%@$now@g" > tmp_.gp
+    gnuplot -p tmp_.gp
+    echo -n "."
+    sed -e "s@%DIR%@$dir@g" $gp_slope_histories | sed -e "s@%REGION%@eta`printf %02d $i`@g" | sed -e "s@#%PNG%@@g" | sed -e "s@%TITLE%@`title $i`@" | sed -e "s@%NOW%@$now@g" > tmp_.gp
     gnuplot -p tmp_.gp
     echo -n "."
 done
