@@ -15,12 +15,12 @@ export LAS_GTAG=GR_R_44_V15
 export LAS_LTAG=${LAS_LTAG:-EcalLaserAPDPNRatios_last}
 #export LAS_LTAG=${LAS_TAG:-EcalLaserAPDPNRatios_data_20120516_190380_193761_P_p1_tbc}
                          
-#export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
-#export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
-export LAS_HISTDIR="/afs/cern.ch/user/m/mplaner/www/out_plot/`date +%F-%H:%M:%S`"
-export LAS_DUMPDIR="/tmp/mplaner/lcor_dump/`date +%F-%H:%M:%S`"
+export LAS_HISTDIR="/afs/cern.ch/user/e/ecalmon/www/out_plot/`date +%F-%H:%M:%S`"
+export LAS_DUMPDIR="/data1/ecalmon/lcor_dump/`date +%F-%H:%M:%S`"
+#export LAS_HISTDIR="/afs/cern.ch/user/m/mplaner/www/out_plot/`date +%F-%H:%M:%S`"
+#export LAS_DUMPDIR="/tmp/mplaner/lcor_dump/`date +%F-%H:%M:%S`"
 #mkdir /tmp/mplaner/out_plot/
-mkdir /tmp/mplaner/lcor_dump/
+#mkdir /tmp/mplaner/lcor_dump/
 
 presc=1
 
