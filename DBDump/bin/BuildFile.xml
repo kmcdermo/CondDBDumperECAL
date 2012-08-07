@@ -5,5 +5,11 @@
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
 </bin>
+<bin   file="lava_db.cpp" name="lava_db">
+  <use   name="CondFormats/EcalObjects"/>
+  <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
+  <use   name="rootgraphics"/>
+  <use   name="rootcore"/>
+</bin>
 <bin   file="merge_dump.cpp" name="merge_dump">
 </bin>
