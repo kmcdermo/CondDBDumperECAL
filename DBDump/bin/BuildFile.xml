@@ -11,5 +11,20 @@
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
 </bin>
+<bin   file="lava_db_dumpId.cpp" name="lava_db_dumpId">
+  <use   name="CondFormats/EcalObjects"/>
+  <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
+  <use   name="rootgraphics"/>
+  <use   name="rootcore"/>
+</bin>
+<bin   file="ic_dump.cpp" name="ic_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="adc2gev_dump.cpp" name="adc2gev_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="alpha_dump.cpp" name="alpha_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
 <bin   file="merge_dump.cpp" name="merge_dump">
 </bin>
