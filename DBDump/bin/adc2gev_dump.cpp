@@ -124,7 +124,7 @@ int cond::ADC2GeVDump::execute()
 
                 std::cout << "since: " << since << "   till: " << till << "\n";
 
-                iov.setRange(since,till);
+                iov.range(since,till);
 
                 //std::string payloadContainer = iov.payloadContainerName();
                 const std::set<std::string> payloadClasses = iov.payloadClasses();
