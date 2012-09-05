@@ -26,5 +26,8 @@
 <bin   file="alpha_dump.cpp" name="alpha_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="runinfo_dump.cpp" name="runinfo_dump">
+  <use   name="CondFormats/RunInfo"/>
+</bin>
 <bin   file="merge_dump.cpp" name="merge_dump">
 </bin>
