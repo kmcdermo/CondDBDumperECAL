@@ -165,7 +165,7 @@ int cond::ESICDump::execute()
                                 boost::shared_ptr<A> pa = session.getTypedObject<A>(ita->token());
                                 sprintf(filename, "dump_%s__since_%08ld_till_%08ld.dat", tag.c_str(), (long int)ita->since(), (long int)ita->till());
                                 //sprintf(filename, "dump_%s.dat", tag.c_str());
-                                //fprintf(stderr, "going to dump on `%s'\n", filename);
+                                fprintf(stderr, "going to dump on `%s'\n", filename);
                                 dump(*pa, filename);
                         }
                 }
