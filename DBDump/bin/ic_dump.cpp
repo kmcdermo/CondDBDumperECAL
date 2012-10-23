@@ -186,7 +186,7 @@ int cond::ICDump::execute()
                 for (cond::IOVProxy::const_iterator ita = iov.begin(); ita != iov.end(); ++ita, ++cnt) {
                         std::cout << cnt << " " << ita->since() << " -> " << ita->till() << "\n";
                         boost::shared_ptr<A> pa = session.getTypedObject<A>(ita->token());
-                        sprintf(filename, "dump_%s__since_%ld_till_%ld.dat", tag.c_str(), (long int)ita->since(), (long int)ita->till());
+                        sprintf(filename, "dump_%s__since_%08ld_till_%08ld.dat", tag.c_str(), (long int)ita->since(), (long int)ita->till());
                         fprintf(stderr, "going to dump on `%s'\n", filename);
                         dump(*pa, filename);
                 }
