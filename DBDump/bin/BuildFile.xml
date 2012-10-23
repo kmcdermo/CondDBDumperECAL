@@ -26,6 +26,15 @@
 <bin   file="alpha_dump.cpp" name="alpha_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="esgain_dump.cpp" name="esgain_dump">
+  <use   name="CondFormats/ESObjects"/>
+</bin>
+<bin   file="esic_dump.cpp" name="esic_dump">
+  <use   name="CondFormats/ESObjects"/>
+</bin>
+<bin   file="eseeic_dump.cpp" name="eseeic_dump">
+  <use   name="CondFormats/ESObjects"/>
+</bin>
 <bin   file="runinfo_dump.cpp" name="runinfo_dump">
   <use   name="CondFormats/RunInfo"/>
 </bin>
