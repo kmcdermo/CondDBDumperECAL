@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id: EventDump.cc,v 1.1 2012/07/12 14:43:53 ferriff Exp $
+// $Id: EventDump.cc,v 1.2 2012/07/12 14:54:51 ferriff Exp $
 //
 //
 
@@ -60,6 +60,7 @@ Implementation:
 #include "CalibCalorimetry/EcalLaserCorrection/interface/EcalLaserDbRecord.h"
 
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
+#include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 
 #include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
@@ -100,6 +101,11 @@ class EventDump : public edm::EDAnalyzer {
 
       void dumpRecHits(const edm::Event& ev, const edm::EventSetup& es);
       void dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, const edm::Handle<EcalRecHitCollection> & rechits);
+
+      void dumpDigis(const edm::Event& ev, const edm::EventSetup& es);
+      void dumpDigis(const edm::Event& ev, const edm::EventSetup& es, const edm::Handle<EcalDigiCollection> & digis);
+
+      void dumpEvent(const edm::Event & ev, const edm::EventSetup & es);
 
       typedef struct Coord {
               int ix_;
@@ -158,8 +164,14 @@ class EventDump : public edm::EDAnalyzer {
       bool dumpGainRatios_;
       edm::ESHandle<EcalGainRatios> gr_;
 
+      // event info
+      bool dumpEvent_;
+
       // recHits
       bool dumpRecHits_;
+
+      // digis
+      bool dumpDigis_;
 
       // Input tags
       // EcalRecHits
@@ -167,6 +179,11 @@ class EventDump : public edm::EDAnalyzer {
       edm::InputTag iee_rechits_;
       edm::Handle<EcalRecHitCollection> heb_rechits_;
       edm::Handle<EcalRecHitCollection> hee_rechits_;
+      // EcalDigis
+      edm::InputTag ieb_digis_;
+      edm::InputTag iee_digis_;
+      edm::Handle<EBDigiCollection> heb_digis_;
+      edm::Handle<EEDigiCollection> hee_digis_;
 
       // conditions: iterators
       EcalIntercalibConstantMap::const_iterator it_ic_;
@@ -240,8 +257,17 @@ EventDump::EventDump(const edm::ParameterSet& ps) :
 	// laser transparency corrections
 	dumpRecHits_ = ps.getParameter<bool>("dumpRecHits");
 
+	// digis
+	dumpDigis_ = ps.getParameter<bool>("dumpDigis");
+
+        // event info
+        dumpEvent_ = ps.getParameter<bool>("dumpEvent");
+
         ieb_rechits_ = ps.getParameter<edm::InputTag>("ecalRecHitsEB");
         iee_rechits_ = ps.getParameter<edm::InputTag>("ecalRecHitsEE");
+
+        ieb_digis_ = ps.getParameter<edm::InputTag>("ecalDigisEB");
+        iee_digis_ = ps.getParameter<edm::InputTag>("ecalDigisEE");
 
 	if (outDumpFile_ != "") {
 		ofile_.open(outDumpFile_.c_str(), std::ios::out);
@@ -277,6 +303,8 @@ EventDump::EventDump(const edm::ParameterSet& ps) :
 void EventDump::setDumpFalse()
 {
         dumpRecHits_ = false;
+        dumpDigis_ = false;
+        dumpEvent_ = false;
 
         dumpGeometry_ = false;
 	dumpIC_ = false;
@@ -327,6 +355,43 @@ void EventDump::coord(DetId id, Coord * c)
 }
 
 
+void EventDump::dumpEvent(const edm::Event& ev, const edm::EventSetup& es)
+{
+        // dump header
+        fprintf(fd_dump_, "#evt run event ls time\n");
+        fprintf(fd_dump_, "evt %d %d %d %d\n", run_, event_, ls_, time_);
+}
+
+
+void EventDump::dumpDigis(const edm::Event& ev, const edm::EventSetup& es, const edm::Handle<EcalDigiCollection> & digis)
+{
+        // dump header
+        fprintf(fd_dump_, "#edg run event ls time\trawid ieta/ix iphi/iy 0/zside\tsample_0 s1 s2 s4 s5 s6 s7 s8 sample_9\tgain_0 g1 g2 g3 g4 g5 g6 g7 g8 gain_9");
+        fprintf(fd_dump_, "\n");
+        Coord c;
+        fprintf(stderr, "SIZE: %u\n", digis->size());
+        for(EcalDigiCollection::const_iterator itdg = digis->begin(); itdg != digis->end(); ++itdg) {
+
+                DetId id(itdg->id());
+                coord(id, &c);
+                fprintf(fd_dump_, "edg %d %d %d %d\t%d %d %d %d", 
+                        run_, event_, ls_, time_, id.rawId(), c.ix_, c.iy_, c.iz_
+                        );
+                fprintf(fd_dump_, "\t");
+                for (int is = 0; is < EcalDataFrame::MAXSAMPLES; ++is) {
+                        int adc = ((EcalDataFrame)*itdg).sample(is).adc();
+                        fprintf(fd_dump_, "%d", adc);
+                }
+                fprintf(fd_dump_, "\t");
+                for (int is = 0; is < EcalDataFrame::MAXSAMPLES; ++is) {
+                        int gid = ((EcalDataFrame)*itdg).sample(is).gainId();
+                        fprintf(fd_dump_, "%d", gid);
+                }
+                fprintf(fd_dump_, "\n");
+        }
+}
+
+
 void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, const edm::Handle<EcalRecHitCollection> & rechits)
 {
         // dump header
@@ -353,6 +418,16 @@ void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, con
                 //fprintf(fd_dump_, "\t%f  %d %f  %d %f  %d %f", );
                 fprintf(fd_dump_, "\n");
         }
+}
+
+
+void EventDump::dumpDigis(const edm::Event& ev, const edm::EventSetup& es)
+{
+        ev.getByLabel(ieb_digis_, heb_digis_);
+        dumpDigis(ev, es, heb_digis_);
+
+        ev.getByLabel(iee_digis_, hee_digis_);
+        dumpDigis(ev, es, hee_digis_);
 }
 
 
@@ -398,7 +473,9 @@ EventDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
         es.get<EcalLaserAlphasRcd>().get(alpha_);
         es.get<EcalLaserDbRecord>().get(laser_);
 
+        if (dumpEvent_)   dumpEvent(ev, es);
         if (dumpRecHits_) dumpRecHits(ev, es);
+        if (dumpDigis_)   dumpDigis(ev, es);
 
         /*
         iov_last_ = ev.time().unixTime();
