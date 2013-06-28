@@ -5,9 +5,12 @@ process = cms.Process("Demo")
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 
-gTag = os.environ.get('LAS_GTAG')
+gTag = os.environ.get('GTAG')
 if not gTag:
-    gTag = 'GR_R_44_V13::All'
+    #gTag = 'GR_R_44_V13::All'
+    #gTag = 'FT_R_53_V6::All'
+    #gTag = 'GR_P_V42::All'
+    gTag = 'GR_P_V42B::All'
 
 lTag = os.environ.get('LAS_LTAG')
 if not lTag:
@@ -30,7 +33,7 @@ process.load('Configuration.StandardSequences.GeometryDB_cff')
 #process.GlobalTag.globaltag = 'IDEAL_31X::All'
 #process.GlobalTag.globaltag = 'MC_31X_V1::All'
 #process.GlobalTag.globaltag = 'GR09_31X_V1::All'
-process.GlobalTag.globaltag = gTag
+#process.GlobalTag.globaltag = gTag
 
     
 
@@ -131,15 +134,50 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
 #        timeBetweenEvents = cms.untracked.uint32(10)
 #)
 
+#process.GlobalTag.globaltag = "FT_R_53_V6::All"
+#process.GlobalTag.globaltag = "GR_P_V42C::All"
+#process.GlobalTag.globaltag = "GR_P_V41::All"
+process.GlobalTag.globaltag = "GR_P_V42::All"
+
 process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
         #'file:F08F782B-77E8-DE11-B1FC-0019B9F72BFF.root'
         #'file:ZeeSummer09.root'
         #'file:/afs/cern.ch/user/s/sbrochet/public/jetmet/pickevents.root'
-        'file:/afs/cern.ch/user/m/mpierini/work/public/pickevents_merged.root'
+        #'file:/afs/cern.ch/user/m/mpierini/work/public/pickevents_merged.root'
+        #'file:/afs/cern.ch/user/p/poter/public/pickevents_merged.root'
+        #'file:/tmp/ferriff/event_195774_179_334180725.root',
+        #'file:/afs/cern.ch/work/z/zdemirag/public/forPV/Photon300NoHE_LS533.root',
+        #'root://eoscms//eos/cms/store/caf/user/shervin/calibration/8TeV/ZNtuples/alcareco/DoubleElectron-HZZ/190456-208686/none/DoubleElectron-HZZ-190456-208686.root',
+        #
+        ##process.GlobalTag.globaltag = "FT_R_53_V6::All" # eejjLQ650_AOD.provDump
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012A-13Jul2012-v1__AOD.root",
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012B-13Jul2012-v1__AOD.root",
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012A-13Jul2012-v1__AOD.root",
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012B-13Jul2012-v1__AOD.root",
+        #
+        ##process.GlobalTag.globaltag = "GR_P_V42C::All" + CMSSW_5_3_6_patch1
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012C-EcalRecover_11Dec2012-v1__AOD.root"
+        
+        ##process.GlobalTag.globaltag = "GR_P_V41::All" + CMSSW_5_3_3_patch3
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012C-PromptReco-v2__AOD.root",
+        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012C-PromptReco-v2__AOD.root"
+        
+        #process.GlobalTag.globaltag = "GR_P_V42::All" + CMSSW_5_3_4_patch2
+        "file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012D-PromptReco-v1__AOD.root",
+        "file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012D-PromptReco-v1__AOD.root"
+        #
+
         ),
         #skipEvents = cms.untracked.uint32(10)
 )
+
+ofile = "out_dump__" + str(process.GlobalTag.globaltag.value()) + "__"
+for i in process.source.fileNames:
+        ofile += os.path.basename(i).rstrip(".root") + "__"
+
+ofile = ofile.rstrip("_") + ".dat"
+
 
 process.maxEvents = cms.untracked.PSet(
         input = cms.untracked.int32(-1)
@@ -148,23 +186,31 @@ process.maxEvents = cms.untracked.PSet(
 process.demo = cms.EDAnalyzer('EventDump',
         outPlot = cms.bool(False),
         outDump = cms.bool(True),
-        outDumpFile = cms.string('./outdump.dat'),
+        #outDumpFile = cms.string('./outdump.dat'),
+        outDumpFile = cms.string(ofile),
         ecalRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
         ecalRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
+        ecalUncalibratedRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
+        ecalUncalibratedRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
+        ecalDigisEB   = cms.InputTag("selectDigi:selectedEcalEBDigiCollection"),
+        ecalDigisEE   = cms.InputTag("selectDigi:selectedEcalEEDigiCollection"),
+        dumpEvent   = cms.bool(True),
+        dumpDigis   = cms.bool(True),
         dumpRecHits = cms.bool(True),
+        dumpUncalibratedRecHits = cms.bool(False),
         dumpGeometry   = cms.bool(False),
-        dumpIC         = cms.bool(False),
+        dumpIC         = cms.bool(True),
         plotIC         = cms.bool(False),
         dumpTC         = cms.bool(False),
         plotTC         = cms.bool(False),
         dumpADCToGeV   = cms.bool(False),
-        dumpTransp     = cms.bool(False),
+        dumpTransp     = cms.bool(True),
         plotTransp     = cms.bool(False),
-        dumpAlpha      = cms.bool(False),
+        dumpAlpha      = cms.bool(True),
         plotAlpha      = cms.bool(False),
-        dumpTranspCorr = cms.bool(False),
+        dumpTranspCorr = cms.bool(True),
         plotTranspCorr = cms.bool(False),
-        dumpChStatus   = cms.bool(False),
+        dumpChStatus   = cms.bool(True),
         plotChStatus   = cms.bool(False),
         dumpPedestals  = cms.bool(False),
         plotPedestals  = cms.bool(False),
