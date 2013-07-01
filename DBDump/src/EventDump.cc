@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id: EventDump.cc,v 1.3 2013/06/26 13:38:27 ferriff Exp $
+// $Id: EventDump.cc,v 1.4 2013/06/28 20:26:06 ferriff Exp $
 //
 //
 
@@ -140,7 +140,7 @@ class EventDump : public edm::EDAnalyzer {
 
       // ADCToGeV constant
       bool dumpADCToGeV_;
-      edm::ESHandle<EcalADCToGeVConstant> adcToGeV_;
+      edm::ESHandle<EcalADCToGeVConstant> adctogev_;
 
       // laser transparency measurements
       bool dumpTransp_;
@@ -419,7 +419,7 @@ void EventDump::dumpUncalibratedRecHits(const edm::Event& ev, const edm::EventSe
 {
         // dump header
         fprintf(fd_dump_, "#erh run event ls time\trawid ieta/ix iphi/iy 0/zside\tenergy time flag");
-        fprintf(fd_dump_, "\tic lc");
+        fprintf(fd_dump_, "\tadc2gev ic lc");
         fprintf(fd_dump_, "\n");
         Coord c;
         for(size_t iurh =0; iurh < urechits->size(); ++iurh) {
@@ -466,7 +466,13 @@ void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, con
                         fprintf(stderr, "problem with IC for detId %d", id.rawId());
                         assert(0);
                 }
-                fprintf(fd_dump_, "\t%f %f", *it_ic_, lc);
+                float adctogev = 0;
+                if (id.subdetId() == EcalBarrel) {
+                        adctogev = adctogev_->getEBValue();
+                } else {
+                        adctogev = adctogev_->getEEValue();
+                }
+                fprintf(fd_dump_, "\t%f %f %f", adctogev, *it_ic_, lc);
                 //fprintf(fd_dump_, "\t%f  %d %f  %d %f  %d %f", );
                 fprintf(fd_dump_, "\n");
         }
@@ -538,6 +544,7 @@ EventDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
         es.get<EcalLaserDbRecord>().get(laser_);
         es.get<EcalPedestalsRcd>().get(ped_);
         es.get<EcalGainRatiosRcd>().get(gr_);
+        es.get<EcalADCToGeVConstantRcd>().get(adctogev_);
 
         if (dumpEvent_)   dumpEvent(ev, es);
         if (dumpUncalibratedRecHits_) dumpUncalibratedRecHits(ev, es);
