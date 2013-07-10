@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id: EventDump.cc,v 1.5 2013/07/01 09:40:10 ferriff Exp $
+// $Id: EventDump.cc,v 1.6 2013/07/10 06:42:16 ferriff Exp $
 //
 //
 
@@ -467,7 +467,7 @@ void EventDump::dumpClusters(const edm::Event& ev, const edm::EventSetup& es, co
 {
         fprintf(fd_dump_, "#esc run event ls time\tenergy n_hits raw_energy\n");
         for (reco::SuperClusterCollection::const_iterator cit = scs->begin(); cit != scs->end(); ++cit) {
-                fprintf(fd_dump_, "erh %d %d %d %d", run_, event_, ls_, time_);
+                fprintf(fd_dump_, "esc %d %d %d %d", run_, event_, ls_, time_);
                 const std::vector<std::pair<DetId, float> > & hf = cit->hitsAndFractions();
                 float e_raw = 0;
                 for (size_t i = 0; i < hf.size(); ++i) {
