@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id: EventDump.cc,v 1.4 2013/06/28 20:26:06 ferriff Exp $
+// $Id: EventDump.cc,v 1.5 2013/07/01 09:40:10 ferriff Exp $
 //
 //
 
@@ -61,6 +61,8 @@ Implementation:
 
 #include "DataFormats/EcalRecHit/interface/EcalRecHitCollections.h"
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
+#include "DataFormats/EgammaReco/interface/SuperCluster.h"
+#include "DataFormats/EgammaReco/interface/SuperClusterFwd.h"
 
 #include "Geometry/CaloEventSetup/interface/CaloTopologyRecord.h"
 #include "Geometry/CaloGeometry/interface/CaloGeometry.h"
@@ -98,6 +100,9 @@ class EventDump : public edm::EDAnalyzer {
       //virtual void beginRun(const edm::Event&, const edm::EventSetup&);
       //virtual void endRun(const edm::Event&, const edm::EventSetup&);
       virtual void endJob() ;
+
+      void dumpClusters(const edm::Event& ev, const edm::EventSetup& es);
+      void dumpClusters(const edm::Event& ev, const edm::EventSetup& es, const reco::SuperClusterCollection * scs, const EcalRecHitCollection * rechits);
 
       void dumpRecHits(const edm::Event& ev, const edm::EventSetup& es);
       void dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, const EcalRecHitCollection * rechits);
@@ -170,6 +175,9 @@ class EventDump : public edm::EDAnalyzer {
       // event info
       bool dumpEvent_;
 
+      // clusters
+      bool dumpClusters_;
+
       // recHits
       bool dumpRecHits_;
 
@@ -180,6 +188,11 @@ class EventDump : public edm::EDAnalyzer {
       bool dumpDigis_;
 
       // Input tags
+      // SuperClusters
+      edm::InputTag ieb_scs_;
+      edm::InputTag iee_scs_;
+      edm::Handle<reco::SuperClusterCollection> heb_scs_;
+      edm::Handle<reco::SuperClusterCollection> hee_scs_;
       // EcalRecHits
       edm::InputTag ieb_rechits_;
       edm::InputTag iee_rechits_;
@@ -276,6 +289,12 @@ EventDump::EventDump(const edm::ParameterSet& ps) :
 
 	// recHits
 	dumpRecHits_ = ps.getParameter<bool>("dumpRecHits");
+
+	// clusters
+	dumpClusters_ = ps.getParameter<bool>("dumpClusters");
+
+        ieb_scs_ = ps.getParameter<edm::InputTag>("ecalSuperClustersEB");
+        iee_scs_ = ps.getParameter<edm::InputTag>("ecalSuperClustersEE");
 
         ieb_rechits_ = ps.getParameter<edm::InputTag>("ecalRecHitsEB");
         iee_rechits_ = ps.getParameter<edm::InputTag>("ecalRecHitsEE");
@@ -444,6 +463,21 @@ void EventDump::dumpUncalibratedRecHits(const edm::Event& ev, const edm::EventSe
 }
 
 
+void EventDump::dumpClusters(const edm::Event& ev, const edm::EventSetup& es, const reco::SuperClusterCollection * scs, const EcalRecHitCollection * rechits)
+{
+        fprintf(fd_dump_, "#esc run event ls time\tenergy n_hits raw_energy\n");
+        for (reco::SuperClusterCollection::const_iterator cit = scs->begin(); cit != scs->end(); ++cit) {
+                fprintf(fd_dump_, "erh %d %d %d %d", run_, event_, ls_, time_);
+                const std::vector<std::pair<DetId, float> > & hf = cit->hitsAndFractions();
+                float e_raw = 0;
+                for (size_t i = 0; i < hf.size(); ++i) {
+                        e_raw += rechits->find(hf[i].first)->energy() * hf[i].second;
+                }
+                fprintf(fd_dump_, "%f %f\n", cit->energy(), e_raw);
+        }
+}
+
+
 void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es, const EcalRecHitCollection * rechits)
 {
         // dump header
@@ -513,6 +547,18 @@ void EventDump::dumpRecHits(const edm::Event& ev, const edm::EventSetup& es)
 }
 
 
+void EventDump::dumpClusters(const edm::Event& ev, const edm::EventSetup& es)
+{
+        ev.getByLabel(ieb_scs_, heb_scs_);
+        dumpClusters(ev, es, heb_scs_.product(), heb_rechits_.product());
+
+        ev.getByLabel(iee_scs_, hee_scs_);
+        dumpClusters(ev, es, hee_scs_.product(), hee_rechits_.product());
+        // Preshower
+        //ev.getByLabel( ecalRecHitESCollection_, esRecHits_h_ );
+}
+
+
 // ------------ method called to for each event  ------------
 void
 EventDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
@@ -547,9 +593,11 @@ EventDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
         es.get<EcalADCToGeVConstantRcd>().get(adctogev_);
 
         if (dumpEvent_)   dumpEvent(ev, es);
+        if (dumpDigis_)   dumpDigis(ev, es);
         if (dumpUncalibratedRecHits_) dumpUncalibratedRecHits(ev, es);
         if (dumpRecHits_) dumpRecHits(ev, es);
-        if (dumpDigis_)   dumpDigis(ev, es);
+        if (dumpClusters_ && dumpRecHits_) dumpClusters(ev, es);
+        else fprintf(stderr, "Cannot dump clusters without dumping recHits, please change the cfg file.\n");
 
         ++niov_;
 }
