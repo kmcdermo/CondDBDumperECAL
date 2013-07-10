@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Federico FERRI
 //         Created:  Fri May 11 11:06:00 CEST 2012
-// $Id: EventDump.cc,v 1.6 2013/07/10 06:42:16 ferriff Exp $
+// $Id: EventDump.cc,v 1.7 2013/07/10 07:47:45 ferriff Exp $
 //
 //
 
@@ -473,7 +473,7 @@ void EventDump::dumpClusters(const edm::Event& ev, const edm::EventSetup& es, co
                 for (size_t i = 0; i < hf.size(); ++i) {
                         e_raw += rechits->find(hf[i].first)->energy() * hf[i].second;
                 }
-                fprintf(fd_dump_, "%f %f\n", cit->energy(), e_raw);
+                fprintf(fd_dump_, " %d %f %f\n", hf.size(), cit->energy(), e_raw);
         }
 }
 
