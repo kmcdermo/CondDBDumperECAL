@@ -597,7 +597,7 @@ EventDump::analyze(const edm::Event& ev, const edm::EventSetup& es)
         if (dumpUncalibratedRecHits_) dumpUncalibratedRecHits(ev, es);
         if (dumpRecHits_) dumpRecHits(ev, es);
         if (dumpClusters_ && dumpRecHits_) dumpClusters(ev, es);
-        else fprintf(stderr, "Cannot dump clusters without dumping recHits, please change the cfg file.\n");
+        else if (dumpClusters_) fprintf(stderr, "Cannot dump clusters without dumping recHits, please change the cfg file.\n");
 
         ++niov_;
 }

@@ -792,8 +792,8 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		static TProfile* p3_p2_ncut_x;
 		static TH2D* p2d_slope_p3[3];
 		static TH2D* p2d_slope_p1[3];
-		static TH2D* p2d_slope_p3_corr[3];
-		static TH2D* p2d_slope_p1_corr[3];
+		//static TH2D* p2d_slope_p3_corr[3];
+		//static TH2D* p2d_slope_p1_corr[3];
 		
 		
 		sprintf(str,"%s_p2_p1_slope",temhl[isEB]);
@@ -856,7 +856,7 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 		static TH2D* bad_channel_map_LM;
 		static TH2D * bad_channel_summary_map[3];
 		static TH2D * bad_timing_summary_map[3][3];
-		static TH2D* p2_map[3][8000];
+		//static TH2D* p2_map[3][8000];
 		static TH2D* propagation_map[3][2];
 
 		if(niov_>=1000)

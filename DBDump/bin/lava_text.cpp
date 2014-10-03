@@ -160,7 +160,7 @@ int main( int argc, char** argv )
         EcalLaserPlotter lp(geom);
         if (strcmp(status, " ") != 0) lp.setEcalChannelStatus(ch_status_, 1);
         EcalLaserAPDPNRatios apdpn;
-        time_t t[92], t1, t3, ot3 = 0;
+        time_t t[92], t1, t3; //, ot3 = 0;
         int cnt = 0, cnt_iov = 0, skip = 0;
         int id;
         char * beg, * end;
@@ -197,7 +197,7 @@ int main( int argc, char** argv )
                                 //assert(ot3 == t1); // not always true if sequences are taken from DB
                                 assert(cnt == EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
                         }
-                        ot3 = t3;
+                        //ot3 = t3;
                         cnt = 0;
                         first = 0;
                         free(line);
