@@ -10,7 +10,8 @@ if not gTag:
     #gTag = 'GR_R_44_V13::All'
     #gTag = 'FT_R_53_V6::All'
     #gTag = 'GR_P_V42::All'
-    gTag = 'GR_P_V42B::All'
+    #gTag = 'GR_P_V42B::All'
+    gTag = 'POSTLS172_V7::All'
 
 lTag = os.environ.get('LAS_LTAG')
 if not lTag:
@@ -30,12 +31,7 @@ dumpdir = './'
 
 process.load('Configuration/StandardSequences/FrontierConditions_GlobalTag_cff')
 process.load('Configuration.StandardSequences.GeometryDB_cff')
-#process.GlobalTag.globaltag = 'IDEAL_31X::All'
-#process.GlobalTag.globaltag = 'MC_31X_V1::All'
-#process.GlobalTag.globaltag = 'GR09_31X_V1::All'
-#process.GlobalTag.globaltag = gTag
 
-    
 
 ##process.es_prefer = cms.ESPrefer("PoolDBESSource","ecalConditions")
 ##from CondCore.DBCommon.CondDBSetup_cfi import *
@@ -118,55 +114,11 @@ process.load('Configuration.StandardSequences.GeometryDB_cff')
 ###process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0_pre9/src/CondTools/Ecal/python'
 ###process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0/src/CondTools/Ecal/python'
 
-#process.MaxEvents = cms.untracked.PSet( input = cms.untracked.int32(2628) )
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
-
-#process.source = cms.Source("EmptySource",
-#        firstRun = cms.untracked.uint32(190705),
-#        numberEventsInRun = cms.untracked.uint32(1),
-#        #firstTime = cms.untracked.uint32( 1244042540 ), # run 98723
-#        #firstTime = cms.untracked.uint32( 1224557391 ), # beginning of run 66951
-#        #firstTime = cms.untracked.uint32( 1224188905 ), # beginning of run 66615
-#        ##firstTime = cms.untracked.uint32( 1224147420 ), # inside t1 and t2 of a DB IOV before run 65940
-#        ##firstTime = cms.untracked.uint32( 1224146163 ),
-#        #firstTime = cms.untracked.uint32( (1303120805 - 10*3600) ),
-#        firstTime = cms.untracked.uint32( 1333582717 ), # run 190389
-#        timeBetweenEvents = cms.untracked.uint32(10)
-#)
-
-#process.GlobalTag.globaltag = "FT_R_53_V6::All"
-#process.GlobalTag.globaltag = "GR_P_V42C::All"
-#process.GlobalTag.globaltag = "GR_P_V41::All"
-process.GlobalTag.globaltag = "GR_P_V42::All"
 
 process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
-        #'file:F08F782B-77E8-DE11-B1FC-0019B9F72BFF.root'
-        #'file:ZeeSummer09.root'
-        #'file:/afs/cern.ch/user/s/sbrochet/public/jetmet/pickevents.root'
-        #'file:/afs/cern.ch/user/m/mpierini/work/public/pickevents_merged.root'
-        #'file:/afs/cern.ch/user/p/poter/public/pickevents_merged.root'
-        #'file:/tmp/ferriff/event_195774_179_334180725.root',
-        #'file:/afs/cern.ch/work/z/zdemirag/public/forPV/Photon300NoHE_LS533.root',
-        #'root://eoscms//eos/cms/store/caf/user/shervin/calibration/8TeV/ZNtuples/alcareco/DoubleElectron-HZZ/190456-208686/none/DoubleElectron-HZZ-190456-208686.root',
-        #
-        ##process.GlobalTag.globaltag = "FT_R_53_V6::All" # eejjLQ650_AOD.provDump
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012A-13Jul2012-v1__AOD.root",
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012B-13Jul2012-v1__AOD.root",
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012A-13Jul2012-v1__AOD.root",
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012B-13Jul2012-v1__AOD.root",
-        #
-        ##process.GlobalTag.globaltag = "GR_P_V42C::All" + CMSSW_5_3_6_patch1
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012C-EcalRecover_11Dec2012-v1__AOD.root"
-        
-        ##process.GlobalTag.globaltag = "GR_P_V41::All" + CMSSW_5_3_3_patch3
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012C-PromptReco-v2__AOD.root",
-        #"file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012C-PromptReco-v2__AOD.root"
-        
-        #process.GlobalTag.globaltag = "GR_P_V42::All" + CMSSW_5_3_4_patch2
-        "file:/afs/cern.ch/work/f/ferriff/check_events/eejjLQ650_ElectronHad__Run2012D-PromptReco-v1__AOD.root",
-        "file:/afs/cern.ch/work/f/ferriff/check_events/enujjLQ650_ElectronHad__Run2012D-PromptReco-v1__AOD.root"
-        #
+        "file:/build/argiro/testnewphase/CMSSW_7_2_0_pre4/photongun_pu25_ave20_0_ECALRECOstd.root"
+        #"file:/build/argiro/testnewphase/CMSSW_7_2_0_pre4/photongun_pu25_ave20_0_ECALRECOredigi_shift.root"
 
         ),
         #skipEvents = cms.untracked.uint32(10)
@@ -188,29 +140,34 @@ process.demo = cms.EDAnalyzer('EventDump',
         outDump = cms.bool(True),
         #outDumpFile = cms.string('./outdump.dat'),
         outDumpFile = cms.string(ofile),
-        ecalRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
-        ecalRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
+        #ecalRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
+        #ecalRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
+        ecalRecHitsEB = cms.InputTag("ecalRecHit:EcalRecHitsEB"),
+        ecalRecHitsEE = cms.InputTag("ecalRecHit:EcalRecHitsEE"),
         ecalUncalibratedRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
         ecalUncalibratedRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
         ecalDigisEB   = cms.InputTag("selectDigi:selectedEcalEBDigiCollection"),
         ecalDigisEE   = cms.InputTag("selectDigi:selectedEcalEEDigiCollection"),
+        ecalSuperClustersEB = cms.InputTag(""),
+        ecalSuperClustersEE = cms.InputTag(""),
         dumpEvent   = cms.bool(True),
-        dumpDigis   = cms.bool(True),
+        dumpDigis   = cms.bool(False),
         dumpRecHits = cms.bool(True),
         dumpUncalibratedRecHits = cms.bool(False),
+        dumpClusters = cms.bool(False),
         dumpGeometry   = cms.bool(False),
-        dumpIC         = cms.bool(True),
+        dumpIC         = cms.bool(False),
         plotIC         = cms.bool(False),
         dumpTC         = cms.bool(False),
         plotTC         = cms.bool(False),
         dumpADCToGeV   = cms.bool(False),
-        dumpTransp     = cms.bool(True),
+        dumpTransp     = cms.bool(False),
         plotTransp     = cms.bool(False),
-        dumpAlpha      = cms.bool(True),
+        dumpAlpha      = cms.bool(False),
         plotAlpha      = cms.bool(False),
-        dumpTranspCorr = cms.bool(True),
+        dumpTranspCorr = cms.bool(False),
         plotTranspCorr = cms.bool(False),
-        dumpChStatus   = cms.bool(True),
+        dumpChStatus   = cms.bool(False),
         plotChStatus   = cms.bool(False),
         dumpPedestals  = cms.bool(False),
         plotPedestals  = cms.bool(False),
