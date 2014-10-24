@@ -114,19 +114,19 @@ process.load('Configuration.StandardSequences.GeometryDB_cff')
 ###process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0_pre9/src/CondTools/Ecal/python'
 ###process.CondDBCommon.DBParameters.authenticationPath = '/nfshome0/fra/CMSSW_3_1_0/src/CondTools/Ecal/python'
 
+process.GlobalTag.globaltag = gTag
 
 process.source = cms.Source("PoolSource",
         fileNames = cms.untracked.vstring(
-        "file:/build/argiro/testnewphase/CMSSW_7_2_0_pre4/photongun_pu25_ave20_0_ECALRECOstd.root"
-        #"file:/build/argiro/testnewphase/CMSSW_7_2_0_pre4/photongun_pu25_ave20_0_ECALRECOredigi_shift.root"
-
+        #"file:/afs/cern.ch/user/a/argiro/public/phaseshift/photongun_pu25_ave20_0_ECALRECOredigi_shift.root"
+        "file:/afs/cern.ch/user/a/argiro/public/phaseshift/photongun_pu25_ave20_0_ECALRECOstd_digi.root"
         ),
         #skipEvents = cms.untracked.uint32(10)
 )
 
 ofile = "out_dump__" + str(process.GlobalTag.globaltag.value()) + "__"
 for i in process.source.fileNames:
-        ofile += os.path.basename(i).rstrip(".root") + "__"
+        ofile += os.path.basename(i).replace(".root", "") + "__"
 
 ofile = ofile.rstrip("_") + ".dat"
 
@@ -146,12 +146,16 @@ process.demo = cms.EDAnalyzer('EventDump',
         ecalRecHitsEE = cms.InputTag("ecalRecHit:EcalRecHitsEE"),
         ecalUncalibratedRecHitsEB = cms.InputTag("reducedEcalRecHitsEB"),
         ecalUncalibratedRecHitsEE = cms.InputTag("reducedEcalRecHitsEE"),
-        ecalDigisEB   = cms.InputTag("selectDigi:selectedEcalEBDigiCollection"),
-        ecalDigisEE   = cms.InputTag("selectDigi:selectedEcalEEDigiCollection"),
+        #ecalDigisEB   = cms.InputTag("selectDigi:selectedEcalEBDigiCollection"),
+        #ecalDigisEE   = cms.InputTag("selectDigi:selectedEcalEEDigiCollection"),
+        ecalDigisEB   = cms.InputTag("ecalDigis:ebDigis"),
+        ecalDigisEE   = cms.InputTag("ecalDigis:eeDigis"),
+        #ecalDigisEB   = cms.InputTag("simEcalDigis:ebDigis"),
+        #ecalDigisEE   = cms.InputTag("simEcalDigis:eeDigis"),
         ecalSuperClustersEB = cms.InputTag(""),
         ecalSuperClustersEE = cms.InputTag(""),
         dumpEvent   = cms.bool(True),
-        dumpDigis   = cms.bool(False),
+        dumpDigis   = cms.bool(True),
         dumpRecHits = cms.bool(True),
         dumpUncalibratedRecHits = cms.bool(False),
         dumpClusters = cms.bool(False),
@@ -179,4 +183,8 @@ process.demo = cms.EDAnalyzer('EventDump',
 ####        fileName = cms.string('out_plot.root')
 ####)
 
+import EventFilter.EcalRawToDigi.EcalUnpackerData_cfi
+process.ecalDigis = EventFilter.EcalRawToDigi.EcalUnpackerData_cfi.ecalEBunpacker.clone()
+
+#process.p = cms.Path(process.ecalDigis * process.demo)
 process.p = cms.Path(process.demo)

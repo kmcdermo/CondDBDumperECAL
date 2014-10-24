@@ -32,6 +32,12 @@
 <bin   file="ic_dump.cpp" name="ic_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="timeic_dump.cpp" name="timeic_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="timeoffset_dump.cpp" name="timeoffset_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
 <bin   file="adc2gev_dump.cpp" name="adc2gev_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
