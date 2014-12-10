@@ -38,6 +38,9 @@
 <bin   file="timeoffset_dump.cpp" name="timeoffset_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="ped_dump.cpp" name="ped_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
 <bin   file="adc2gev_dump.cpp" name="adc2gev_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
