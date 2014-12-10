@@ -1,7 +1,6 @@
-Tools for dumping database objects.
+## Tools for dumping CMS database payloads
 
 Package contents:
-
    * a general plugin for dumping several conditions at the same time/run
      from a given Global Tag, via cmsRun + configuration file.
    * several executables that can be launched with the general syntax of
@@ -32,3 +31,7 @@ Dumper list:
    * `runinfo_dump.cpp`: dump start-time and stop-time of CMS runs
    * `timeic_dump.cpp`: dump ECAL time inter-calibration constants
    * `timeoffset_dump.cpp`: dump ECAL time offset constants
+
+Todo:
+   * generalize the dumpers, e.g. by deriving them from a common class with common
+     options and specifying only the dumper function for each of the classes
