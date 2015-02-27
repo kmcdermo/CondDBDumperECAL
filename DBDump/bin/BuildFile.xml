@@ -17,6 +17,13 @@
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
 </bin>
+<bin   file="lava_db_dumper.cpp" name="lava_db_dumper">
+  <use   name="CondFormats/EcalObjects"/>
+  <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
+</bin>
+<bin   file="lava_db2txt.cpp" name="lava_db2txt">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
 <bin   file="lava_db_cond.cpp" name="lava_db_cond">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
@@ -39,6 +46,15 @@
   <use   name="CondFormats/EcalObjects"/>
 </bin>
 <bin   file="ped_dump.cpp" name="ped_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="ictime_dump.cpp" name="ictime_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="pedestals_dump.cpp" name="pedestals_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="tpglinearization_dump.cpp" name="tpglinearization_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
 <bin   file="adc2gev_dump.cpp" name="adc2gev_dump">
@@ -65,5 +81,18 @@
 <bin   file="chstatus_dump.cpp" name="chstatus_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="apdpnratio_dump.cpp" name="apdpnratio_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="apdpnratio_average_dump.cpp" name="apdpnratio_average_dump">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
+<bin   file="apdpnratio_Hgg.cpp" name="apdpnratio_Hgg">
+  <use   name="CondFormats/EcalObjects"/>
+  <use   name="Calibration/Tools"/>
+</bin>
 <bin   file="merge_dump.cpp" name="merge_dump">
+</bin>
+<bin   file="cluster_local_cont_dump.cpp" name="cluster_local_cont_dump">
+  <use   name="CondFormats/EcalObjects"/>
 </bin>
