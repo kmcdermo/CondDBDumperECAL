@@ -86,6 +86,7 @@
 </bin>
 <bin   file="apdpnratio_average_dump.cpp" name="apdpnratio_average_dump">
   <use   name="CondFormats/EcalObjects"/>
+  <use   name="Calibration/Tools"/>
 </bin>
 <bin   file="apdpnratio_Hgg.cpp" name="apdpnratio_Hgg">
   <use   name="CondFormats/EcalObjects"/>

@@ -15,9 +15,12 @@
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatiosRef.h"
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRefRcd.h"
 
+#include "Calibration/Tools/interface/DRings.h"
+
 #include <boost/program_options.hpp>
 #include <iterator>
 #include <iostream>
+#include <limits>
 
 using namespace std;
 
@@ -54,6 +57,7 @@ namespace cond {
                         void reset_time_average();
                 private:
                         std::vector<DetId> ecalDetIds_;
+                        DRings dr_;
         };
 
 }
@@ -74,6 +78,7 @@ cond::TriggerTag::TriggerTag():Utilities("cmscond_list_iov")
         //addOption<bool>("flat", "f", "flat iov, i.e. p1 = p2 = p3");
         addOption<bool>("txt", "x", "dump a txt file as per IC coeff. (NB: the time information of t1, t2, t3 is lost)");
         addOption<bool>("shift", "S", "in the filename, time = (time>>32)");
+        addOption<std::string>("ringFile", "r", "ring file");
 
         ecalDetIds_.resize(EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
         int idx = -1;
@@ -127,14 +132,18 @@ void cond::TriggerTag::dump_txt(FILE * fd)
                 p2 = _values[i] / _nvalues[i];
                 if (id.subdetId() == EcalBarrel) {
                         EBDetId eid(id);
-                        fprintf(fd, "%d %d %d %f  %u\n", eid.ieta(), eid.iphi(), 0,  
+                        fprintf(fd, "%d %d %d %f  %u %d\n", eid.ieta(), eid.iphi(), 0,  
                                 p2,
-                                id.rawId());
+                                id.rawId(),
+                                dr_.ieta(id)
+                                );
                 } else if (id.subdetId() == EcalEndcap) {
                         EEDetId eid(id);
-                        fprintf(fd, "%d %d %d %f  %u\n", eid.ix(), eid.iy(), eid.zside(),
+                        fprintf(fd, "%d %d %d %f  %u %d\n", eid.ix(), eid.iy(), eid.zside(),
                                 p2,
-                                id.rawId());
+                                id.rawId(),
+                                dr_.ieta(id)
+                                );
                 } else {
                         fprintf(stderr, "[dump] invalid DetId: %d\n", id.rawId());
                         exit(-1);
@@ -196,7 +205,7 @@ int cond::TriggerTag::execute()
                 cond::Time_t till = std::numeric_limits<cond::Time_t>::max();
                 if(hasOptionValue("endTime")) till = getOptionValue<cond::Time_t>("endTime");
 
-                time_t t_interval = 1;
+                time_t t_interval = std::numeric_limits<time_t>::max();
                 if (hasOptionValue("deltaTime")) t_interval = getOptionValue<time_t>("deltaTime");
                 bool shift = hasOptionValue("shift");
 
@@ -214,6 +223,10 @@ int cond::TriggerTag::execute()
                 bool verbose = hasOptionValue("verbose");
                 //bool flat = hasOptionValue("flat");
                 bool txt = hasOptionValue("txt");
+
+                std::string rf = "eerings.dat";
+                if (hasOptionValue("ringFile")) rf = getOptionValue<std::string>("ringFile");
+                dr_.setEERings(rf.c_str());
 
                 //cond::IOVProxy iov(session, getToken(session, tag));
                 cond::IOVProxy iov1(session, token1);
