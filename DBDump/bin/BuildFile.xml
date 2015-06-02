@@ -97,3 +97,6 @@
 <bin   file="cluster_local_cont_dump.cpp" name="cluster_local_cont_dump">
   <use   name="CondFormats/EcalObjects"/>
 </bin>
+<bin   file="conddb_dumper.cpp" name="conddb_dumper">
+  <use   name="CondFormats/EcalObjects"/>
+</bin>
