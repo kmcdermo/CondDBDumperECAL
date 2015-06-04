@@ -1,5 +1,4 @@
 #include "CondCore/Utilities/interface/Utilities.h"
-
 #include "CondCore/CondDB/interface/ConnectionPool.h"
 #include "CondCore/CondDB/interface/IOVProxy.h"
 
@@ -46,6 +45,8 @@ cond::CondDBDumper::~CondDBDumper()
 
 void cond::CondDBDumper::print(int cnt, const cond::Iov_t & iov)
 {
+        printf("%d  %llu %llu\n", cnt, iov.since, iov.till);
+        return;
         time_t s = iov.since>>32;
         time_t t = iov.till>>32;
         char ss[64], st[64];
