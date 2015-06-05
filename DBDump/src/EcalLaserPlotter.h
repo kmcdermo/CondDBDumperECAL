@@ -478,9 +478,9 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
                   qslope3_[qetaoffs_ + etabin(eta)].fill(slope3, iid);
 		//hm_.h<TProfile>("etaMedian",name, &m)->Fill(eta, p2);
 	}
-	char buf[256];
-	strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&t));
-	printf(" Last IOV: %ld (%s UTC) \n", t, buf);
+	//char buf[256];
+	//strftime(buf, sizeof(buf), "%F %R:%S", gmtime(&t));
+	//printf(" Last IOV: %ld (%s UTC) \n", t, buf);
 	//std::cout << " # p2==1 " << count1 << " # p2==0 " << count0 << " # p2<0 " << countneg << std::endl;
 }
 
@@ -541,11 +541,6 @@ void EcalLaserPlotter::fill_slope_histories(time_t t)
 	    }
 	}
     }
-  
-  
-  
-	printf("%d IOV(s) analysed.\n", niov_);
-  
 }
 
 
