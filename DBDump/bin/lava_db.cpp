@@ -45,6 +45,7 @@ cond::LaserValidation::LaserValidation():Utilities("cmscond_list_iov")
         addOption<std::string>("output","o","output file (default: ecallaserplotter.root)");
         addOption<int>("niov","n","number of IOV");
         addOption<int>("prescale","s","prescale factor");
+        addOption<bool>("timebased","T","the IOVs are time-based (default is run-based)");
 }
 
 cond::LaserValidation::~LaserValidation(){
@@ -65,6 +66,7 @@ int cond::LaserValidation::execute()
 
         std::string geom = hasOptionValue("geom") ? getOptionValue<std::string>("geom") : "detid_geom.dat";
         std::string output = hasOptionValue("output") ? getOptionValue<std::string>("output") : "ecallaserplotter.root";
+        //bool timebased = hasOptionValue("timebased");
 
         cond::Time_t since = std::numeric_limits<cond::Time_t>::min();
         if( hasOptionValue("beginTime" )) since = getOptionValue<cond::Time_t>("beginTime");
@@ -74,28 +76,13 @@ int cond::LaserValidation::execute()
         //bool verbose = hasOptionValue("verbose");
 
         session.transaction().start( true );
-        cond::persistency::IOVProxy iov = session.readIov(tag, true);
+        const cond::persistency::IOVProxy & iov = session.readIov(tag, true);
 
         //since = std::max((cond::Time_t)2, cond::timeTypeSpecs[iov.timetype()].beginValue); // avoid first IOV
         //till  = std::min(till,  cond::timeTypeSpecs[iov.timetype()].endValue);
 
+        std::cout << "tag " << tag << " , total of " << std::distance(iov.begin(), iov.end()) << "iov(s)\n";
         std::cout << "since: " << since << "   till: " << till << "\n";
-
-        //FIXME//iov.range(since, till);
-
-        //std::string payloadContainer = iov.payloadContainerName();
-        //FIXME//std::set<std::string> payloadClasses = iov.payloadObjectType();
-        std::cout<<"Tag "<<tag <<"\n";
-        //FIXME//if (verbose) std::cout << "\nStamp: " << iov.iov().comment()
-        //FIXME//        << "; time " <<  cond::time::to_boost(iov.iov().timestamp())
-        //FIXME//                << "; revision " << iov.iov().revision();
-        //FIXME//std::cout <<"\nTimeType " << cond::timeTypeSpecs[iov.timetype()].name
-        //FIXME//        <<"\nPayloadClasses:\n";
-        //FIXME//for (std::set<std::string>::const_iterator it = payloadClasses.begin(); it != payloadClasses.end(); ++it) {
-        //FIXME//        std::cout << " --> " << *it << "\n";
-        //FIXME//}
-        //FIXME//std::cout
-        //FIXME//        <<"since \t till \t payloadToken"<<std::endl;
 
         int niov = -1;
         if (hasOptionValue("niov")) niov = getOptionValue<int>("niov");
@@ -104,21 +91,17 @@ int cond::LaserValidation::execute()
         if (hasOptionValue("prescale")) prescale = getOptionValue<int>("prescale");
         assert(prescale > 0);
 
-        static const unsigned int nIOVS = std::distance(iov.begin(), iov.end());
-
-        std::cout << "nIOVS: " << nIOVS << "\n";
-
         typedef unsigned int LuminosityBlockNumber_t;
         typedef unsigned int RunNumber_t;
 
-        int cnt = 0;
+        int cnt = 0, cnt_iov = 0;
         EcalLaserPlotter lp(geom.c_str());
-        //for (cond::IOVProxy::const_iterator ita = iov.begin(); ita != iov.end() - 2; ++ita, ++cnt) {
-        for (auto i : iov) {
+        for (const auto & i : iov) {
+                ++cnt_iov;
+                if (i.since < since || i.till > i.till) continue;
+                if (cnt_iov % prescale != 0) continue;
                 ++cnt;
-                if (cnt == 0 || cnt < 2) continue;
-                if (cnt % prescale != 0) continue;
-                std::cout << cnt << " " << i.since << " -> " << i.till << "\n";
+                std::cout << cnt_iov << " " << i.since << " -> " << i.till << " " << cnt << "\n";
                 boost::shared_ptr<A> pa = session.fetchPayload<A>(i.payloadId);
                 lp.fill(*pa, (time_t)i.since>>32);
                 if (niov > 0 && cnt >= niov) break;
