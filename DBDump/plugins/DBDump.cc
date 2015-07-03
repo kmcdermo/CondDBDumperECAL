@@ -33,7 +33,6 @@ Implementation:
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ServiceRegistry/interface/Service.h"
-//#include "PhysicsTools/UtilAlgos/interface/TFileService.h"
 
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
@@ -67,12 +66,12 @@ Implementation:
 #include <Geometry/EcalMapping/interface/EcalElectronicsMapping.h>
 #include <Geometry/EcalMapping/interface/EcalMappingRcd.h>
 
-
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "HistoManager.h"
-#include "Quantile.h"
-#include "EcalLaserPlotter.h"
+#include "usercode/DBDump/interface/HistoManager.h"
+#include "usercode/DBDump/interface/Quantile.h"
+#include "usercode/DBDump/interface/EcalLaserPlotter.h"
+
 #include <iostream>
 #include <fstream>
 

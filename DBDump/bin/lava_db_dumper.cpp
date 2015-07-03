@@ -15,7 +15,10 @@
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatiosRef.h"
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRefRcd.h"
 
-#include "../src/EcalLaserDumper.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
+
+#include "../interface/EcalLaserDumper.h"
 
 #include <boost/program_options.hpp>
 #include <iterator>

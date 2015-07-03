@@ -1,5 +1,4 @@
-#ifndef __ECAL_LASER_PLOTTER
-#define __ECAL_LASER_PLOTTER
+#include "usercode/DBDump/interface/EcalLaserGreenAnalysis.h"
 
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
@@ -7,81 +6,14 @@
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
 
-#include "HistoManager.h"
-#include "Quantile.h"
+#include "usercode/DBDump/interface/HistoManager.h"
+#include "usercode/DBDump/interface/Quantile.h"
 
 #include "TProfile.h"
 #include "TProfile2D.h"
 #include "TGraphAsymmErrors.h"
 
-#include <vector>
-#include <set>
-
-#define NSUBDET 3
-#define NMAXVAL 10
-
-class EcalLaserPlotter {
-        public:
-                EcalLaserPlotter(const char * geom_filename = "detid_geom.dat");
-                ~EcalLaserPlotter() { printSummary(); };
-
-                void fill(const EcalLaserAPDPNRatios &, time_t);
-                void printSummary();
-                void save(const char * filename = "ecallaserplotter.root", const char * opt = "RECREATE");
-                void setEcalChannelStatus(const EcalChannelStatus & chStatus, int onceForAll = 0);
-                void setEcalGeometry(const char * geom_filename = "detid_geom.dat");
-
-        private:
-                time_t il_;
-                char weekly_[128];
-
-                void reset_quantile();
-                int etabin(float eta);
-                float geom_eta(DetId id);
-                void compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t);
-                void fill_histories(time_t t);
-                void max_min(DetId id, float val);
-                void max_min_plots();
-                void max_min_values();
-
-                //number of bins for plots of corrections in an eta ring
-                const static int netabins_ = 20;
-
-                // all, EE-, EB-, EB+, EE+, 92 LMR, netabins eta ring
-                const static int nq_ = 97 + netabins_;
-                const static int qetaoffs_ = 97;
-                Quantile<int> q_[nq_];
-                char qname_[nq_][32];
-
-                HistoManager hm_;
-
-                // number of IOVs, first and last
-                int niov_;
-                time_t iov_first_;
-                time_t iov_last_;
-
-                std::vector<DetId> ecalDetIds_;
-                std::vector<float> max_val_;
-                std::vector<float> min_val_;
-                std::vector<float> geom_eta_;
-                std::vector<uint16_t> ch_status_;
-
-                std::set<int> inf_; // +/- DetId according to inf sign
-                std::set<int> nan_; // DetId
-
-                std::set<float, std::greater<float> > min_values_[75848];
-                std::set<float> max_values_[75848];
-
-                char ecalPart[3];
-                char eename[3];
-
-                char str[128];
-
-                int set_geom_;
-                int set_ch_status_;
-};
-
-EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
+EcalLaserGreenAnalysis::EcalLaserGreenAnalysis(const char * geom_filename) :
         il_(0), niov_(0), iov_first_(-1), iov_last_(0), set_geom_(0), set_ch_status_(0)
 {
         sprintf(ecalPart, "E*");
@@ -138,19 +70,19 @@ EcalLaserPlotter::EcalLaserPlotter(const char * geom_filename) :
 	assert(i == sizeof(qname_)/sizeof(qname_[0]));
 }
 
-void EcalLaserPlotter::reset_quantile()
+void EcalLaserGreenAnalysis::reset_quantile()
 {
         for (int i = 0; i < nq_; ) q_[i++].reset();
 }
 
-void EcalLaserPlotter::save(const char * filename, const char * opt)
+void EcalLaserGreenAnalysis::save(const char * filename, const char * opt)
 {
         max_min_plots();
         max_min_values();
         hm_.save(filename, opt);
 }
 
-int EcalLaserPlotter::etabin(float eta)
+int EcalLaserGreenAnalysis::etabin(float eta)
 {
         const float etamin  =  -2.964;
         const float etamax  =  2.964;
@@ -159,7 +91,7 @@ int EcalLaserPlotter::etabin(float eta)
         return int((eta - etamin) / (etamax - etamin) * netabins_);
 }
 
-float EcalLaserPlotter::geom_eta(DetId id)
+float EcalLaserGreenAnalysis::geom_eta(DetId id)
 {
         if (id.subdetId() == EcalBarrel) {
                 return geom_eta_[EBDetId(id).hashedIndex()];
@@ -170,7 +102,7 @@ float EcalLaserPlotter::geom_eta(DetId id)
         }
 }
 
-void EcalLaserPlotter::max_min(DetId id, float val)
+void EcalLaserGreenAnalysis::max_min(DetId id, float val)
 {
         int idx = -1;
         if (id.subdetId() == EcalBarrel) {
@@ -184,7 +116,7 @@ void EcalLaserPlotter::max_min(DetId id, float val)
         if (min_val_[idx] > val)  min_val_[idx] = val;
 }
 
-void EcalLaserPlotter::max_min_plots()
+void EcalLaserGreenAnalysis::max_min_plots()
 {
         int ix = -1, iy = -1, iz = -1;
         int isEB = 0;
@@ -212,7 +144,7 @@ void EcalLaserPlotter::max_min_plots()
         }
 }
 
-void EcalLaserPlotter::max_min_values()
+void EcalLaserGreenAnalysis::max_min_values()
 {
         FILE * fout = fopen("test_max_min_values.dat", "w");
         for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
@@ -231,7 +163,7 @@ void EcalLaserPlotter::max_min_values()
         fclose(fout);
 }
 
-void EcalLaserPlotter::setEcalGeometry(const char * geom_filename)
+void EcalLaserGreenAnalysis::setEcalGeometry(const char * geom_filename)
 {
         if (set_geom_) return;
         FILE * fg = fopen(geom_filename, "r");
@@ -256,7 +188,7 @@ void EcalLaserPlotter::setEcalGeometry(const char * geom_filename)
         set_geom_ = 1;
 }
 
-void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, int onceForAll)
+void EcalLaserGreenAnalysis::setEcalChannelStatus(const EcalChannelStatus & chStatus, int onceForAll)
 {
         if (onceForAll && set_ch_status_) return;
         if (!set_ch_status_) ch_status_.resize(ecalDetIds_.size());
@@ -283,7 +215,7 @@ void EcalLaserPlotter::setEcalChannelStatus(const EcalChannelStatus & chStatus, 
         set_ch_status_ = 1;
 }
 
-void EcalLaserPlotter::printSummary()
+void EcalLaserGreenAnalysis::printSummary()
 {
         printf("%d IOV(s) analysed.\n", niov_);
         char buf[256];
@@ -305,7 +237,7 @@ void EcalLaserPlotter::printSummary()
         printf("\n");
 }
 
-void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t)
+void EcalLaserGreenAnalysis::compute_averages(const EcalLaserAPDPNRatios & apdpn, time_t t)
 {
         static TProfile * p = 0;
         char name[64];
@@ -361,7 +293,7 @@ void EcalLaserPlotter::compute_averages(const EcalLaserAPDPNRatios & apdpn, time
         }
 }
 
-void EcalLaserPlotter::fill_histories(time_t t)
+void EcalLaserGreenAnalysis::fill_histories(time_t t)
 {
         float fracs[] = { 0.5 * (1 - 0.997), 0.5 * (1 - 0.954), 0.5 * (1 - 0.682), 0 };
         const char * nfrac[] = { "3S", "2S", "1S", "E" };
@@ -379,7 +311,7 @@ void EcalLaserPlotter::fill_histories(time_t t)
         ++niov_;
 }
 
-void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
+void EcalLaserGreenAnalysis::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
 {
         reset_quantile();
         iov_last_ = t;
@@ -517,5 +449,3 @@ void EcalLaserPlotter::fill(const EcalLaserAPDPNRatios & apdpn, time_t t)
         }
         fill_histories(t);
 }
-
-#endif

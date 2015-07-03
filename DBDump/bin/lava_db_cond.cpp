@@ -24,7 +24,7 @@
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatiosRef.h"
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRefRcd.h"
 
-#include "../src/EcalLaserPlotter.h"
+#include "../interface/EcalLaserPlotter.h"
 
 #include <err.h>
 #include <signal.h>

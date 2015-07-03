@@ -1,4 +1,6 @@
 #include "CondCore/Utilities/interface/Utilities.h"
+#include "CondCore/CondDB/interface/ConnectionPool.h"
+#include "CondCore/CondDB/interface/IOVProxy.h"
 
 #include "CondCore/DBCommon/interface/DbConnection.h"
 #include "CondCore/DBCommon/interface/DbScopedTransaction.h"
@@ -15,7 +17,7 @@
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatiosRef.h"
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRefRcd.h"
 
-#include "../src/EcalLaserDumper.h"
+#include "../interface/EcalLaserDumper.h"
 
 #include <boost/program_options.hpp>
 #include <iterator>
@@ -33,22 +35,20 @@ namespace cond {
                         typedef EcalLaserAPDPNRatios::EcalLaserAPDPNpair AP;
                         typedef EcalLaserAPDPNRatios::EcalLaserTimeStamp AT;
 
-                        std::string getToken(cond::DbSession & s, std::string & tag)
-                        {
-                                s = openDbSession("connect", true);
-                                cond::MetaData metadata_svc(s);
-                                cond::DbScopedTransaction transaction(s);
-                                transaction.start(true);
-                                std::string token = metadata_svc.getToken(tag);
-                                transaction.commit();
-                                std::cout << "Source iov token: " << token << "\n";
-                                return token;
-                        }
-
                         LaserValidation();
                         ~LaserValidation();
+
+                        typedef struct Coord {
+                                int ix_;
+                                int iy_;
+                                int iz_;
+                        } Coord;
+
+                        void coord(DetId id, Coord * c);
                         int execute();
                         void dump_txt(FILE * fd, const A & obja, time_t tb, time_t te);
+                        void dump_etaphi(FILE * fd, const A & obja, time_t tb, time_t te);
+
                 private:
                         float verify(const A & rcd1);
                         std::vector<DetId> ecalDetIds_;
@@ -93,6 +93,45 @@ cond::LaserValidation::~LaserValidation(){
 }
 
 
+void cond::LaserValidation::coord(DetId id, Coord * c)
+{
+        if (id.subdetId() == EcalBarrel) {
+                EBDetId eid(id);
+                c->ix_ = eid.ieta();
+                c->iy_ = eid.iphi();
+                c->iz_ = 0;
+        } else if (id.subdetId() == EcalEndcap) {
+                EEDetId eid(id);
+                c->ix_ = eid.ix();
+                c->iy_ = eid.iy();
+                c->iz_ = eid.zside();
+        } else {
+                fprintf(stderr, "[coord] ERROR: invalid DetId %d", id.rawId());
+                assert(0);
+        }
+}
+
+
+
+void cond::LaserValidation::dump_etaphi(FILE * fd, const A & obja, time_t tb, time_t te)
+{
+        AT ta;
+        AMapCit ita, itb;
+        fprintf(fd, "# T %ld %ld", tb, te);
+        for (size_t i = 0; i < 92; ++i) {
+                ta = obja.getTimeMap()[i];
+                fprintf(fd, " %d", ta.t2.unixTime());
+        }
+        fprintf(fd, "\n");
+        for (size_t i = 0; i < ecalDetIds_.size(); ++i) {
+                Coord c;
+                coord(ecalDetIds_[i], &c);
+                ita = obja.getLaserMap().find(ecalDetIds_[i]);
+                fprintf(fd, "P %d %f %f %f  %d %d %d\n", ecalDetIds_[i].rawId(), ita->p1, ita->p2, ita->p3, c.ix_, c.iy_, c.iz_);
+        }
+}
+
+
 void cond::LaserValidation::dump_txt(FILE * fd, const A & obja, time_t tb, time_t te)
 {
         AT ta;
@@ -112,97 +151,80 @@ void cond::LaserValidation::dump_txt(FILE * fd, const A & obja, time_t tb, time_
 
 int cond::LaserValidation::execute()
 {
-        initializePluginManager();
-
-        bool listAll = hasOptionValue("all");
-        cond::DbSession session  = openDbSession("connect", true);
-        cond::DbScopedTransaction transaction(session);
-        transaction.start(true);
-
-        if(listAll){
-                cond::MetaData metadata_svc(session);
-                std::vector<std::string> alltags;
-                cond::DbScopedTransaction transaction(session);
-                transaction.start(true);
-                metadata_svc.listAllTags(alltags);
-                transaction.commit();
-                std::copy (alltags.begin(),
-                           alltags.end(),
-                           std::ostream_iterator<std::string>(std::cout,"\n")
-                          );
-        } else {
-                std::string tag1 = getOptionValue<std::string>("tag");
-
-                std::string geom = hasOptionValue("geom") ? getOptionValue<std::string>("geom") : "detid_geom.dat";
-                std::string odir = hasOptionValue("output") ? getOptionValue<std::string>("output") : "ecal_laser_dumper";
-
-                cond::MetaData metadata_svc(session);
-                cond::DbScopedTransaction transaction(session);
-                transaction.start(true);
-                transaction.commit();
-                std::string token1;
-                token1 = metadata_svc.getToken(tag1);
-
-                cond::Time_t since = std::numeric_limits<cond::Time_t>::min();
-                if( hasOptionValue("beginTime" )) since = getOptionValue<cond::Time_t>("beginTime");
-                cond::Time_t till = std::numeric_limits<cond::Time_t>::max();
-                if( hasOptionValue("endTime" )) till = getOptionValue<cond::Time_t>("endTime");
-
-                FILE * fdump = NULL;
-                //if (hasOptionValue("dump")) {
-                        fdump = fopen(getOptionValue<std::string>("dump").c_str(), "w");
-                        assert(fdump);
-                //}
-
-                bool verbose = hasOptionValue("verbose");
-
-                cond::IOVProxy iov1(session, token1);
-
-                std::cout << "since: " << since << "   till: " << till << "\n";
-
-                iov1.range(since, till);
-
-                const std::set<std::string> payloadClasses = iov1.payloadClasses();
-                std::cout<<"Tag "<<tag1;
-                if (verbose) std::cout << "\nStamp: " << iov1.iov().comment()
-                        << "; time " <<  cond::time::to_boost(iov1.iov().timestamp())
-                                << "; revision " << iov1.iov().revision();
-                std::cout <<"\nTimeType " << cond::timeTypeSpecs[iov1.timetype()].name
-                        <<"\nPayloadClasses:\n";
-                for (std::set<std::string>::const_iterator it = payloadClasses.begin(); it != payloadClasses.end(); ++it) {
-                        std::cout << " --> " << *it << "\n";
-                }
-                std::cout
-                        <<"since \t till \t payloadToken"<<std::endl;
-
-                int niov = -1;
-                if (hasOptionValue("niov")) niov = getOptionValue<int>("niov");
-
-                int prescale = 1;
-                if (hasOptionValue("prescale")) prescale = getOptionValue<int>("prescale");
-                assert(prescale > 0);
-
-                static const unsigned int nIOVS = std::distance(iov1.begin(), iov1.end());
-
-                std::cout << "nIOVS: " << nIOVS << "\n";
-
-                typedef unsigned int LuminosityBlockNumber_t;
-                typedef unsigned int RunNumber_t;
-
-                int cnt = 0;
-                //for (cond::IOVProxy::const_iterator ita = iov1.begin(); ita != iov1.end() - 2; ++ita, ++cnt) {
-                for (cond::IOVProxy::const_iterator ita = iov1.begin(); ita != iov1.end(); ++ita, ++cnt) {
-                        //if (cnt == 0 || cnt < 2) continue;
-                        if (cnt % prescale != 0) continue;
-                        if (ita->since() < since || ita->till() > till) continue;
-                        std::cout << cnt << " " << ita->since() << " -> " << ita->till() << " " << ita->token() << "\n";
-
-                        boost::shared_ptr<A> pa = session.getTypedObject<A>(ita->token());
-                        if (niov > 0 && cnt >= niov) break;
-                        if (fdump) dump_txt(fdump, *pa, (time_t)ita->since()>>32, (time_t)ita->till()>>32);
-                }
-                transaction.commit();
+        std::string connect = getOptionValue<std::string>("connect" );
+        cond::persistency::ConnectionPool connPool;
+        if( hasOptionValue("authPath") ){
+                connPool.setAuthenticationPath( getOptionValue<std::string>( "authPath") ); 
         }
+        connPool.configure();
+        cond::persistency::Session session = connPool.createSession( connect );
+
+        std::string tag = getOptionValue<std::string>("tag");
+
+        std::string geom = hasOptionValue("geom") ? getOptionValue<std::string>("geom") : "detid_geom.dat";
+        std::string odir = hasOptionValue("output") ? getOptionValue<std::string>("output") : "ecal_laser_dumper";
+
+        cond::Time_t since = std::numeric_limits<cond::Time_t>::min();
+        if( hasOptionValue("beginTime" )) since = getOptionValue<cond::Time_t>("beginTime");
+        cond::Time_t till = std::numeric_limits<cond::Time_t>::max();
+        if( hasOptionValue("endTime" )) till = getOptionValue<cond::Time_t>("endTime");
+
+        FILE * fdump = NULL;
+        //if (hasOptionValue("dump")) {
+        fdump = fopen(getOptionValue<std::string>("dump").c_str(), "w");
+        assert(fdump);
+        //}
+
+        //bool verbose = hasOptionValue("verbose");
+
+        session.transaction().start( true );
+        cond::persistency::IOVProxy iov = session.readIov(tag, true);
+
+        std::cout << "since: " << since << "   till: " << till << "\n";
+
+        //FIXME//iov1.range(since, till);
+
+        //FIXME//const std::set<std::string> payloadClasses = iov1.payloadClasses();
+        //FIXME//std::cout<<"Tag "<<tag1;
+        //FIXME//if (verbose) std::cout << "\nStamp: " << iov1.iov().comment()
+        //FIXME//        << "; time " <<  cond::time::to_boost(iov1.iov().timestamp())
+        //FIXME//                << "; revision " << iov1.iov().revision();
+        //FIXME//std::cout <<"\nTimeType " << cond::timeTypeSpecs[iov1.timetype()].name
+        //FIXME//        <<"\nPayloadClasses:\n";
+        //FIXME//for (std::set<std::string>::const_iterator it = payloadClasses.begin(); it != payloadClasses.end(); ++it) {
+        //FIXME//        std::cout << " --> " << *it << "\n";
+        //FIXME//}
+        //FIXME//std::cout
+        //FIXME//        <<"since \t till \t payloadToken"<<std::endl;
+
+        int niov = -1;
+        if (hasOptionValue("niov")) niov = getOptionValue<int>("niov");
+
+        int prescale = 1;
+        if (hasOptionValue("prescale")) prescale = getOptionValue<int>("prescale");
+        assert(prescale > 0);
+
+        static const unsigned int nIOVS = std::distance(iov.begin(), iov.end());
+
+        std::cout << "nIOVS: " << nIOVS << "\n";
+
+        typedef unsigned int LuminosityBlockNumber_t;
+        typedef unsigned int RunNumber_t;
+
+        int cnt = -1;
+        for (auto i : iov) {
+                //if (cnt == 0 || cnt < 2) continue;
+                ++cnt;
+                if (cnt % prescale != 0) continue;
+                if (i.since < since || i.till > till) continue;
+                std::cout << cnt << " " << i.since << " -> " << i.till << "\n";
+
+                boost::shared_ptr<A> pa = session.fetchPayload<A>(i.payloadId);
+                if (niov > 0 && cnt >= niov) break;
+                //if (fdump) dump_txt(fdump, *pa, (time_t)i.since>>32, (time_t)i.till>>32);
+                if (fdump) dump_etaphi(fdump, *pa, (time_t)i.since>>32, (time_t)i.till>>32);
+        }
+        session.transaction().commit();
         return 0;
 }
 

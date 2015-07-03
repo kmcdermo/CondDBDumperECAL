@@ -1,0 +1,9 @@
+<use   name="CalibCalorimetry/EcalLaserCorrection"/>
+<use   name="CondFormats/DataRecord"/>
+<use   name="CondFormats/EcalObjects"/>
+<use   name="FWCore/Framework"/>
+<use   name="FWCore/ParameterSet"/>
+<use   name="FWCore/PluginManager"/>
+<use   name="Geometry/CaloGeometry"/>
+<use   name="usercode/DBDump"/>
+<flags EDM_PLUGIN="1"/>

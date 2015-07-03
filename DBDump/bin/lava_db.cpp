@@ -8,7 +8,7 @@
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatiosRef.h"
 #include "CondFormats/DataRecord/interface/EcalLaserAPDPNRatiosRefRcd.h"
 
-#include "../src/EcalLaserPlotter.h"
+#include "usercode/DBDump/interface/EcalLaserPlotter.h"
 
 #include <boost/program_options.hpp>
 #include <iterator>

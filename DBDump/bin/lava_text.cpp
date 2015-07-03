@@ -2,8 +2,10 @@
 #include "DataFormats/EcalDetId/interface/EBDetId.h"
 #include "DataFormats/EcalDetId/interface/EEDetId.h"
 #include "DataFormats/Provenance/interface/Timestamp.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
+#include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
 
-#include "../src/EcalLaserPlotter.h"
+#include "../interface/EcalLaserPlotter.h"
 
 #include <errno.h>
 #include <getopt.h>
