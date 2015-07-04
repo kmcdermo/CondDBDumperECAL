@@ -21,6 +21,17 @@ int usage(char * s)
         exit(1);
 }
 
+
+void list_supported(std::vector<std::string> & supported)
+{
+        fprintf(stderr, "Currently supported objects:\n");
+        std::sort(supported.begin(), supported.end());
+        for (size_t i = 0; i < supported.size(); ++i) {
+                fprintf(stderr, "  %s\n", supported[i].c_str());
+        }
+}
+
+
 int main(int argc, char** argv)
 {
         if (argc < 2) {
@@ -37,118 +48,115 @@ int main(int argc, char** argv)
                         help = true;
                 }
         }
-        if (help) {
-                cond::CondDBDumper<bool> d("Help");
-                d.run(argc, argv);
-                return 0;
-        }
-        if (obj == "none") usage(argv[0]);
+        if (obj == "none" && !help) usage(argv[0]);
 
         supported.push_back("EcalIntercalibConstants");
-        if (obj == "EcalIntercalibConstants") {
+        if (!help && obj == "EcalIntercalibConstants") {
                 cond::CondDBDumper<EcalIntercalibConstants> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalADCToGeVConstant");
-        if (obj == "EcalADCToGeVConstant") {
+        if (!help && obj == "EcalADCToGeVConstant") {
                 cond::CondDBDumper<EcalADCToGeVConstant> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalLaserAlphas");
-        if (obj == "EcalLaserAlphas") {
+        if (!help && obj == "EcalLaserAlphas") {
                 cond::CondDBDumper<EcalLaserAlphas> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalChannelStatus");
-        if (obj == "EcalChannelStatus") {
+        if (!help && obj == "EcalChannelStatus") {
                 cond::CondDBDumper<EcalChannelStatus> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalPedestals");
-        if (obj == "EcalPedestals") {
+        if (!help && obj == "EcalPedestals") {
                 cond::CondDBDumper<EcalPedestals> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalTimeCalibConstants");
-        if (obj == "EcalTimeCalibConstants") {
+        if (!help && obj == "EcalTimeCalibConstants") {
                 cond::CondDBDumper<EcalTimeCalibConstants> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalTimeOffsetConstant");
-        if (obj == "EcalTimeOffsetConstant") {
+        if (!help && obj == "EcalTimeOffsetConstant") {
                 cond::CondDBDumper<EcalTimeOffsetConstant> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalTPGLinearizationConst");
-        if (obj == "EcalTPGLinearizationConst") {
+        if (!help && obj == "EcalTPGLinearizationConst") {
                 cond::CondDBDumper<EcalTPGLinearizationConst> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("EcalClusterLocalContCorrParameters");
-        if (obj == "EcalClusterLocalContCorrParameters") {
+        if (!help && obj == "EcalClusterLocalContCorrParameters") {
                 cond::CondDBDumper<EcalClusterLocalContCorrParameters> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("ESEEIntercalibConstants");
-        if (obj == "ESEEIntercalibConstants") {
+        if (!help && obj == "ESEEIntercalibConstants") {
                 cond::CondDBDumper<ESEEIntercalibConstants> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("ESGain");
-        if (obj == "ESGain") {
+        if (!help && obj == "ESGain") {
                 cond::CondDBDumper<ESGain> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("ESIntercalibConstants");
-        if (obj == "ESIntercalibConstants") {
+        if (!help && obj == "ESIntercalibConstants") {
                 cond::CondDBDumper<ESIntercalibConstants> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("BeamSpotObjects");
-        if (obj == "BeamSpotObjects") {
+        if (!help && obj == "BeamSpotObjects") {
                 cond::CondDBDumper<BeamSpotObjects> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
         supported.push_back("RunInfo");
-        if (obj == "RunInfo") {
+        if (!help && obj == "RunInfo") {
                 cond::CondDBDumper<RunInfo> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
 
-        fprintf(stderr, "Dumper for object `%s' not implemented.\n"
-                "Please check the spelling and, if correct, ask the experts for its implementation.\n"
-                "Currently supported objects:\n"
-                , obj.c_str());
-        std::sort(supported.begin(), supported.end());
-        for (size_t i = 0; i < supported.size(); ++i) {
-                fprintf(stderr, " %s\n", supported[i].c_str());
+        if (help) {
+                cond::CondDBDumper<bool> d("Help");
+                d.run(argc, argv);
+                list_supported(supported);
+                return 0;
         }
+
+        fprintf(stderr, "Dumper for object `%s' not implemented.\n"
+                "Please check the spelling and, if correct, ask the experts for its implementation.\n", obj.c_str());
+        list_supported(supported);
         return 2;
 }
