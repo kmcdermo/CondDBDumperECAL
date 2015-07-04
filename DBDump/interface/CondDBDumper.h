@@ -10,20 +10,22 @@
 #include <iterator>
 #include <iostream>
 
-#include "DataFormats/EcalDetId/interface/EBDetId.h"
-#include "DataFormats/EcalDetId/interface/EEDetId.h"
-#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
-#include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
+#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
 #include "CondFormats/EcalObjects/interface/EcalPedestals.h"
+#include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalTimeOffsetConstant.h"
 #include "CondFormats/ESObjects/interface/ESEEIntercalibConstants.h"
 #include "CondFormats/ESObjects/interface/ESGain.h"
 #include "CondFormats/ESObjects/interface/ESIntercalibConstants.h"
-#include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
-#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/RunInfo/interface/RunInfo.h"
+
+#include "DataFormats/EcalDetId/interface/EBDetId.h"
+#include "DataFormats/EcalDetId/interface/EEDetId.h"
 
 namespace cond {
 
@@ -242,6 +244,11 @@ namespace cond {
                         void dump(FILE * fd, EcalADCToGeVConstant & a)
                         {
                                 fprintf(fd, "EB= %f  EE= %f\n", a.getEBValue(), a.getEEValue());
+                        }
+
+                        void dump(FILE * fd, EcalTimeOffsetConstant & o)
+                        {
+                                fprintf(fd, "EB= %f  EE= %f\n", o.getEBValue(), o.getEEValue());
                         }
 
                         void dump(FILE * fd, EcalClusterLocalContCorrParameters & a)

@@ -85,6 +85,13 @@ int main(int argc, char** argv)
                 return 0;
         }
 
+        supported.push_back("EcalTimeOffsetConstant");
+        if (obj == "EcalTimeOffsetConstant") {
+                cond::CondDBDumper<EcalTimeOffsetConstant> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
         supported.push_back("EcalClusterLocalContCorrParameters");
         if (obj == "EcalClusterLocalContCorrParameters") {
                 cond::CondDBDumper<EcalClusterLocalContCorrParameters> d(obj);
