@@ -19,6 +19,7 @@
 #include "CondFormats/EcalObjects/interface/EcalPedestals.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeOffsetConstant.h"
+#include "CondFormats/EcalObjects/interface/EcalTPGLinearizationConst.h"
 #include "CondFormats/ESObjects/interface/ESEEIntercalibConstants.h"
 #include "CondFormats/ESObjects/interface/ESGain.h"
 #include "CondFormats/ESObjects/interface/ESIntercalibConstants.h"
@@ -221,6 +222,23 @@ namespace cond {
                                         }
                                         coord(_ids[i]);
                                         fprintf(fd, "%d %d %d %d %d\n", _c.ix_, _c.iy_, _c.iz_, (*it).getStatusCode(), id.rawId());
+                                }
+                        }
+
+                        void dump(FILE * fd, EcalTPGLinearizationConst & ct)
+                        {
+                                for (size_t i = 0; i < _ids.size(); ++i) {
+                                        DetId id(_ids[i]);
+                                        EcalTPGLinearizationConst::const_iterator it = ct.find(id);
+                                        if (it == ct.end()) {
+                                                fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
+                                        }
+                                        coord(_ids[i]);
+                                        fprintf(fd, "%d %d %d %u %u %u %u %u %u  %u\n", _c.ix_, _c.iy_, _c.iz_,
+                                                it->mult_x12, it->shift_x12,
+                                                it->mult_x6,  it->shift_x6,
+                                                it->mult_x1,  it->shift_x1,
+                                                id.rawId());
                                 }
                         }
 

@@ -1,16 +1,17 @@
 #include "usercode/DBDump/interface/CondDBDumper.h"
 
+#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
-#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
-#include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
+#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
 #include "CondFormats/EcalObjects/interface/EcalPedestals.h"
+#include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalTPGLinearizationConst.h"
 #include "CondFormats/ESObjects/interface/ESEEIntercalibConstants.h"
 #include "CondFormats/ESObjects/interface/ESGain.h"
 #include "CondFormats/ESObjects/interface/ESIntercalibConstants.h"
-#include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
-#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/RunInfo/interface/RunInfo.h"
 
 
@@ -88,6 +89,13 @@ int main(int argc, char** argv)
         supported.push_back("EcalTimeOffsetConstant");
         if (obj == "EcalTimeOffsetConstant") {
                 cond::CondDBDumper<EcalTimeOffsetConstant> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalTPGLinearizationConst");
+        if (obj == "EcalTPGLinearizationConst") {
+                cond::CondDBDumper<EcalTPGLinearizationConst> d(obj);
                 d.run(argc, argv);
                 return 0;
         }
