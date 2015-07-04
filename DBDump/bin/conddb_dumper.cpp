@@ -1,91 +1,139 @@
-#include "CondCore/Utilities/interface/Utilities.h"
-#include "CondCore/CondDB/interface/ConnectionPool.h"
-#include "CondCore/CondDB/interface/IOVProxy.h"
+#include "usercode/DBDump/interface/CondDBDumper.h"
 
-#include <boost/program_options.hpp>
-#include <iterator>
-#include <iostream>
+#include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
+#include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
+#include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
+#include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
+#include "CondFormats/EcalObjects/interface/EcalPedestals.h"
+#include "CondFormats/ESObjects/interface/ESEEIntercalibConstants.h"
+#include "CondFormats/ESObjects/interface/ESGain.h"
+#include "CondFormats/ESObjects/interface/ESIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
+#include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
+#include "CondFormats/RunInfo/interface/RunInfo.h"
 
-using namespace std;
 
-namespace cond {
-        class CondDBDumper : public cond::Utilities {
-                public:
-                        CondDBDumper();
-                        ~CondDBDumper();
-                        int execute();
-
-                        virtual void dump(FILE * fd) {};
-
-                private:
-                        void print(int cnt, const cond::Iov_t & iov);
-        };
-
+int usage(char * s)
+{
+        fprintf(stderr, "Usage: %s -O <object> [conddb options]\nFull help available with the -h/--help options.\n", s);
+        exit(1);
 }
 
-cond::CondDBDumper::CondDBDumper():Utilities("conddb_dumper")
+int main(int argc, char** argv)
 {
-        addConnectOption();
-        addAuthenticationOptions();
-        addOption<bool>("verbose","v","verbose");
-        addOption<bool>("all","a","list all tags (default mode)");
-        addOption<cond::Time_t>("beginTime","b","begin time (first since) (optional)");
-        addOption<cond::Time_t>("endTime","e","end time (last till) (optional)");
-        addOption<std::string>("tag","t","list info of the specified tag");
-        addOption<std::string>("geom","g","geometry file (default: detid_geom.dat)");
-        addOption<std::string>("output","o","output file (default: ecallaserplotter.root)");
-        addOption<int>("niov","n","number of IOV");
-        addOption<int>("prescale","s","prescale factor");
-}
-
-cond::CondDBDumper::~CondDBDumper()
-{
-}
-
-
-void cond::CondDBDumper::print(int cnt, const cond::Iov_t & iov)
-{
-        printf("%d  %llu %llu\n", cnt, iov.since, iov.till);
-        return;
-        time_t s = iov.since>>32;
-        time_t t = iov.till>>32;
-        char ss[64], st[64];
-        ctime_r(&s, ss);
-        ctime_r(&s, st);
-        ss[strlen(ss) - 1] = '\0';
-        st[strlen(st) - 1] = '\0';
-        printf("%d  %s (%ld)  -->  %s (%ld)\n", cnt, ss, s, st, t);
-}
-
-
-int cond::CondDBDumper::execute()
-{
-        std::string connect = getOptionValue<std::string>("connect" );
-        cond::persistency::ConnectionPool connPool;
-        if( hasOptionValue("authPath") ){
-                connPool.setAuthenticationPath( getOptionValue<std::string>( "authPath") ); 
+        if (argc < 2) {
+                return usage(argv[0]);
         }
-        connPool.configure();
-        cond::persistency::Session session = connPool.createSession( connect );
 
-        std::string tag = getOptionValue<std::string>("tag");
-
-        printf("%s %s\n", connect.c_str(), tag.c_str());
-
-        session.transaction().start( true );
-        cond::persistency::IOVProxy iov = session.readIov(tag, true);
-        session.transaction().commit();
-
-        int cnt = 0;
-        for (auto i : iov) {
-                print(cnt++, i);
+        std::string obj = "none";
+        bool help = false;
+        std::vector<std::string> supported;
+        for (int i = 1; i < argc; ++i) {
+                if (strcmp(argv[i], "-O") == 0 || strcmp(argv[i], "--object") == 0) {
+                        obj = argv[i + 1];
+                } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
+                        help = true;
+                }
         }
-        return 0;
-}
+        if (help) {
+                cond::CondDBDumper<bool> d("Help");
+                d.run(argc, argv);
+                return 0;
+        }
+        if (obj == "none") usage(argv[0]);
 
+        supported.push_back("EcalIntercalibConstants");
+        if (obj == "EcalIntercalibConstants") {
+                cond::CondDBDumper<EcalIntercalibConstants> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
 
-int main( int argc, char** argv )
-{
-        cond::CondDBDumper d;
-        return d.run(argc,argv);
+        supported.push_back("EcalADCToGeVConstant");
+        if (obj == "EcalADCToGeVConstant") {
+                cond::CondDBDumper<EcalADCToGeVConstant> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalLaserAlphas");
+        if (obj == "EcalLaserAlphas") {
+                cond::CondDBDumper<EcalLaserAlphas> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalChannelStatus");
+        if (obj == "EcalChannelStatus") {
+                cond::CondDBDumper<EcalChannelStatus> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalPedestals");
+        if (obj == "EcalPedestals") {
+                cond::CondDBDumper<EcalPedestals> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalTimeCalibConstants");
+        if (obj == "EcalTimeCalibConstants") {
+                cond::CondDBDumper<EcalTimeCalibConstants> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalClusterLocalContCorrParameters");
+        if (obj == "EcalClusterLocalContCorrParameters") {
+                cond::CondDBDumper<EcalClusterLocalContCorrParameters> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("ESEEIntercalibConstants");
+        if (obj == "ESEEIntercalibConstants") {
+                cond::CondDBDumper<ESEEIntercalibConstants> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("ESGain");
+        if (obj == "ESGain") {
+                cond::CondDBDumper<ESGain> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("ESIntercalibConstants");
+        if (obj == "ESIntercalibConstants") {
+                cond::CondDBDumper<ESIntercalibConstants> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("BeamSpotObjects");
+        if (obj == "BeamSpotObjects") {
+                cond::CondDBDumper<BeamSpotObjects> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("RunInfo");
+        if (obj == "RunInfo") {
+                cond::CondDBDumper<RunInfo> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        fprintf(stderr, "Dumper for object `%s' not implemented.\n"
+                "Please check the spelling and, if correct, ask the experts for its implementation.\n"
+                "Currently supported objects:\n"
+                , obj.c_str());
+        std::sort(supported.begin(), supported.end());
+        for (size_t i = 0; i < supported.size(); ++i) {
+                fprintf(stderr, " %s\n", supported[i].c_str());
+        }
+        return 2;
 }
