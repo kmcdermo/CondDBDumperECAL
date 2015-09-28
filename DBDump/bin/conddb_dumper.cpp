@@ -5,6 +5,7 @@
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
+#include "CondFormats/EcalObjects/interface/EcalIntercalibConstantsMC.h"
 #include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
 #include "CondFormats/EcalObjects/interface/EcalPedestals.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeCalibConstants.h"
@@ -53,6 +54,13 @@ int main(int argc, char** argv)
         supported.push_back("EcalIntercalibConstants");
         if (!help && obj == "EcalIntercalibConstants") {
                 cond::CondDBDumper<EcalIntercalibConstants> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalIntercalibConstantsMC");
+        if (!help && obj == "EcalIntercalibConstantsMC") {
+                cond::CondDBDumper<EcalIntercalibConstantsMC> d(obj);
                 d.run(argc, argv);
                 return 0;
         }

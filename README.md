@@ -1,6 +1,6 @@
 ## Tools for dumping CMS database payloads
 
-Package contents:
+#### Package contents
    * a `conddb_dumper` executable that can be used to dump (mostly ECAL)
      conditions in txt files from a given object-specific tag, with several options
    * a general plugin for dumping several conditions at the same time/run
@@ -8,7 +8,7 @@ Package contents:
    * a general plugin for dumping ECAL events for closer inspection
    * some utilities developed for the monitoring of the ECAL laser monitoring corrections
 
-Dumper list:
+#### Dumper list
    * `conddb_dumper.cpp`: self-explicative via the `-h/--help` options. Currently supported objects: 
       * `BeamSpotObjects`
       * `ESEEIntercalibConstants`
@@ -18,6 +18,7 @@ Dumper list:
       * `EcalChannelStatus`
       * `EcalClusterLocalContCorrParameters`
       * `EcalIntercalibConstants`
+      * `EcalIntercalibConstantsMC`
       * `EcalLaserAlphas`
       * `EcalPedestals`
       * `EcalTPGLinearizationConst`
@@ -34,3 +35,17 @@ Dumper list:
    * `merge_dump.cpp`: merges different txt files of ECAL monitoring
                        corrections with overlapping IOV into one single
                        coherent txt file (N.B. does not need the CMSSW environment to work)
+#### Dumper setup
+```bash
+$> cmsrel CMSSW_7_4_0_pre5
+$> cd CMSSW_7_4_0_pre5/src
+$> git clone git@github.com:ferriff/usercode.git
+$> cd usercode/
+$> git checkout conddbv2 # ci sara` un modo piu` elegante
+$> git cms-merge-topic -u ferriff:ecal_calib_tools
+$> scram b
+$> conddb_dumper -O EcalIntercalibConstants -c frontier://FrontierProd/CMS_CONDITIONS -t EcalIntercalibConstants_2012ABCD_offline
+```
+
+#### Additional documentation
+   * https://twiki.cern.ch/twiki/bin/view/CMS/DBDump
