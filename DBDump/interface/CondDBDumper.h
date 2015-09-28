@@ -141,12 +141,14 @@ namespace cond {
 
                                 auto first_iov = iov.begin();
                                 auto last_iov  = iov.begin();
-                                for (int i = 0; i < iov.sequenceSize() - 1; ++i) ++last_iov;
+                                //for (int i = 0; i < iov.sequenceSize() - 1; ++i) ++last_iov;
+                                for (int i = 0; i < iov.loadedSize() - 1; ++i) ++last_iov;
 
                                 std::cout << (*first_iov).since << " " << (*last_iov).since << "\n";
                                 char filename[512];
                                 //sprintf(filename, "dump_%s__since_%08llu_jtill_since_%08llu.dat", obj_type.c_str(), (*first_iov).since, (*last_iov).since);
                                 sprintf(filename, "dump_%s__since_%08llu_jtill_since_%08llu.dat", _class_name.c_str(), (*first_iov).since, (*last_iov).since);
+                                if (hasOptionValue("output")) sprintf(filename, getOptionValue<std::string>("output").c_str());
 
                                 int cnt = 0, cnt_iov = -1;
                                 FILE * fout;
