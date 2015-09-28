@@ -1,22 +1,29 @@
 ## Tools for dumping CMS database payloads
 
 Package contents:
+   * a `conddb_dumper` executable that can be used to dump (mostly ECAL)
+     conditions in txt files from a given object-specific tag, with several options
    * a general plugin for dumping several conditions at the same time/run
      from a given Global Tag, via cmsRun + configuration file.
-   * several executables that can be launched with the general syntax of
-     `cmscond_list_iov` plus some specific options, in order to dump payloads
-     via a direct connection to a DB, given a tag. The options can be seen via
-     `<dumper> --help`
+   * a general plugin for dumping ECAL events for closer inspection
+   * some utilities developed for the monitoring of the ECAL laser monitoring corrections
 
 Dumper list:
-   * `adc2gev_dump.cpp`: dump ADC2GeV calibration constant
-   * `alpha_dump.cpp`: dump the record of the alpha parameter of the ECAL response corrections
-   * `bs_dump.cpp`: dump beam-spot parameters
-   * `chstatus_dump.cpp`: dump ECAL channel status
-   * `eseeic_dump.cpp`: dump ECAL ES-EE intercalibration parameters
-   * `esgain_dump.cpp`: dump the ES gain
-   * `esic_dump.cpp`: dump the ES inter-calibration constants
-   * `ic_dump.cpp`: dump the ECAL inter-calibration
+   * `conddb_dumper.cpp`: self-explicative via the `-h/--help` options. Currently supported objects: 
+      * `BeamSpotObjects`
+      * `ESEEIntercalibConstants`
+      * `ESGain`
+      * `ESIntercalibConstants`
+      * `EcalADCToGeVConstant`
+      * `EcalChannelStatus`
+      * `EcalClusterLocalContCorrParameters`
+      * `EcalIntercalibConstants`
+      * `EcalLaserAlphas`
+      * `EcalPedestals`
+      * `EcalTPGLinearizationConst`
+      * `EcalTimeCalibConstants`
+      * `EcalTimeOffsetConstant`
+      * `RunInfo`
    * `lava_db.cpp`: validate a tag of the ECAL monitoring corrections
    * `lava_db_compare.cpp`: compare two tags of ECAL monitoring corrections
    * `lava_db_cond.cpp`: for ECAL monitoring corrections, compare the content
@@ -27,11 +34,3 @@ Dumper list:
    * `merge_dump.cpp`: merges different txt files of ECAL monitoring
                        corrections with overlapping IOV into one single
                        coherent txt file (N.B. does not need the CMSSW environment to work)
-   * `ped_dump.cpp`: dump ECAL pedestals mean and rms for all of the three available gains (12, 6, 1)
-   * `runinfo_dump.cpp`: dump start-time and stop-time of CMS runs
-   * `timeic_dump.cpp`: dump ECAL time inter-calibration constants
-   * `timeoffset_dump.cpp`: dump ECAL time offset constants
-
-Todo:
-   * generalize the dumpers, e.g. by deriving them from a common class with common
-     options and specifying only the dumper function for each of the classes
