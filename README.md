@@ -35,16 +35,23 @@
    * `merge_dump.cpp`: merges different txt files of ECAL monitoring
                        corrections with overlapping IOV into one single
                        coherent txt file (N.B. does not need the CMSSW environment to work)
+
 #### Dumper setup
+Setup a working area for example in `CMSSW_7_4_0_pre5`. Any release `>=7XY`
+should work just fine, contact me in case not.
 ```bash
-$> cmsrel CMSSW_7_4_0_pre5
-$> cd CMSSW_7_4_0_pre5/src
-$> git clone git@github.com:ferriff/usercode.git
-$> cd usercode/
-$> git checkout conddbv2 # ci sara` un modo piu` elegante
-$> git cms-merge-topic -u ferriff:ecal_calib_tools
-$> scram b
-$> conddb_dumper -O EcalIntercalibConstants -c frontier://FrontierProd/CMS_CONDITIONS -t EcalIntercalibConstants_2012ABCD_offline
+cmsrel CMSSW_7_4_0_pre5
+cd CMSSW_7_4_0_pre5/src
+git clone git@github.com:ferriff/usercode.git
+cd usercode/
+git checkout conddbv2 # ci sara` un modo piu` elegante
+git cms-merge-topic -u ferriff:ecal_calib_tools
+scram b
+```
+
+Example of dump of one object:
+```bash
+conddb_dumper -O EcalIntercalibConstants -c frontier://FrontierProd/CMS_CONDITIONS -t EcalIntercalibConstants_2012ABCD_offline
 ```
 
 #### Additional documentation
