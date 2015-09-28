@@ -141,7 +141,6 @@ namespace cond {
 
                                 auto first_iov = iov.begin();
                                 auto last_iov  = iov.begin();
-                                //for (int i = 0; i < iov.sequenceSize() - 1; ++i) ++last_iov;
                                 for (int i = 0; i < iov.loadedSize() - 1; ++i) ++last_iov;
 
                                 std::cout << (*first_iov).since << " " << (*last_iov).since << "\n";
