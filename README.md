@@ -40,8 +40,8 @@
 Setup a working area for example in `CMSSW_7_4_0_pre5`. Any release `>=7XY`
 should work just fine, contact me in case not.
 ```bash
-cmsrel CMSSW_7_4_0_pre5
-cd CMSSW_7_4_0_pre5/src
+cmsrel CMSSW_7_4_6_patch2
+cd CMSSW_7_4_6_patch2/src
 cmsenv
 git cms-init
 git clone git@github.com:ferriff/usercode.git
