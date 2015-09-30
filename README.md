@@ -42,10 +42,11 @@ should work just fine, contact me in case not.
 ```bash
 cmsrel CMSSW_7_4_0_pre5
 cd CMSSW_7_4_0_pre5/src
+cmsenv
+git cms-init
 git clone git@github.com:ferriff/usercode.git
-cd usercode/
-git checkout conddbv2 # ci sara` un modo piu` elegante
 git cms-merge-topic -u ferriff:ecal_calib_tools
+cd usercode/
 scram b
 ```
 
