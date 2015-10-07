@@ -19,28 +19,30 @@ void usage(const char * prg)
 {
         printf("Usage: %s <options>\n", prg);
         printf("where option can be:\n");
-        printf("-b, --break,              break after time or iov limits have been\n");
-        printf("                          exceeded (useful for time ordered text files\n");
-        printf("                          [default: 1, i.e. break]\n");
-        printf("-g, --geom <filename>,    specify the geometry file name\n");
-        printf("                          [default: detid_geom.dat]\n");
-        printf("                          in the format \"detid eta phi r\"\n");
-        printf("-i, --input <filename>,   specify the input file name\n");
-        printf("                          [default: input.dat]\n");
-        printf("-n, --niov <niov>,        specify the number of IOV from <tmin> to be\n");
-        printf("                          used in the validation\n");
-        printf("                          [default: -1, all the IOV]\n");
-        printf("-o, --output <filename>,  specify the output file name\n");
-        printf("                          [default: ecallaserplotter.root]\n");
-        printf("-s, --status <filename>,  specify the EcalChannelStatus file name\n");
-        printf("                          [default: none]\n");
-        printf("                          in the format \"detid status\"\n");
-        printf("-t, --tmin <tmin>,        specify the time to start the validation from\n");
-        printf("                          in second since the Epoch (1970-01-01), UTC\n");
-        printf("                          [default: -1, i.e. no minimum]\n");
-        printf("-T, --tmax <tmax>,        specify the time to end the validation to\n");
-        printf("                          in second since the Epoch (1970-01-01), UTC\n");
-        printf("                          [default: -1, i.e. no maximum]\n");
+        printf("-b, --break,                break after time or iov limits have been\n");
+        printf("                            exceeded (useful for time ordered text files\n");
+        printf("                            [default: 1, i.e. break]\n");
+        printf("-g, --geom <filename>,      specify the geometry file name\n");
+        printf("                            [default: detid_geom.dat]\n");
+        printf("                            in the format \"detid eta phi r\"\n");
+        printf("-i, --input <filename>,     specify the input file name\n");
+        printf("                            [default: input.dat]\n");
+        printf("-n, --niov <niov>,          specify the number of IOV from <tmin> to be\n");
+        printf("                            used in the validation\n");
+        printf("                            [default: -1, all the IOV]\n");
+        printf("-o, --output <filename>,    specify the output file name\n");
+        printf("                            [default: ecallaserplotter.root]\n");
+        printf("-S, --status <filename>,    specify the EcalChannelStatus file name\n");
+        printf("                            [default: none]\n");
+        printf("                            in the format \"detid status\"\n");
+        printf("-t, --tmin <tmin>,          specify the time to start the validation from\n");
+        printf("                            in second since the Epoch (1970-01-01), UTC\n");
+        printf("                            [default: -1, i.e. no minimum]\n");
+        printf("-T, --tmax <tmax>,          specify the time to end the validation to\n");
+        printf("                            in second since the Epoch (1970-01-01), UTC\n");
+        printf("                            [default: -1, i.e. no maximum]\n");
+        printf("-s, --prescale <prescale>,  prescale value for IOV analysis\n");
+        printf("                            [default: 1]\n");
         exit(1);
 }
 
@@ -56,7 +58,7 @@ int main( int argc, char** argv )
         sprintf(geom, "detid_geom.dat");
         sprintf(status, " ");
 
-        int tmin = -1, tmax = -1, niov = -1, br = 1;
+        int tmin = -1, tmax = -1, niov = -1, br = 1, prescale = 1;
 
         while (1) {
 
@@ -67,15 +69,16 @@ int main( int argc, char** argv )
                         {"input",    required_argument, 0, 'i'},
                         {"output",   required_argument, 0, 'o'},
                         {"geom",     required_argument, 0, 'g'},
-                        {"status",   required_argument, 0, 's'},
+                        {"status",   required_argument, 0, 'S'},
                         {"tmin",     required_argument, 0, 't'},
                         {"tmax",     required_argument, 0, 'T'},
                         {"niov",     required_argument, 0, 'n'},
                         {"break",    required_argument, 0, 'b'},
+                        {"prescale", required_argument, 0, 's'},
                 };
 
                 int option_index = 0;
-                c = getopt_long(argc, argv, "vqi:o:g:s:t:T:n:b", long_options, &option_index);
+                c = getopt_long(argc, argv, "vqi:o:g:S:s:t:T:n:b", long_options, &option_index);
                 if (c == -1) break;
 
                 switch (c) {
@@ -104,7 +107,7 @@ int main( int argc, char** argv )
                                 sprintf(output, "%s", optarg);
                                 printf("output file: %s\n", output);
                                 break;
-                        case 's':
+                        case 'S':
                                 sprintf(status, "%s", optarg);
                                 printf("status file: %s\n", status);
                                 break;
@@ -115,6 +118,10 @@ int main( int argc, char** argv )
                         case 'T':
                                 tmax = atoi(optarg);
                                 printf("tmax: %d\n", tmax);
+                                break;
+                        case 's':
+                                prescale = atoi(optarg);
+                                printf("prescale: %d\n", tmax);
                                 break;
                         default:
                                 usage(argv[0]);
@@ -181,6 +188,7 @@ int main( int argc, char** argv )
                         if (tmin > 0 && t1 < tmin)      skip = 1;
                         if (tmax > 0 && t1 > tmax)      skip = 1;
                         if (niov > 0 && cnt_iov > niov) skip = 1;
+                        if (cnt_iov % prescale != 0)    skip = 1;
                         if (skip) {
                                 if (br) break;
                                 printf("skipping IOV %5d     begin: %s (%ld)    end: %s (%ld)\n", cnt_iov, bufb, t1, bufe, t3);
