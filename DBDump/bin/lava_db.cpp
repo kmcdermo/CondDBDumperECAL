@@ -98,7 +98,7 @@ int cond::LaserValidation::execute()
         EcalLaserPlotter lp(geom.c_str());
         for (const auto & i : iov) {
                 ++cnt_iov;
-                if (i.since < since || i.till > i.till) continue;
+                if (i.since < since || i.till > till) continue;
                 if (cnt_iov % prescale != 0) continue;
                 ++cnt;
                 std::cout << cnt_iov << " " << i.since << " -> " << i.till << " " << cnt << "\n";
