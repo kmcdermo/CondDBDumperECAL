@@ -65,7 +65,7 @@ cond::LaserValidation::LaserValidation():Utilities("cmscond_list_iov")
         addOption<std::string>("tag","t","list info of the specified tag");
         addOption<std::string>("geom","g","geometry file (default: detid_geom.dat)");
         addOption<std::string>("output","o","output file (default: ecal_laser_dumped_ids.dat)");
-        addOption<std::string>("id","i","DetId (raw Id) to be dumped, quoted and blank separated list of raw DetIds");
+        addOption<std::string>("id","i","DetId (raw Id) to be dumped, quoted and blank separated list of raw DetIds, or one of the following keywords: all, EB, EB-, EB+, EE, EE-, EE+");
         addOption<int>("niov","n","number of IOV");
         addOption<int>("prescale","s","prescale factor");
 }
@@ -168,15 +168,36 @@ int cond::LaserValidation::execute()
                         assert(0);
                 } else {
                         std::string ids = getOptionValue<std::string>("id");
-                        const char * beg = ids.c_str();
-                        const char * lim = beg + ids.size();
-                        char * end;
-                        int num = 1;
-                        printf("Going to dump data for the following DetId:");
-                        while (beg < lim && (num = strtol(beg, &end, 0)) != 0) {
-                                printf(" %d", num);
-                                id.push_back(num);
-                                beg = end;
+                        if (ids == "all" || ids.find("EB") != std::string::npos || ids.find("EE") != std::string::npos) {
+                                for (int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
+                                        EBDetId ebId = EBDetId::unhashIndex(hi);
+                                        int ieta = ebId.ieta();
+                                        if (ebId != EBDetId()) {
+                                                if (ieta > 0 && (ids == "all" || ids == "EB" || ids == "EB+")) id.push_back(ebId);
+                                                if (ieta < 0 && (ids == "all" || ids == "EB" || ids == "EB-")) id.push_back(ebId);
+                                        }
+                                }
+                                for ( int hi = 0; hi < EEDetId::kSizeForDenseIndexing; ++hi ) {
+                                        EEDetId eeId = EEDetId::unhashIndex(hi);
+                                        int zside = eeId.zside();
+                                        if (eeId != EEDetId()) {
+                                                if (zside > 0 && (ids == "all" || ids == "EE" || ids == "EE+")) id.push_back(eeId);
+                                                if (zside < 0 && (ids == "all" || ids == "EE" || ids == "EE-")) id.push_back(eeId);
+                                        }
+                                }
+                        } else {
+                                const char * beg = ids.c_str();
+                                const char * lim = beg + ids.size();
+                                char * end;
+                                int num = 1;
+                                while (beg < lim && (num = strtol(beg, &end, 0)) != 0) {
+                                        id.push_back(num);
+                                        beg = end;
+                                }
+                        }
+                        printf("Going to dump data for the following DetId('s):");
+                        for (size_t i = 0; i < id.size(); ++i) {
+                                printf(" %d", id[i]);
                         }
                         printf("\n");
                 }
