@@ -17,6 +17,7 @@
       * `EcalADCToGeVConstant`
       * `EcalChannelStatus`
       * `EcalClusterLocalContCorrParameters`
+      * `EcalGainRatios`
       * `EcalIntercalibConstants`
       * `EcalIntercalibConstantsMC`
       * `EcalLaserAlphas`
@@ -51,7 +52,7 @@ cd usercode/
 scram b
 ```
 
-Example of dump of one object:
+Example: how to dump an object from the default Frontier DataBase
 ```bash
 conddb_dumper -O EcalIntercalibConstants -c frontier://FrontierProd/CMS_CONDITIONS -t EcalIntercalibConstants_2012ABCD_offline
 ```
