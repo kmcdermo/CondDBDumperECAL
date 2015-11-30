@@ -4,6 +4,7 @@
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
+#include "CondFormats/EcalObjects/interface/EcalGainRatios.h"
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstants.h"
 #include "CondFormats/EcalObjects/interface/EcalIntercalibConstantsMC.h"
 #include "CondFormats/EcalObjects/interface/EcalLaserAlphas.h"
@@ -117,6 +118,13 @@ int main(int argc, char** argv)
         supported.push_back("EcalClusterLocalContCorrParameters");
         if (!help && obj == "EcalClusterLocalContCorrParameters") {
                 cond::CondDBDumper<EcalClusterLocalContCorrParameters> d(obj);
+                d.run(argc, argv);
+                return 0;
+        }
+
+        supported.push_back("EcalGainRatios");
+        if (!help && obj == "EcalGainRatios") {
+                cond::CondDBDumper<EcalGainRatios> d(obj);
                 d.run(argc, argv);
                 return 0;
         }

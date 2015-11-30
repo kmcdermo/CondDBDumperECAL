@@ -14,8 +14,9 @@
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
 #include "CondFormats/EcalObjects/interface/EcalClusterLocalContCorrParameters.h"
-#include "CondFormats/EcalObjects/interface/EcalPedestals.h"
 #include "CondFormats/EcalObjects/interface/EcalCondObjectContainer.h"
+#include "CondFormats/EcalObjects/interface/EcalGainRatios.h"
+#include "CondFormats/EcalObjects/interface/EcalPedestals.h"
 #include "CondFormats/EcalObjects/interface/EcalTimeOffsetConstant.h"
 #include "CondFormats/EcalObjects/interface/EcalTPGLinearizationConst.h"
 #include "CondFormats/ESObjects/interface/ESEEIntercalibConstants.h"
@@ -37,17 +38,15 @@ namespace cond {
                         {
                                 addConnectOption();
                                 addAuthenticationOptions();
-                                addOption<std::string>("object","O","object to dump (required)");
+                                addOption<bool>("join", "j", "produce one single output file, where IOVs are separated by double line break and a comment line starting with `#'");
                                 addOption<bool>("verbose","v","verbose");
-                                addOption<bool>("all","a","list all tags (default mode)");
                                 addOption<cond::Time_t>("beginTime","b","begin time (first since) (optional)");
                                 addOption<cond::Time_t>("endTime","e","end time (last till) (optional)");
-                                addOption<std::string>("tag","t","list info of the specified tag");
-                                addOption<std::string>("geom","g","geometry file (default: detid_geom.dat)");
-                                addOption<std::string>("output","o","output file (default: ecallaserplotter.root)");
-                                addOption<bool>("join", "j", "produce one single output file, where IOV are separated by double line break and a comment line starting with `#'");
-                                addOption<int>("niov","n","number of IOV");
-                                addOption<int>("prescale","s","prescale factor");
+                                addOption<int>("niov","n","number of IOVs to be dumped");
+                                addOption<int>("prescale","s","prescale factor, i.e. dump 1 in N IOVs");
+                                addOption<std::string>("object","O","object to be dumped (required)");
+                                addOption<std::string>("output","o","output file");
+                                addOption<std::string>("tag","t","tag to be dumped (required)");
 
                                 _ids.resize(EBDetId::MAX_HASH + 1 + EEDetId::kSizeForDenseIndexing);
                                 for (int hi = EBDetId::MIN_HASH; hi <= EBDetId::MAX_HASH; ++hi ) {
@@ -104,10 +103,16 @@ namespace cond {
                         // main loop
                         int execute()
                         {
-                                std::string connect = getOptionValue<std::string>("connect" );
+                                std::string connect;
+                                if (hasOptionValue("connect")) {
+                                        connect = getOptionValue<std::string>("connect" );
+                                } else {
+                                        connect = "frontier://FrontierProd/CMS_CONDITIONS";
+                                }
+
                                 cond::persistency::ConnectionPool connPool;
 
-                                if( hasOptionValue("authPath") ){
+                                if(hasOptionValue("authPath")){
                                         connPool.setAuthenticationPath( getOptionValue<std::string>( "authPath") ); 
                                 }
 
@@ -197,12 +202,12 @@ namespace cond {
 
                         void dump(FILE * fd, bool) {}
 
-                        void dump(FILE * fd, EcalCondObjectContainer<float> & ct)
+                        void dump(FILE * fd, EcalCondObjectContainer<float> & o)
                         {
                                 for (size_t i = 0; i < _ids.size(); ++i) {
                                         DetId id(_ids[i]);
-                                        EcalCondObjectContainer<float>::const_iterator it = ct.find(id);
-                                        if (it == ct.end()) {
+                                        EcalCondObjectContainer<float>::const_iterator it = o.find(id);
+                                        if (it == o.end()) {
                                                 fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
                                         }
                                         coord(_ids[i]);
@@ -211,12 +216,12 @@ namespace cond {
 
                         }
 
-                        void dump(FILE * fd, EcalChannelStatus & ct)
+                        void dump(FILE * fd, EcalChannelStatus & o)
                         {
                                 for (size_t i = 0; i < _ids.size(); ++i) {
                                         DetId id(_ids[i]);
-                                        EcalChannelStatus::const_iterator it = ct.find(id);
-                                        if (it == ct.end()) {
+                                        EcalChannelStatus::const_iterator it = o.find(id);
+                                        if (it == o.end()) {
                                                 fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
                                         }
                                         coord(_ids[i]);
@@ -224,12 +229,12 @@ namespace cond {
                                 }
                         }
 
-                        void dump(FILE * fd, EcalTPGLinearizationConst & ct)
+                        void dump(FILE * fd, EcalTPGLinearizationConst & o)
                         {
                                 for (size_t i = 0; i < _ids.size(); ++i) {
                                         DetId id(_ids[i]);
-                                        EcalTPGLinearizationConst::const_iterator it = ct.find(id);
-                                        if (it == ct.end()) {
+                                        EcalTPGLinearizationConst::const_iterator it = o.find(id);
+                                        if (it == o.end()) {
                                                 fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
                                         }
                                         coord(_ids[i]);
@@ -241,12 +246,12 @@ namespace cond {
                                 }
                         }
 
-                        void dump(FILE * fd, EcalPedestals & ct)
+                        void dump(FILE * fd, EcalPedestals & o)
                         {
                                 for (size_t i = 0; i < _ids.size(); ++i) {
                                         DetId id(_ids[i]);
-                                        EcalPedestals::const_iterator it = ct.find(id);
-                                        if (it == ct.end()) {
+                                        EcalPedestals::const_iterator it = o.find(id);
+                                        if (it == o.end()) {
                                                 fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
                                         }
                                         coord(_ids[i]);
@@ -276,6 +281,21 @@ namespace cond {
                                         fprintf(fd, " %f", p[s]);
                                 }
                                 fprintf(fd, "\n");
+                        }
+
+                        void dump(FILE * fd, EcalGainRatios & o)
+                        {
+                                for (size_t i = 0; i < _ids.size(); ++i) {
+                                        DetId id(_ids[i]);
+                                        EcalGainRatios::const_iterator it = o.find(id);
+                                        if (it == o.end()) {
+                                                fprintf(stderr, "Cannot find value for DetId %u", id.rawId());
+                                        }
+                                        coord(_ids[i]);
+                                        fprintf(fd, "%d %d %d  %f %f  %u\n", _c.ix_, _c.iy_, _c.iz_,
+                                                (*it).gain12Over6(), (*it).gain6Over1(),
+                                                id.rawId());
+                                }
                         }
 
                         void dump(FILE * fd, ESEEIntercalibConstants & ic)
