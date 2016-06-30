@@ -1,4 +1,4 @@
-#include "usercode/DBDump/interface/EcalLaserGreenAnalysis.h"
+#include "CondDBDumperECAL/DBDump/interface/EcalLaserGreenAnalysis.h"
 
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
@@ -6,8 +6,8 @@
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEBGeom.h"
 #include "CalibCalorimetry/EcalLaserAnalyzer/interface/MEEEGeom.h"
 
-#include "usercode/DBDump/interface/HistoManager.h"
-#include "usercode/DBDump/interface/Quantile.h"
+#include "CondDBDumperECAL/DBDump/interface/HistoManager.h"
+#include "CondDBDumperECAL/DBDump/interface/Quantile.h"
 
 #include "TProfile.h"
 #include "TProfile2D.h"

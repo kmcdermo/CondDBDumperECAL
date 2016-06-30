@@ -6,8 +6,8 @@
 #include <set>
 
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"
-#include "usercode/DBDump/interface/Quantile.h"
-#include "usercode/DBDump/interface/HistoManager.h"
+#include "CondDBDumperECAL/DBDump/interface/Quantile.h"
+#include "CondDBDumperECAL/DBDump/interface/HistoManager.h"
 
 #define NSUBDET 3
 #define NMAXVAL 10

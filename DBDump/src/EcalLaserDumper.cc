@@ -1,4 +1,4 @@
-#include "usercode/DBDump/interface/EcalLaserDumper.h"
+#include "CondDBDumperECAL/DBDump/interface/EcalLaserDumper.h"
 
 #include "CondFormats/EcalObjects/interface/EcalLaserAPDPNRatios.h"
 #include "CondFormats/EcalObjects/interface/EcalChannelStatus.h"

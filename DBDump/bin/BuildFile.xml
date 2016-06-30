@@ -4,62 +4,62 @@
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db.cpp" name="lava_db">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db_compare.cpp" name="lava_db_compare">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db_dumper.cpp" name="lava_db_dumper">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db2txt.cpp" name="lava_db2txt">
   <use   name="CondFormats/EcalObjects"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db_cond.cpp" name="lava_db_cond">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="lava_db_dumpId.cpp" name="lava_db_dumpId">
   <use   name="CondFormats/EcalObjects"/>
   <use   name="CalibCalorimetry/EcalLaserAnalyzer"/>
   <use   name="rootgraphics"/>
   <use   name="rootcore"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="apdpnratio_dump.cpp" name="apdpnratio_dump">
   <use   name="CondFormats/EcalObjects"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>
 <bin   file="apdpnratio_average_dump.cpp" name="apdpnratio_average_dump">
   <use   name="CondFormats/EcalObjects"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
   <use   name="Calibration/Tools"/>
 </bin>
 <bin   file="apdpnratio_Hgg.cpp" name="apdpnratio_Hgg">
   <use   name="CondFormats/EcalObjects"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
   <use   name="Calibration/Tools"/>
 </bin>
 <bin   file="merge_dump.cpp" name="merge_dump">
 </bin>
 <bin   file="conddb_dumper.cpp" name="conddb_dumper">
   <use   name="CondFormats/EcalObjects"/>
-  <use   name="usercode/DBDump"/>
+  <use   name="CondDBDumperECAL/DBDump"/>
 </bin>

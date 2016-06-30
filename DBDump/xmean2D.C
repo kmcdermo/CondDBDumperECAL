@@ -52,6 +52,8 @@ void xmean2D(){
   histseb.resize(r1s.size());
   histseep.resize(r1s.size());
   histseem.resize(r1s.size());
+
+  std::vector<int> xs; xs.push_back(12); xs.push_back(6); xs.push_back(1);
   for (int i = 0; i < r1s.size(); i++) {
     int run1 = r1s[i];
     int run2 = r2s[i];
@@ -59,15 +61,15 @@ void xmean2D(){
     histseep[i].resize(3);
     histseem[i].resize(3);
     for (int j = 0; j < 3; j++) {
-      histseb[i][j] = new TH2F(Form("hist_%i_%i_eb",i,j),Form("mean_x12-%i runs:%i-%i 2D EB",j+1,run1,run2),360,0,360,170,-85,85);
+      histseb[i][j] = new TH2F(Form("hist_%i_x%i_eb",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EB",xs[j],run1,run2),360,0,360,170,-85,85);
       histseb[i][j]->GetXaxis()->SetTitle("iphi");
       histseb[i][j]->GetYaxis()->SetTitle("ieta");
 
-      histseep[i][j] = new TH2F(Form("hist_%i_%i_eep",i,j),Form("mean_x12-%i runs:%i-%i 2D EE+",j+1,run1,run2),100,0,100,100,0,100);
+      histseep[i][j] = new TH2F(Form("hist_%i_x%i_eep",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EE+",xs[j],run1,run2),100,0,100,100,0,100);
       histseep[i][j]->GetXaxis()->SetTitle("ix");
       histseep[i][j]->GetYaxis()->SetTitle("iy");
 
-      histseem[i][j] = new TH2F(Form("hist_%i_%i_eem",i,j),Form("mean_x12-%i runs:%i-%i 2D EE-",j+1,run1,run2),100,0,100,100,0,100);
+      histseem[i][j] = new TH2F(Form("hist_%i_x%i_eem",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EE-",xs[j],run1,run2),100,0,100,100,0,100);
       histseem[i][j]->GetXaxis()->SetTitle("ix");
       histseem[i][j]->GetYaxis()->SetTitle("iy");
     }
@@ -105,19 +107,19 @@ void xmean2D(){
       TCanvas * canveb = new TCanvas();
       canveb->cd();
       histseb[i][j]->Draw("colz");
-      canveb->SaveAs(Form("mean_x12_%i_runs%i_%i_EB.png",j+1,run1,run2));
+      canveb->SaveAs(Form("mean_x%i_runs%i_%i_EB.png",xs[j],run1,run2));
       delete canveb;
       
       TCanvas * canveep = new TCanvas();
       canveep->cd();
       histseep[i][j]->Draw("colz");
-      canveep->SaveAs(Form("mean_x12_%i_runs%i_%i_EEP.png",j+1,run1,run2));
+      canveep->SaveAs(Form("mean_x%i_runs%i_%i_EEP.png",xs[j],run1,run2));
       delete canveep;
 
       TCanvas * canveem = new TCanvas();
       canveem->cd();
       histseem[i][j]->Draw("colz");
-      canveem->SaveAs(Form("mean_x12_%i_runs%i_%i_EEM.png",j+1,run1,run2));
+      canveem->SaveAs(Form("mean_x%i_runs%i_%i_EEM.png",xs[j],run1,run2));
       delete canveem;
     }
   }

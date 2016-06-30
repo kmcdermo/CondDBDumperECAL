@@ -1,4 +1,4 @@
-#include "usercode/DBDump/interface/CondDBDumper.h"
+#include "CondDBDumperECAL/DBDump/interface/CondDBDumper.h"
 
 #include "CondFormats/BeamSpotObjects/interface/BeamSpotObjects.h"
 #include "CondFormats/EcalObjects/interface/EcalADCToGeVConstant.h"

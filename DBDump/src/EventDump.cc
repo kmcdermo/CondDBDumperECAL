@@ -79,7 +79,7 @@ Implementation:
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "usercode/DBDump/interface/HistoManager.h"
+#include "CondDBDumperECAL/DBDump/interface/HistoManager.h"
 
 #include "TProfile.h"
 #include "TProfile2D.h"

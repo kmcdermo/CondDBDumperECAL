@@ -68,9 +68,9 @@ Implementation:
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
 
-#include "usercode/DBDump/interface/HistoManager.h"
-#include "usercode/DBDump/interface/Quantile.h"
-#include "usercode/DBDump/interface/EcalLaserPlotter.h"
+#include "CondDBDumperECAL/DBDump/interface/HistoManager.h"
+#include "CondDBDumperECAL/DBDump/interface/Quantile.h"
+#include "CondDBDumperECAL/DBDump/interface/EcalLaserPlotter.h"
 
 #include <iostream>
 #include <fstream>
