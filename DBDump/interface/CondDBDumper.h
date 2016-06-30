@@ -256,9 +256,9 @@ namespace cond {
                                         }
                                         coord(_ids[i]);
                                         fprintf(fd, "%d %d %d  %f %f  %f %f  %f %f %u\n", _c.ix_, _c.iy_, _c.iz_,
-                                                (*it).mean(1), (*it).rms(1),
-                                                (*it).mean(2), (*it).rms(2),
-                                                (*it).mean(3), (*it).rms(3),
+                                                (*it).mean_x12, (*it).rms_x12,
+                                                (*it).mean_x6,  (*it).rms_x6,
+                                                (*it).mean_x1,  (*it).rms_x1,
                                                 id.rawId());
                                 }
                         }
