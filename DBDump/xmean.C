@@ -1,3 +1,13 @@
+// https://cms-conddb.cern.ch/cmsDbBrowser/list/Prod/gts/76X_dataRun2_16Dec2015_v0
+// GT for 2015 data rereco 76X
+// look up Tag matching Record from supported objects: https://github.com/kmcdermo/CondDBDumperECAL
+// 2015  start: 254231
+// 2015D start: 256630
+// conddb_dumper -O EcalPedestals -c frontier://FrontierProd/CMS_CONDITIONS -t EcalPedestals_hlt -b 254231
+
+// ADC conversion: EcalADCToGeVConstant
+// EcalADCToGeVConstant_Run1_Run2_V02_offline
+
 #include <vector>
 #include "TH2F.h"
 #include "TString.h"
