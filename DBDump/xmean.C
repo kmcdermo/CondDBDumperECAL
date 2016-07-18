@@ -86,6 +86,7 @@ void xmean()
   std::vector<std::vector<TH1F*> > histseem; histseem.resize(r1s.size());
 
   std::vector<int> xs; xs.push_back(12); xs.push_back(6); xs.push_back(1);
+  const float xhigh = 0.5;
   for (int i = 0; i < r1s.size(); i++) {
     int run1 = r1s[i];
     int run2 = r2s[i];
@@ -94,19 +95,19 @@ void xmean()
     histseep[i].resize(xs.size());
     histseem[i].resize(xs.size());
     for (int j = 0; j < xs.size(); j++) {
-      histseb[i][j] = new TH1F(Form("hist_%i_x%i_eb",i,xs[j]),Form("rms x%i runs:%i-%i EB",xs[j],run1,run2),100,0,5);
+      histseb[i][j] = new TH1F(Form("hist_%i_x%i_eb",i,xs[j]),Form("rms x%i runs:%i-%i EB",xs[j],run1,run2),100,0,xhigh);
       histseb[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseb[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histsee[i][j] = new TH1F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms x%i runs:%i-%i EE (Inclusive)",xs[j],run1,run2),100,0,5);
+      histsee[i][j] = new TH1F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms x%i runs:%i-%i EE (Inclusive)",xs[j],run1,run2),100,0,xhigh);
       histsee[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histsee[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histseep[i][j] = new TH1F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms x%i runs:%i-%i EE+",xs[j],run1,run2),100,0,5);
+      histseep[i][j] = new TH1F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms x%i runs:%i-%i EE+",xs[j],run1,run2),100,0,xhigh);
       histseep[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseep[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histseem[i][j] = new TH1F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms x%i runs:%i-%i EE-",xs[j],run1,run2),100,0,5);
+      histseem[i][j] = new TH1F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms x%i runs:%i-%i EE-",xs[j],run1,run2),100,0,xhigh);
       histseem[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseem[i][j]->GetYaxis()->SetTitle("nCrystals");
     }
@@ -199,19 +200,19 @@ void xmean()
   std::vector<TH1F*> histstoteep; histstoteep.resize(xs.size());
   std::vector<TH1F*> histstoteem; histstoteem.resize(xs.size());
   for (int j = 0; j < xs.size(); j++) {
-    histstoteb[j] = new TH1F(Form("hist_total_x%i_eb",xs[j]),Form("rms x%i total EB",xs[j]),100,0,5);
+    histstoteb[j] = new TH1F(Form("hist_total_x%i_eb",xs[j]),Form("rms x%i total EB",xs[j]),100,0,xhigh);
     histstoteb[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteb[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstotee[j] = new TH1F(Form("hist_total_x%i_ee",xs[j]),Form("rms x%i total EE",xs[j]),100,0,5);
+    histstotee[j] = new TH1F(Form("hist_total_x%i_ee",xs[j]),Form("rms x%i total EE",xs[j]),100,0,xhigh);
     histstotee[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstotee[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstoteep[j] = new TH1F(Form("hist_total_x%i_eep",xs[j]),Form("rms x%i total EE+",xs[j]),100,0,5);
+    histstoteep[j] = new TH1F(Form("hist_total_x%i_eep",xs[j]),Form("rms x%i total EE+",xs[j]),100,0,xhigh);
     histstoteep[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteep[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstoteem[j] = new TH1F(Form("hist_total_x%i_eem",xs[j]),Form("rms x%i total EE-",xs[j]),100,0,5);
+    histstoteem[j] = new TH1F(Form("hist_total_x%i_eem",xs[j]),Form("rms x%i total EE-",xs[j]),100,0,xhigh);
     histstoteem[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteem[j]->GetYaxis()->SetTitle("nCrystals");
   }
@@ -267,7 +268,7 @@ void xmean()
     for (int j = 0; j < xs.size(); j++){
       canvalls[k][j] = new TCanvas();
       canvalls[k][j]->cd();
-      legalls[k][j] = new TLegend(0.7,0.2,1.0,1.0);
+      legalls[k][j] = new TLegend(0.7,0.6,1.0,1.0);
     }
   }
 
