@@ -4,7 +4,8 @@
 
 #include <map>
 
-struct eid{
+struct eid
+{
 public:
   eid() {}
   int i1_; // iphi (EB) or ix (EE)
@@ -12,7 +13,8 @@ public:
   TString name_;
 };
 
-void xmean2D(){
+void xmean2D()
+{
   //  gStyle->SetOptStat("emou");
   gStyle->SetOptStat(0);
 

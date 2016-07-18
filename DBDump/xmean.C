@@ -3,6 +3,7 @@
 // look up Tag matching Record from supported objects: https://github.com/kmcdermo/CondDBDumperECAL
 // 2015  start: 254231
 // 2015D start: 256630
+// 2015D end:   260627
 // conddb_dumper -O EcalPedestals -c frontier://FrontierProd/CMS_CONDITIONS -t EcalPedestals_hlt -b 254231
 
 // ADC conversion: EcalADCToGeVConstant
@@ -14,7 +15,8 @@
 
 #include <map>
 
-struct eid{
+struct eid
+{
 public:
   eid() {}
   int i1_; // iphi (EB) or ix (EE)
@@ -22,7 +24,19 @@ public:
   TString name_;
 };
 
-void xmean(){
+struct adcconv
+{
+public:
+  adcconv() {}
+  //  adcconv(int runb, int rune, float ebconv, float eeconv) : rune_(rune), runb_(rub), ebconv_(ebconv), eeconv_(eeconv) {}
+  int runb_; // starting run for ADC to GeV
+  int rune_; // ending   run for ADC to GeV
+  float ebconv_; // EB ADC to GeV conversion factor
+  float eeconv_; // EE ADC to GeV conversion factor
+};
+
+void xmean()
+{
   //  gStyle->SetOptStat("emou");
   gStyle->SetOptStat(0);
 
@@ -36,7 +50,21 @@ void xmean(){
     r2s.push_back(rn2);
   }
   inputruns.close();
-  
+
+  // input adc to gev conversion factors
+  std::ifstream inputadcs;
+  inputadcs.open("ecalpeds/dump_EcalADCToGeVConstant__since_00000001_jtill_since_00262466.dat",std::ios::in);
+  int rnb, rne;
+  float ebadc2gev, eeadc2gev;
+  std::vector<adcconv> adcconvs;
+  while (inputadcs >> rnb >> rne >> ebadc2gev >> eeadc2gev) {
+    adcconv adctogev;
+    adctogev.runb_   = rnb;       adctogev.rune_   = rne;
+    adctogev.ebconv_ = ebadc2gev; adctogev.eeconv_ = eeadc2gev;
+    adcconvs.push_back(adctogev);
+  }
+  inputadcs.close();
+
   // input maps for detids
   std::ifstream inputids;
   inputids.open("detidsietaiphi.txt",std::ios::in);
@@ -52,18 +80,10 @@ void xmean(){
   }
   inputids.close();
 
-  // for (std::map<int,eid>::const_iterator iter = eids.begin(); iter != eids.end(); ++iter){
-  //   std::cout << iter->first << " " << iter->second.i1_ << " " << iter->second.i2_ << " " << iter->second.name_ << std::endl;
-  // }
-
-  std::vector<std::vector<TH1F*> > histseb;
-  std::vector<std::vector<TH1F*> > histsee;
-  std::vector<std::vector<TH1F*> > histseep;
-  std::vector<std::vector<TH1F*> > histseem;
-  histseb.resize(r1s.size());
-  histsee.resize(r1s.size());
-  histseep.resize(r1s.size());
-  histseem.resize(r1s.size());
+  std::vector<std::vector<TH1F*> > histseb;  histseb.resize(r1s.size());
+  std::vector<std::vector<TH1F*> > histsee;  histsee.resize(r1s.size());
+  std::vector<std::vector<TH1F*> > histseep; histseep.resize(r1s.size());
+  std::vector<std::vector<TH1F*> > histseem; histseem.resize(r1s.size());
 
   std::vector<int> xs; xs.push_back(12); xs.push_back(6); xs.push_back(1);
   for (int i = 0; i < r1s.size(); i++) {
@@ -92,38 +112,40 @@ void xmean(){
     }
   }
 
-  std::vector<TString> parts; parts.push_back("EB"); parts.push_back("EE"); parts.push_back("EEP"); parts.push_back("EEM");
-
-  std::vector<std::vector<TCanvas*> > canvalls;
-  std::vector<std::vector<TLegend*> > legalls;
-  canvalls.resize(parts.size());
-  legalls.resize(parts.size());
-  for (int k = 0; k < parts.size(); k++){
-    canvalls[k].resize(xs.size());
-    legalls[k].resize(xs.size());
-    for (int j = 0; j < xs.size(); j++){
-      canvalls[k][j] = new TCanvas();
-      canvalls[k][j]->cd();
-      legalls[k][j] = new TLegend(0.7,0.2,1.0,1.0);
-    }
-  }
-  
   for (int i = 0; i < r1s.size(); i++){
     int run1 = r1s[i];
     int run2 = r2s[i];
+
+    // get adc to gev conversion constants for the run range
+    float ebconv = 0;
+    float eeconv = 0;
+    bool found = false;
+    for (int r = 0; r < adcconvs.size(); r++){
+      int runb = adcconvs[r].runb_;
+      int rune = adcconvs[r].rune_;
+
+      if (run1 <= runb && run2 <= rune){
+	ebconv = adcconvs[r].ebconv_;
+	eeconv = adcconvs[r].eeconv_;
+	found = true;
+      }
+      if (found) break;
+    }
+
     TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
-        
     std::ifstream input;
     input.open(name.Data(),std::ios::in);
     float x, y, z, m1, r1, m2, r2, m3, r3;
     uint32_t id;
     while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id){
       if      (eids[id].name_.Contains("EB",TString::kExact)) {
+	r1 *= ebconv; r2 *= ebconv; r3 *= ebconv;
 	histseb[i][0]->Fill(r1);
 	histseb[i][1]->Fill(r2);
 	histseb[i][2]->Fill(r3);
       }
       else if (eids[id].name_.Contains("EE+",TString::kExact) || eids[id].name_.Contains("EE-",TString::kExact)) {
+	r1 *= eeconv; r2 *= eeconv; r3 *= eeconv;
 	histsee[i][0]->Fill(r1);
 	histsee[i][1]->Fill(r2);
 	histsee[i][2]->Fill(r3);
@@ -231,6 +253,22 @@ void xmean(){
     histstoteem[j]->Draw();
     canveem->SaveAs(Form("rms_x%i_total_EEM.png",xs[j]));
     delete canveem;
+  }
+
+  std::vector<TString> parts; parts.push_back("EB"); parts.push_back("EE"); parts.push_back("EEP"); parts.push_back("EEM");
+
+  std::vector<std::vector<TCanvas*> > canvalls;
+  std::vector<std::vector<TLegend*> > legalls;
+  canvalls.resize(parts.size());
+  legalls.resize(parts.size());
+  for (int k = 0; k < parts.size(); k++){
+    canvalls[k].resize(xs.size());
+    legalls[k].resize(xs.size());
+    for (int j = 0; j < xs.size(); j++){
+      canvalls[k][j] = new TCanvas();
+      canvalls[k][j]->cd();
+      legalls[k][j] = new TLegend(0.7,0.2,1.0,1.0);
+    }
   }
 
   for (int i = 0; i < r1s.size(); i++){
