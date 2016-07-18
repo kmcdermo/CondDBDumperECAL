@@ -47,9 +47,11 @@ void xmean2D(){
   // }
 
   std::vector<std::vector<TH2F*> > histseb;
+  std::vector<std::vector<TH2F*> > histsee;
   std::vector<std::vector<TH2F*> > histseep;
   std::vector<std::vector<TH2F*> > histseem;
   histseb.resize(r1s.size());
+  histsee.resize(r1s.size());
   histseep.resize(r1s.size());
   histseem.resize(r1s.size());
 
@@ -58,18 +60,23 @@ void xmean2D(){
     int run1 = r1s[i];
     int run2 = r2s[i];
     histseb[i].resize(3);
+    histsee[i].resize(3);
     histseep[i].resize(3);
     histseem[i].resize(3);
     for (int j = 0; j < 3; j++) {
-      histseb[i][j] = new TH2F(Form("hist_%i_x%i_eb",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EB",xs[j],run1,run2),360,0,360,170,-85,85);
+      histseb[i][j] = new TH2F(Form("hist_%i_x%i_eb",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EB",xs[j],run1,run2),361,0,361,172,-86,86);
       histseb[i][j]->GetXaxis()->SetTitle("iphi");
       histseb[i][j]->GetYaxis()->SetTitle("ieta");
 
-      histseep[i][j] = new TH2F(Form("hist_%i_x%i_eep",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EE+",xs[j],run1,run2),100,0,100,100,0,100);
+      histsee[i][j] = new TH2F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE (Inclusive)",xs[j],run1,run2),101,0,101,101,0,101);
+      histsee[i][j]->GetXaxis()->SetTitle("ix");
+      histsee[i][j]->GetYaxis()->SetTitle("iy");
+
+      histseep[i][j] = new TH2F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE+",xs[j],run1,run2),101,0,101,101,0,101);
       histseep[i][j]->GetXaxis()->SetTitle("ix");
       histseep[i][j]->GetYaxis()->SetTitle("iy");
 
-      histseem[i][j] = new TH2F(Form("hist_%i_x%i_eem",i,xs[j]),Form("mean_x%i runs:%i-%i 2D EE-",xs[j],run1,run2),100,0,100,100,0,100);
+      histseem[i][j] = new TH2F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE-",xs[j],run1,run2),101,0,101,101,0,101);
       histseem[i][j]->GetXaxis()->SetTitle("ix");
       histseem[i][j]->GetYaxis()->SetTitle("iy");
     }
@@ -86,19 +93,32 @@ void xmean2D(){
     uint32_t id;
     while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id){
       if (eids[id].name_.Contains("EB",TString::kExact)) {
-	histseb[i][0]->Fill(eids[id].i1_,eids[id].i2_,m1);
-	histseb[i][1]->Fill(eids[id].i1_,eids[id].i2_,m2);
-	histseb[i][2]->Fill(eids[id].i1_,eids[id].i2_,m3);
+	histseb[i][0]->Fill(eids[id].i1_,eids[id].i2_,r1);
+	histseb[i][1]->Fill(eids[id].i1_,eids[id].i2_,r2);
+	histseb[i][2]->Fill(eids[id].i1_,eids[id].i2_,r3);
       }
-      else if (eids[id].name_.Contains("EE+",TString::kExact)) {
-	histseep[i][0]->Fill(eids[id].i1_,eids[id].i2_,m1);
-	histseep[i][1]->Fill(eids[id].i1_,eids[id].i2_,m2);
-	histseep[i][2]->Fill(eids[id].i1_,eids[id].i2_,m3);
-      }
-      else if (eids[id].name_.Contains("EE-",TString::kExact)) {
-	histseem[i][0]->Fill(eids[id].i1_,eids[id].i2_,m1);
-	histseem[i][1]->Fill(eids[id].i1_,eids[id].i2_,m2);
-	histseem[i][2]->Fill(eids[id].i1_,eids[id].i2_,m3);
+      else if (eids[id].name_.Contains("EE-",TString::kExact) || eids[id].name_.Contains("EE+",TString::kExact)) {
+	const float i1 = histsee[i][0]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
+	const float i2 = histsee[i][1]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
+	const float i3 = histsee[i][2]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
+
+	if (i1 == 0) {histsee[i][0]->Fill(eids[id].i1_,eids[id].i2_,r1);}
+	else         {histsee[i][0]->SetBinContent(eids[id].i1_+1,eids[id].i2_+1,(r1+i1)/2.f);}
+	if (i2 == 0) {histsee[i][1]->Fill(eids[id].i1_,eids[id].i2_,r2);}
+	else         {histsee[i][1]->SetBinContent(eids[id].i1_+1,eids[id].i2_+1,(r2+i2)/2.f);}
+	if (i3 == 0) {histsee[i][2]->Fill(eids[id].i1_,eids[id].i2_,r3);}
+	else         {histsee[i][2]->SetBinContent(eids[id].i1_+1,eids[id].i2_+1,(r3+i3)/2.f);}
+
+	if      (eids[id].name_.Contains("EE+",TString::kExact)) {
+	  histseep[i][0]->Fill(eids[id].i1_,eids[id].i2_,r1);
+	  histseep[i][1]->Fill(eids[id].i1_,eids[id].i2_,r2);
+	  histseep[i][2]->Fill(eids[id].i1_,eids[id].i2_,r3);
+	}
+	else if (eids[id].name_.Contains("EE-",TString::kExact)) {
+	  histseem[i][0]->Fill(eids[id].i1_,eids[id].i2_,r1);
+	  histseem[i][1]->Fill(eids[id].i1_,eids[id].i2_,r2);
+	  histseem[i][2]->Fill(eids[id].i1_,eids[id].i2_,r3);
+	}
       }
     }
     input.close();
@@ -107,19 +127,25 @@ void xmean2D(){
       TCanvas * canveb = new TCanvas();
       canveb->cd();
       histseb[i][j]->Draw("colz");
-      canveb->SaveAs(Form("mean_x%i_runs%i_%i_EB.png",xs[j],run1,run2));
+      canveb->SaveAs(Form("rms_x%i_runs%i_%i_EB.png",xs[j],run1,run2));
       delete canveb;
+      
+      TCanvas * canvee = new TCanvas();
+      canvee->cd();
+      histsee[i][j]->Draw("colz");
+      canvee->SaveAs(Form("rms_x%i_runs%i_%i_EE.png",xs[j],run1,run2));
+      delete canvee;
       
       TCanvas * canveep = new TCanvas();
       canveep->cd();
       histseep[i][j]->Draw("colz");
-      canveep->SaveAs(Form("mean_x%i_runs%i_%i_EEP.png",xs[j],run1,run2));
+      canveep->SaveAs(Form("rms_x%i_runs%i_%i_EEP.png",xs[j],run1,run2));
       delete canveep;
 
       TCanvas * canveem = new TCanvas();
       canveem->cd();
       histseem[i][j]->Draw("colz");
-      canveem->SaveAs(Form("mean_x%i_runs%i_%i_EEM.png",xs[j],run1,run2));
+      canveem->SaveAs(Form("rms_x%i_runs%i_%i_EEM.png",xs[j],run1,run2));
       delete canveem;
     }
   }
