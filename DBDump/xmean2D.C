@@ -187,4 +187,67 @@ void xmean2D()
       delete canveem;
     }
   }
+
+  // average 2D plots
+  std::vector<TH2F*> histsaveb;  histsaveb.resize(xs.size());
+  std::vector<TH2F*> histsavee;  histsavee.resize(xs.size());
+  std::vector<TH2F*> histsaveep; histsaveep.resize(xs.size());
+  std::vector<TH2F*> histsaveem; histsaveem.resize(xs.size());
+
+  for (int j = 0; j < xs.size(); j++) {
+    histsaveb[j] = new TH2F(Form("hist_x%i_av_eb",xs[j]),Form("rms_x%i 2D (Average over Runs) EB",xs[j]),361,0,361,172,-86,86);
+    histsaveb[j]->GetXaxis()->SetTitle("iphi");
+    histsaveb[j]->GetYaxis()->SetTitle("ieta");
+    
+    histsavee[j] = new TH2F(Form("hist_x%i_av_ee",xs[j]),Form("rms_x%i 2D (Average over Runs) EE (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsavee[j]->GetXaxis()->SetTitle("ix");
+    histsavee[j]->GetYaxis()->SetTitle("iy");
+
+    histsaveep[j] = new TH2F(Form("hist_x%i_av_eep",xs[j]),Form("rms_x%i 2D (Average over Runs) EE+ (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsaveep[j]->GetXaxis()->SetTitle("ix");
+    histsaveep[j]->GetYaxis()->SetTitle("iy");
+
+    histsaveem[j] = new TH2F(Form("hist_x%i_av_eem",xs[j]),Form("rms_x%i 2D (Average over Runs) EE- (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsaveem[j]->GetXaxis()->SetTitle("ix");
+    histsaveem[j]->GetYaxis()->SetTitle("iy");
+  }
+
+  for (int i = 0; i < r1s.size(); i++) {  
+    for (int j = 0; j < xs.size(); j++) {
+      histsaveb[j]->Add(histseb[i][j]);
+      histsavee[j]->Add(histsee[i][j]);
+      histsaveep[j]->Add(histseem[i][j]);
+      histsaveem[j]->Add(histseem[i][j]);
+    }
+  }
+
+  for (int j = 0; j < xs.size(); j++) {
+    TCanvas * canveb = new TCanvas();
+    canveb->cd();
+    histsaveb[j]->Scale(1.f/r1s.size());
+    histsaveb[j]->Draw("colz");
+    canveb->SaveAs(Form("rms_x%i_average_EB.png",xs[j]));
+    delete canveb;
+
+    TCanvas * canvee = new TCanvas();
+    canvee->cd();
+    histsavee[j]->Scale(1.f/r1s.size());
+    histsavee[j]->Draw("colz");
+    canvee->SaveAs(Form("rms_x%i_average_EE.png",xs[j]));
+    delete canvee;
+
+    TCanvas * canveep = new TCanvas();
+    canveep->cd();
+    histsaveep[j]->Scale(1.f/r1s.size());
+    histsaveep[j]->Draw("colz");
+    canveep->SaveAs(Form("rms_x%i_average_EEP.png",xs[j]));
+    delete canveep;
+      
+    TCanvas * canveem = new TCanvas();
+    canveem->cd();
+    histsaveem[j]->Scale(1.f/r1s.size());
+    histsaveem[j]->Draw("colz");
+    canveem->SaveAs(Form("rms_x%i_average_EEM.png",xs[j]));
+    delete canveem;
+  }
 }
