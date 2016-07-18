@@ -13,6 +13,17 @@ public:
   TString name_;
 };
 
+struct adcconv
+{
+public:
+  adcconv() {}
+  //  adcconv(int runb, int rune, float ebconv, float eeconv) : rune_(rune), runb_(rub), ebconv_(ebconv), eeconv_(eeconv) {}
+  int runb_; // starting run for ADC to GeV
+  int rune_; // ending   run for ADC to GeV
+  float ebconv_; // EB ADC to GeV conversion factor
+  float eeconv_; // EE ADC to GeV conversion factor
+};
+
 void xmean2D()
 {
   //  gStyle->SetOptStat("emou");
@@ -29,6 +40,20 @@ void xmean2D()
   }
   inputruns.close();
   
+    // input adc to gev conversion factors
+  std::ifstream inputadcs;
+  inputadcs.open("ecalpeds/dump_EcalADCToGeVConstant__since_00000001_jtill_since_00262466.dat",std::ios::in);
+  int rnb, rne;
+  float ebadc2gev, eeadc2gev;
+  std::vector<adcconv> adcconvs;
+  while (inputadcs >> rnb >> rne >> ebadc2gev >> eeadc2gev) {
+    adcconv adctogev;
+    adctogev.runb_   = rnb;       adctogev.rune_   = rne;
+    adctogev.ebconv_ = ebadc2gev; adctogev.eeconv_ = eeadc2gev;
+    adcconvs.push_back(adctogev);
+  }
+  inputadcs.close();
+
   // input maps for detids
   std::ifstream inputids;
   inputids.open("detidsietaiphi.txt",std::ios::in);
@@ -44,28 +69,20 @@ void xmean2D()
   }
   inputids.close();
 
-  // for (std::map<int,eid>::const_iterator iter = eids.begin(); iter != eids.end(); ++iter){
-  //   std::cout << iter->first << " " << iter->second.i1_ << " " << iter->second.i2_ << " " << iter->second.name_ << std::endl;
-  // }
-
-  std::vector<std::vector<TH2F*> > histseb;
-  std::vector<std::vector<TH2F*> > histsee;
-  std::vector<std::vector<TH2F*> > histseep;
-  std::vector<std::vector<TH2F*> > histseem;
-  histseb.resize(r1s.size());
-  histsee.resize(r1s.size());
-  histseep.resize(r1s.size());
-  histseem.resize(r1s.size());
+  std::vector<std::vector<TH2F*> > histseb;  histseb.resize(r1s.size());
+  std::vector<std::vector<TH2F*> > histsee;  histsee.resize(r1s.size());
+  std::vector<std::vector<TH2F*> > histseep; histseep.resize(r1s.size());
+  std::vector<std::vector<TH2F*> > histseem; histseem.resize(r1s.size());
 
   std::vector<int> xs; xs.push_back(12); xs.push_back(6); xs.push_back(1);
   for (int i = 0; i < r1s.size(); i++) {
     int run1 = r1s[i];
     int run2 = r2s[i];
-    histseb[i].resize(3);
-    histsee[i].resize(3);
-    histseep[i].resize(3);
-    histseem[i].resize(3);
-    for (int j = 0; j < 3; j++) {
+    histseb[i].resize(xs.size());
+    histsee[i].resize(xs.size());
+    histseep[i].resize(xs.size());
+    histseem[i].resize(xs.size());
+    for (int j = 0; j < xs.size(); j++) {
       histseb[i][j] = new TH2F(Form("hist_%i_x%i_eb",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EB",xs[j],run1,run2),361,0,361,172,-86,86);
       histseb[i][j]->GetXaxis()->SetTitle("iphi");
       histseb[i][j]->GetYaxis()->SetTitle("ieta");
@@ -87,19 +104,38 @@ void xmean2D()
   for (int i = 0; i < r1s.size(); i++){
     int run1 = r1s[i];
     int run2 = r2s[i];
+
+    // get adc to gev conversion constants for the run range
+    float ebconv = 0;
+    float eeconv = 0;
+    bool found = false;
+    for (int r = 0; r < adcconvs.size(); r++){
+      int runb = adcconvs[r].runb_;
+      int rune = adcconvs[r].rune_;
+
+      if (run1 <= runb && run2 <= rune){
+	ebconv = adcconvs[r].ebconv_;
+	eeconv = adcconvs[r].eeconv_;
+	found = true;
+      }
+      if (found) break;
+    }
+
     TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
-        
     std::ifstream input;
     input.open(name.Data(),std::ios::in);
     float x, y, z, m1, r1, m2, r2, m3, r3;
     uint32_t id;
     while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id){
       if (eids[id].name_.Contains("EB",TString::kExact)) {
+	r1 *= ebconv; r2 *= ebconv; r3 *= ebconv;
 	histseb[i][0]->Fill(eids[id].i1_,eids[id].i2_,r1);
 	histseb[i][1]->Fill(eids[id].i1_,eids[id].i2_,r2);
 	histseb[i][2]->Fill(eids[id].i1_,eids[id].i2_,r3);
       }
       else if (eids[id].name_.Contains("EE-",TString::kExact) || eids[id].name_.Contains("EE+",TString::kExact)) {
+	r1 *= eeconv; r2 *= eeconv; r3 *= eeconv;
+
 	const float i1 = histsee[i][0]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
 	const float i2 = histsee[i][1]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
 	const float i3 = histsee[i][2]->GetBinContent(eids[id].i1_+1,eids[id].i2_+1);
@@ -125,7 +161,7 @@ void xmean2D()
     }
     input.close();
     
-    for (int j = 0; j < 3; j++) {
+    for (int j = 0; j < xs.size(); j++) {
       TCanvas * canveb = new TCanvas();
       canveb->cd();
       histseb[i][j]->Draw("colz");

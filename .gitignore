@@ -1,0 +1,16 @@
+main
+*~
+*.pdf
+*.png
+*.log
+*.root
+crab_*
+*.o
+*.so
+*.d
+*.out
+*.txt
+*.pyc
+.*.swp
+.#*
+#*#
