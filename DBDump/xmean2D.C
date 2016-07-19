@@ -87,15 +87,15 @@ void xmean2D()
       histseb[i][j]->GetXaxis()->SetTitle("iphi");
       histseb[i][j]->GetYaxis()->SetTitle("ieta");
 
-      histsee[i][j] = new TH2F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE (Inclusive)",xs[j],run1,run2),101,0,101,101,0,101);
+      histsee[i][j] = new TH2F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE (Inclusive)",xs[j],run1,run2),102,0,102,102,0,102);
       histsee[i][j]->GetXaxis()->SetTitle("ix");
       histsee[i][j]->GetYaxis()->SetTitle("iy");
 
-      histseep[i][j] = new TH2F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE+",xs[j],run1,run2),101,0,101,101,0,101);
+      histseep[i][j] = new TH2F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE+",xs[j],run1,run2),102,0,102,102,0,102);
       histseep[i][j]->GetXaxis()->SetTitle("ix");
       histseep[i][j]->GetYaxis()->SetTitle("iy");
 
-      histseem[i][j] = new TH2F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE-",xs[j],run1,run2),101,0,101,101,0,101);
+      histseem[i][j] = new TH2F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms_x%i runs:%i-%i 2D EE-",xs[j],run1,run2),102,0,102,102,0,102);
       histseem[i][j]->GetXaxis()->SetTitle("ix");
       histseem[i][j]->GetYaxis()->SetTitle("iy");
     }
@@ -199,15 +199,15 @@ void xmean2D()
     histsaveb[j]->GetXaxis()->SetTitle("iphi");
     histsaveb[j]->GetYaxis()->SetTitle("ieta");
     
-    histsavee[j] = new TH2F(Form("hist_x%i_av_ee",xs[j]),Form("rms_x%i 2D (Average over Runs) EE (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsavee[j] = new TH2F(Form("hist_x%i_av_ee",xs[j]),Form("rms_x%i 2D (Average over Runs) EE (Inclusive)",xs[j]),102,0,102,102,0,102);
     histsavee[j]->GetXaxis()->SetTitle("ix");
     histsavee[j]->GetYaxis()->SetTitle("iy");
 
-    histsaveep[j] = new TH2F(Form("hist_x%i_av_eep",xs[j]),Form("rms_x%i 2D (Average over Runs) EE+ (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsaveep[j] = new TH2F(Form("hist_x%i_av_eep",xs[j]),Form("rms_x%i 2D (Average over Runs) EE+ (Inclusive)",xs[j]),102,0,102,102,0,102);
     histsaveep[j]->GetXaxis()->SetTitle("ix");
     histsaveep[j]->GetYaxis()->SetTitle("iy");
 
-    histsaveem[j] = new TH2F(Form("hist_x%i_av_eem",xs[j]),Form("rms_x%i 2D (Average over Runs) EE- (Inclusive)",xs[j]),101,0,101,101,0,101);
+    histsaveem[j] = new TH2F(Form("hist_x%i_av_eem",xs[j]),Form("rms_x%i 2D (Average over Runs) EE- (Inclusive)",xs[j]),102,0,102,102,0,102);
     histsaveem[j]->GetXaxis()->SetTitle("ix");
     histsaveem[j]->GetYaxis()->SetTitle("iy");
   }
