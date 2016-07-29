@@ -37,6 +37,9 @@ public:
 
 void xmean()
 {
+  // output root 
+  TFile * outfile = TFile::Open("plots.root","UPDATE");
+
   //  gStyle->SetOptStat("emou");
   gStyle->SetOptStat(0);
 
@@ -95,19 +98,19 @@ void xmean()
     histseep[i].resize(xs.size());
     histseem[i].resize(xs.size());
     for (int j = 0; j < xs.size(); j++) {
-      histseb[i][j] = new TH1F(Form("hist_%i_x%i_eb",i,xs[j]),Form("rms x%i runs:%i-%i EB",xs[j],run1,run2),100,0,xhigh);
+      histseb[i][j] = new TH1F(Form("hist1D_%i_x%i_eb",i,xs[j]),Form("rms x%i runs:%i-%i EB",xs[j],run1,run2),100,0,xhigh);
       histseb[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseb[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histsee[i][j] = new TH1F(Form("hist_%i_x%i_ee",i,xs[j]),Form("rms x%i runs:%i-%i EE (Inclusive)",xs[j],run1,run2),100,0,xhigh);
+      histsee[i][j] = new TH1F(Form("hist1D_%i_x%i_ee",i,xs[j]),Form("rms x%i runs:%i-%i EE (Inclusive)",xs[j],run1,run2),100,0,xhigh);
       histsee[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histsee[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histseep[i][j] = new TH1F(Form("hist_%i_x%i_eep",i,xs[j]),Form("rms x%i runs:%i-%i EE+",xs[j],run1,run2),100,0,xhigh);
+      histseep[i][j] = new TH1F(Form("hist1D_%i_x%i_eep",i,xs[j]),Form("rms x%i runs:%i-%i EE+",xs[j],run1,run2),100,0,xhigh);
       histseep[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseep[i][j]->GetYaxis()->SetTitle("nCrystals");
 
-      histseem[i][j] = new TH1F(Form("hist_%i_x%i_eem",i,xs[j]),Form("rms x%i runs:%i-%i EE-",xs[j],run1,run2),100,0,xhigh);
+      histseem[i][j] = new TH1F(Form("hist1D_%i_x%i_eem",i,xs[j]),Form("rms x%i runs:%i-%i EE-",xs[j],run1,run2),100,0,xhigh);
       histseem[i][j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
       histseem[i][j]->GetYaxis()->SetTitle("nCrystals");
     }
@@ -169,6 +172,7 @@ void xmean()
       canveb->cd();
       canveb->SetLogy(1);
       histseb[i][j]->Draw();
+      histseb[i][j]->Write(histseb[i][j]->GetName(),TObject::kWriteDelete);
       canveb->SaveAs(Form("rms_x%i_runs%i_%i_EB.png",xs[j],run1,run2));
       delete canveb;
 
@@ -176,6 +180,7 @@ void xmean()
       canvee->cd();
       canvee->SetLogy(1);
       histsee[i][j]->Draw();
+      histsee[i][j]->Write(histsee[i][j]->GetName(),TObject::kWriteDelete);
       canvee->SaveAs(Form("rms_x%i_runs%i_%i_EE.png",xs[j],run1,run2));
       delete canvee;
       
@@ -183,6 +188,7 @@ void xmean()
       canveep->cd();
       canveep->SetLogy(1);
       histseep[i][j]->Draw();
+      histseep[i][j]->Write(histseep[i][j]->GetName(),TObject::kWriteDelete);
       canveep->SaveAs(Form("rms_x%i_runs%i_%i_EEP.png",xs[j],run1,run2));
       delete canveep;
 
@@ -190,6 +196,7 @@ void xmean()
       canveem->cd();
       canveem->SetLogy(1);
       histseem[i][j]->Draw();
+      histseem[i][j]->Write(histseem[i][j]->GetName(),TObject::kWriteDelete);
       canveem->SaveAs(Form("rms_x%i_runs%i_%i_EEM.png",xs[j],run1,run2));
       delete canveem;
     }
@@ -200,19 +207,19 @@ void xmean()
   std::vector<TH1F*> histstoteep; histstoteep.resize(xs.size());
   std::vector<TH1F*> histstoteem; histstoteem.resize(xs.size());
   for (int j = 0; j < xs.size(); j++) {
-    histstoteb[j] = new TH1F(Form("hist_total_x%i_eb",xs[j]),Form("rms x%i total EB",xs[j]),100,0,xhigh);
+    histstoteb[j] = new TH1F(Form("hist1D_total_x%i_eb",xs[j]),Form("rms x%i total EB",xs[j]),100,0,xhigh);
     histstoteb[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteb[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstotee[j] = new TH1F(Form("hist_total_x%i_ee",xs[j]),Form("rms x%i total EE",xs[j]),100,0,xhigh);
+    histstotee[j] = new TH1F(Form("hist1D_total_x%i_ee",xs[j]),Form("rms x%i total EE",xs[j]),100,0,xhigh);
     histstotee[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstotee[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstoteep[j] = new TH1F(Form("hist_total_x%i_eep",xs[j]),Form("rms x%i total EE+",xs[j]),100,0,xhigh);
+    histstoteep[j] = new TH1F(Form("hist1D_total_x%i_eep",xs[j]),Form("rms x%i total EE+",xs[j]),100,0,xhigh);
     histstoteep[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteep[j]->GetYaxis()->SetTitle("nCrystals");
 
-    histstoteem[j] = new TH1F(Form("hist_total_x%i_eem",xs[j]),Form("rms x%i total EE-",xs[j]),100,0,xhigh);
+    histstoteem[j] = new TH1F(Form("hist1D_total_x%i_eem",xs[j]),Form("rms x%i total EE-",xs[j]),100,0,xhigh);
     histstoteem[j]->GetXaxis()->SetTitle(Form("x%i rms",xs[j]));
     histstoteem[j]->GetYaxis()->SetTitle("nCrystals");
   }
@@ -231,6 +238,7 @@ void xmean()
     canveb->cd();
     canveb->SetLogy(1);
     histstoteb[j]->Draw();
+    histstoteb[j]->Write(histstoteb[j]->GetName(),TObject::kWriteDelete);
     canveb->SaveAs(Form("rms_x%i_total_EB.png",xs[j]));
     delete canveb;
 
@@ -238,6 +246,7 @@ void xmean()
     canvee->cd();
     canvee->SetLogy(1);
     histstotee[j]->Draw();
+    histstotee[j]->Write(histstotee[j]->GetName(),TObject::kWriteDelete);
     canvee->SaveAs(Form("rms_x%i_total_EE.png",xs[j]));
     delete canvee;
 
@@ -245,6 +254,7 @@ void xmean()
     canveep->cd();
     canveep->SetLogy(1);
     histstoteep[j]->Draw();
+    histstoteep[j]->Write(histstoteep[j]->GetName(),TObject::kWriteDelete);
     canveep->SaveAs(Form("rms_x%i_total_EEP.png",xs[j]));
     delete canveep;
 
@@ -252,6 +262,7 @@ void xmean()
     canveem->cd();
     canveem->SetLogy(1);
     histstoteem[j]->Draw();
+    histstoteem[j]->Write(histstoteem[j]->GetName(),TObject::kWriteDelete);
     canveem->SaveAs(Form("rms_x%i_total_EEM.png",xs[j]));
     delete canveem;
   }
@@ -318,4 +329,6 @@ void xmean()
       delete canvalls[k][j];
     }
   }
+
+  delete outfile;
 }
