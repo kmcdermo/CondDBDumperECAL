@@ -232,6 +232,7 @@ void xmean2D()
     TCanvas * canveb = new TCanvas();
     canveb->cd();
     histsaveb[j]->Scale(1.f/r1s.size());
+    histsaveb[j]->SetMaximum(0.1);
     histsaveb[j]->Draw("colz");
     histsaveb[j]->Write(histsaveb[j]->GetName(),TObject::kWriteDelete);
     canveb->SaveAs(Form("rms_x%i_average_EB.png",xs[j]));
@@ -240,6 +241,8 @@ void xmean2D()
     TCanvas * canvee = new TCanvas();
     canvee->cd();
     histsavee[j]->Scale(1.f/r1s.size());
+    histsavee[j]->SetMinimum(0.1);
+    histsavee[j]->SetMaximum(0.2);
     histsavee[j]->Draw("colz");
     histsavee[j]->Write(histsavee[j]->GetName(),TObject::kWriteDelete);
     canvee->SaveAs(Form("rms_x%i_average_EE.png",xs[j]));
@@ -248,6 +251,8 @@ void xmean2D()
     TCanvas * canveep = new TCanvas();
     canveep->cd();
     histsaveep[j]->Scale(1.f/r1s.size());
+    histsaveep[j]->SetMinimum(0.1);
+    histsaveep[j]->SetMaximum(0.2);
     histsaveep[j]->Draw("colz");
     histsaveep[j]->Write(histsaveep[j]->GetName(),TObject::kWriteDelete);
     canveep->SaveAs(Form("rms_x%i_average_EEP.png",xs[j]));
@@ -256,6 +261,8 @@ void xmean2D()
     TCanvas * canveem = new TCanvas();
     canveem->cd();
     histsaveem[j]->Scale(1.f/r1s.size());
+    histsaveem[j]->SetMinimum(0.1);
+    histsaveem[j]->SetMaximum(0.2);
     histsaveem[j]->Draw("colz");
     histsaveem[j]->Write(histsaveem[j]->GetName(),TObject::kWriteDelete);
     canveem->SaveAs(Form("rms_x%i_average_EEM.png",xs[j]));
