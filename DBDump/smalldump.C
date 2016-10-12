@@ -1,14 +1,8 @@
-// https://cms-conddb.cern.ch/cmsDbBrowser/list/Prod/gts/76X_dataRun2_16Dec2015_v0
-// GT for 2015 data rereco 76X
-// look up Tag matching Record from supported objects: https://github.com/kmcdermo/CondDBDumperECAL
-// conddb_dumper -O EcalPedestals -c frontier://FrontierProd/CMS_CONDITIONS -t EcalPedestals_express -b 271000
-
-// ADC conversion: EcalADCToGeVConstant
-// EcalADCToGeVConstant_V1_express
-
+#include <fstream>
 #include <vector>
 #include "TH2F.h"
 #include "TString.h"
+#include <iostream>
 
 #include <map>
 
@@ -36,56 +30,45 @@ void getADCs(std::vector<adcconv>& adcconvs);
 void getDetIDs(std::map<uint32_t,eid>& eids);
 void getPedRuns(std::vector<int>& ped_r1s, std::vector<int>& ped_r2s);
 
-void convert()
+void smalldump()
 {
   std::vector<adcconv> adcconvs;
   getADCs(adcconvs);
 
-  // std::map<uint32_t,eid> eids;
-  // getDetIDs(eids);
+  //  std::map<uint32_t,eid> eids;
+  //  getDetIDs(eids);
 
-  std::vector<int> ped_r1s, ped_r2s;
-  getPedRuns(ped_r1s,ped_r2s);
+  // float ebconv = adcconvs[adcconvs.size()-1].ebconv_;
+  // float eeconv = adcconvs[adcconvs.size()-1].eeconv_;
 
-  for (int i = 0; i < ped_r1s.size(); i++){
-    // get IOV for pedestals
-    int run1 = ped_r1s[i];
-    int run2 = ped_r2s[i];
+  // std::vector<int> ped_r1s, ped_r2s;
+  // getPedRuns(ped_r1s,ped_r2s);
 
-    // get adc to gev conversion constants for the run range
-    float ebconv = 0;
-    float eeconv = 0;
-    for (int r = 0; r < adcconvs.size(); r++){
-      int runb = adcconvs[r].runb_;
-      int rune = adcconvs[r].rune_;
+  //  TH1F * quick = new TH1F("h","h12",100,0,0.5);
 
-      if (run1 <= runb && run2 <= rune){
-	ebconv = adcconvs[r].ebconv_;
-	eeconv = adcconvs[r].eeconv_;
-	break;
-      }
-    }
+  // for (int i = 0; i < ped_r1s.size(); i++){
+  //   int run1 = ped_r1s[i];
+  //   int run2 = ped_r2s[i];
+  //   TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
+  //   std::ifstream input;
+  //   input.open(name.Data(),std::ios::in);
+  //   float x, y, z, m1, r1, m2, r2, m3, r3;
+  //   uint32_t id;
 
-    TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
-    std::ifstream input;
-    input.open(name.Data(),std::ios::in);
-    float x, y, z, m1, r1, m2, r2, m3, r3;
-    uint32_t id;
-    while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id){
-      if (z == 0) 
-      {    
-	r1 *= ebconv; r2 *= ebconv; r3 *= ebconv;
-	m1 *= ebconv; m2 *= ebconv; m3 *= ebconv;
-      }
-      else if (std::abs(z) == 1) 
-      { 
-	r1 *= eeconv; r2 *= eeconv; r3 *= eeconv;
-	m1 *= eeconv; m2 *= eeconv; m3 *= eeconv;
-      }
-    }
-    input.close();
-    
-  }
+  //   std::ofstream output;
+  //   output.open(Form("ecalpeds/pedestals_%i-%i.txt",run1,run2),std::ios_base::trunc);
+
+  //   while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id)
+  //   {
+  //     output << id << " " << r1 << std::endl;
+  //     //if (z == 0){ quick->Fill(r1 * ebconv); }
+  //     //if (std::abs(z) == 1){ quick->Fill(r1 * eeconv); }
+  //   }
+  //   input.close();
+  //   output.close();
+  // }
+
+  //  quick->Draw();
 }
 
 void getADCs(std::vector<adcconv>& adcconvs)
@@ -93,7 +76,7 @@ void getADCs(std::vector<adcconv>& adcconvs)
   // input runs
   std::ifstream adcruns;
   adcruns.open("ecalpeds/adcruns.txt",std::ios::in);
-  int t_arc_r1, t_adc_r2; // t is for temp
+  int t_adc_r1, t_adc_r2; // t is for temp
   std::vector<int> adc_r1s, adc_r2s;
   while (adcruns >> t_adc_r1 >> t_adc_r2){
     adc_r1s.push_back(t_adc_r1);
@@ -102,9 +85,11 @@ void getADCs(std::vector<adcconv>& adcconvs)
   adcruns.close();
 
   // input adc to gev conversion factors
+  ofstream output;
+  output.open(Form("ecalpeds/adc2gev_%i-%i.txt",adc_r1s[0],adc_r2s[adc_r2s.size()-1]),std::ios_base::trunc);
   for (int i = 0; i < adc_r1s.size(); i++){
     std::ifstream inputadcs;
-    inputadcs.open(Form("ecalpeds/dump_EcalADCToGeVConstant__since_00%i_till_since_00%i.dat",adc_r1s[i],adc_r2s[i]),std::ios::in);
+    inputadcs.open(Form("ecalpeds/dump_EcalADCToGeVConstant__since_00%i_till_00%i.dat",adc_r1s[i],adc_r2s[i]),std::ios::in);
     TString t_st_eb, t_st_ee;
     float t_adc2gev_eb, t_adc2gev_ee;
     while (inputadcs >> t_st_eb >> t_adc2gev_eb >> t_st_ee >> t_adc2gev_ee) {
@@ -114,9 +99,16 @@ void getADCs(std::vector<adcconv>& adcconvs)
       adctogev.ebconv_ = t_adc2gev_eb; 
       adctogev.eeconv_ = t_adc2gev_ee;
       adcconvs.push_back(adctogev);
+
+      output << adctogev.runb_ << " " 
+	     << adctogev.rune_ << " "
+	     << adctogev.ebconv_ << " "
+	     << adctogev.eeconv_ << " "
+	     << std::endl;
     }
     inputadcs.close();
   }
+  output.close();
 }
 
 void getDetIDs(std::map<uint32_t,eid>& eids)
@@ -124,7 +116,6 @@ void getDetIDs(std::map<uint32_t,eid>& eids)
   // input maps for detids
   std::ifstream inputids;
   inputids.open("detidsietaiphi.txt",std::ios::in);
-  std::map<uint32_t,eid> eids;
   uint32_t ID;
   int i1, i2;
   TString name;
