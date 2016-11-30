@@ -35,40 +35,28 @@ void smalldump()
   std::vector<adcconv> adcconvs;
   getADCs(adcconvs);
 
-  //  std::map<uint32_t,eid> eids;
-  //  getDetIDs(eids);
+  std::vector<int> ped_r1s, ped_r2s;
+  getPedRuns(ped_r1s,ped_r2s);
 
-  // float ebconv = adcconvs[adcconvs.size()-1].ebconv_;
-  // float eeconv = adcconvs[adcconvs.size()-1].eeconv_;
+  for (int i = 0; i < ped_r1s.size(); i++){
+    int run1 = ped_r1s[i];
+    int run2 = ped_r2s[i];
+    TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
+    std::ifstream input;
+    input.open(name.Data(),std::ios::in);
+    float x, y, z, m1, r1, m2, r2, m3, r3;
+    uint32_t id;
 
-  // std::vector<int> ped_r1s, ped_r2s;
-  // getPedRuns(ped_r1s,ped_r2s);
+    std::ofstream output;
+    output.open(Form("ecalpeds/pednoise_%i-%i.txt",run1,run2),std::ios_base::trunc);
 
-  //  TH1F * quick = new TH1F("h","h12",100,0,0.5);
-
-  // for (int i = 0; i < ped_r1s.size(); i++){
-  //   int run1 = ped_r1s[i];
-  //   int run2 = ped_r2s[i];
-  //   TString name = Form("ecalpeds/dump_EcalPedestals__since_00%i_till_00%i.dat",run1,run2);
-  //   std::ifstream input;
-  //   input.open(name.Data(),std::ios::in);
-  //   float x, y, z, m1, r1, m2, r2, m3, r3;
-  //   uint32_t id;
-
-  //   std::ofstream output;
-  //   output.open(Form("ecalpeds/pedestals_%i-%i.txt",run1,run2),std::ios_base::trunc);
-
-  //   while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id)
-  //   {
-  //     output << id << " " << r1 << std::endl;
-  //     //if (z == 0){ quick->Fill(r1 * ebconv); }
-  //     //if (std::abs(z) == 1){ quick->Fill(r1 * eeconv); }
-  //   }
-  //   input.close();
-  //   output.close();
-  // }
-
-  //  quick->Draw();
+    while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id)
+    {
+      output << id << " " << r1 << std::endl;
+    }
+    input.close();
+    output.close();
+  }
 }
 
 void getADCs(std::vector<adcconv>& adcconvs)
@@ -139,3 +127,49 @@ void getPedRuns(std::vector<int>& ped_r1s, std::vector<int>& ped_r2s)
   }
   pedruns.close();
 }
+
+
+
+
+
+
+  // mc
+
+//  std::vector<adcconv> adcconvs;
+//  getADCs(adcconvs);
+
+
+  // TString name = "ecalpeds/dump_EcalPedestals__MC.dat";
+  // std::ifstream input;
+  // input.open(name.Data(),std::ios::in);
+  // float x, y, z, m1, r1, m2, r2, m3, r3;
+  // uint32_t id;
+
+  // std::ofstream output;
+  // output.open("pedestals/pedestals_MC.txt",std::ios_base::trunc);
+
+  // while (input >> x >> y >> z >> m1 >> r1 >> m2 >> r2 >> m3 >> r3 >> id)
+  // {
+  //   output << id << " " << r1 << std::endl;
+  // }
+  // input.close();
+  // output.close();
+
+  // data
+
+
+
+
+
+  // std::map<uint32_t,eid> eids;
+  // getDetIDs(eids);
+
+  // float ebconv = adcconvs[adcconvs.size()-1].ebconv_;
+  // float eeconv = adcconvs[adcconvs.size()-1].eeconv_;
+  //TH1F * quick = new TH1F("h","h12",100,0,0.5);
+
+
+      //if (z == 0){ quick->Fill(r1 * ebconv); }
+      //if (std::abs(z) == 1){ quick->Fill(r1 * eeconv); }
+
+  //  quick->Draw();
